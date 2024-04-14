@@ -1,4 +1,3 @@
-require('dotenv').config();
 const gifs = require('../data/mikeOhearnGifsList');
 
 module.exports = {
