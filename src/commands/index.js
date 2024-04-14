@@ -1,7 +1,7 @@
-const gettopusers = require('./getTopUsers');
+const donthurtme = require('./donthurtme');
 const ping = require('./ping');
 
 module.exports = {
-  gettopusers,
+  donthurtme,
   ping,
 }
