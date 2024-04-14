@@ -7,7 +7,12 @@ client.on('ready', () => {
 });
 
 client.on('messageCreate', async (message) => {
-  if (!message.content.startsWith(commandPrefix)) return;
+  if (
+    !message.content.startsWith(commandPrefix)
+    || message.author.bot
+  ) {
+    return;
+  };
 
   // get command name + arguments
   const args = message.content.slice(1).split(/ +/);
