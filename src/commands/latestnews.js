@@ -40,7 +40,6 @@ module.exports = {
           ? { embeds }
           : 'No articles found.'
       );
-``
     } catch (error) {
       console.error(error);
     }
