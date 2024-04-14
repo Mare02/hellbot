@@ -1,3 +1,6 @@
+const { ChannelType } = require('discord.js');
+
+
 const { client } = require('./client');
 const commands = require('./commands');
 const commandPrefix = '!';
@@ -20,9 +23,17 @@ client.on('messageCreate', async (message) => {
 
   try {
     const command = commands[commandName];
-    command.execute(message, args);
+    await command.execute(message, args);
   }
   catch {
     console.log('Command not found');
   }
 });
+
+client.on('channelCreate', async(channel) => {
+  if (channel.type !== ChannelType.GuildText) return;
+
+  if (channel.name.startsWith('ticket-')) {
+    await commands['newticketquestion'].execute({channel});
+  }
+})

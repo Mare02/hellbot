@@ -14,12 +14,15 @@ module.exports = {
       const apiKey = `apiKey=${process.env.NEWS_API_KEY}`;
       const url = `https://newsapi.org/v2/top-headlines?${apiKey}&${query}&${from}&${sortBy}&${pageSize}`;
 
+      if (args.join(' ').length === 0) {
+        return message.channel.send('Please provide a search query.');
+      }
+
       const response = await fetch(url);
       const data = await response.json();
 
-      console.log(data.articles);
-
       const embeds = [];
+
       for (const article of data.articles) {
         const embed = new EmbedBuilder()
           .setColor(config.embedColor)

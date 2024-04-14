@@ -1,32 +1,14 @@
 require('dotenv').config();
 const config = require('../utils/config');
 const aiModels = require('../utils/aiModels');
+const { prompt } = require('../utils/useAI');
 
 module.exports = {
   name: 'askai',
   description: 'Prompts AI to answer a question.',
   async execute(message, args) {
     try {
-      const apiKey = process.env.GEMINI_API_KEY;
-      const question = args.join(' ');
-      const model = aiModels.googleGemma;
-      const apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
-
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          "model": model,
-          "messages": [
-            {"role": "user", "content": question},
-          ],
-        })
-      });
-
-      const data = await response.json();
+      const data = await prompt(args.join(' '));
 
       if (data.error) {
         message.channel.send(data.error.message);
