@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 require('dotenv').config();
+const config = require('../utils/config');
 
 module.exports = {
   name: 'latestnews',
@@ -21,7 +22,7 @@ module.exports = {
       const embeds = [];
       for (const article of data.articles) {
         const embed = new EmbedBuilder()
-          .setColor('#007bff')
+          .setColor(config.embedColor)
           .setTitle(article.title)
           .setURL(article.url)
           .setAuthor({ name: article.author || 'Unknown Author' })

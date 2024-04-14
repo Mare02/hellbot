@@ -1,5 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
 require('dotenv').config();
+const config = require('../utils/config');
 
 module.exports = {
   name: 'askai',
@@ -8,8 +9,6 @@ module.exports = {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       const question = args.join(' ');
-
-      console.log(question);
 
       const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -29,20 +28,30 @@ module.exports = {
 
       if (data.error) {
         const embed = new EmbedBuilder()
-          .setColor('#007bff')
+          .setColor(config.embedColor)
           .setTitle(data.error.message);
         message.channel.send({embed});
         return;
       }
 
-      const responseMessage = data.choices[0].message;
+      if (!data.choices) {
+        message.channel.send('No response found from the AI.');
+        return;
+      }
 
-      console.log(responseMessage);
+      // Check for message property in the first choice
+      const answer = data.choices[0]?.message;
 
-      // const embed = new EmbedBuilder()
-      //   .setColor('#007bff')
-      //   .setTitle(data.choices[0].message.content)
-      message.channel.send(responseMessage);
+      if (!answer) {
+        message.channel.send('An error occurred while processing the response.');
+        return;
+      }
+
+      const truncatedAnswer = answer.content.length > config.discordMsgLengthLimit
+        ? `${answer.content.substring(0, config.discordMsgLengthLimit - 3)}...`
+        : answer.content;
+
+      message.channel.send(truncatedAnswer);
     }
     catch (error) {
       console.log(error);
