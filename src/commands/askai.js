@@ -1,6 +1,6 @@
-const { EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 const config = require('../utils/config');
+const aiModels = require('../utils/aiModels');
 
 module.exports = {
   name: 'askai',
@@ -9,15 +9,17 @@ module.exports = {
     try {
       const apiKey = process.env.GEMINI_API_KEY;
       const question = args.join(' ');
+      const model = aiModels.googleGemma;
+      const apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
 
-      const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      const response = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          "model": "google/gemma-7b-it:free",
+          "model": model,
           "messages": [
             {"role": "user", "content": question},
           ],
@@ -27,10 +29,7 @@ module.exports = {
       const data = await response.json();
 
       if (data.error) {
-        const embed = new EmbedBuilder()
-          .setColor(config.embedColor)
-          .setTitle(data.error.message);
-        message.channel.send({embed});
+        message.channel.send(data.error.message);
         return;
       }
 
@@ -39,13 +38,7 @@ module.exports = {
         return;
       }
 
-      // Check for message property in the first choice
       const answer = data.choices[0]?.message;
-
-      if (!answer) {
-        message.channel.send('An error occurred while processing the response.');
-        return;
-      }
 
       const truncatedAnswer = answer.content.length > config.discordMsgLengthLimit
         ? `${answer.content.substring(0, config.discordMsgLengthLimit - 3)}...`
