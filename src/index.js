@@ -21,18 +21,16 @@ client.on('messageCreate', async (message) => {
   const args = message.content.slice(1).split(/ +/);
   const commandName = args.shift().toLowerCase();
 
-  try {
-    const command = commands[commandName];
+  const command = commands[commandName];
+  if (command) {
     await command.execute(message, args);
-  }
-  catch {
-    console.log('Command not found');
   }
 });
 
 client.on('channelCreate', async(channel) => {
   if (channel.type !== ChannelType.GuildText) return;
 
+  // New user ticket verification
   if (channel.name.startsWith('ticket-')) {
     await commands['newticketquestion'].execute({channel});
   }
