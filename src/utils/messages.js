@@ -6,6 +6,7 @@ module.exports = {
 
   emptyState: {
     noResponseAI: 'No response found from the AI.',
+    noResponseSummarize: 'No chat messages found.',
   },
 
   errorState: {
