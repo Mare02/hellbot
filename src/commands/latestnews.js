@@ -42,6 +42,7 @@ module.exports = {
       );
     } catch (error) {
       console.error(error);
+      message.channel.send(error.message);
     }
   },
 };

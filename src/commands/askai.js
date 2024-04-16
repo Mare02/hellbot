@@ -1,13 +1,14 @@
 require('dotenv').config();
 const config = require('../utils/config');
-const { prompt } = require('../utils/useAI');
+const { usePrompt } = require('../services/AIservice');
+const messages = require('../utils/messages');
 
 module.exports = {
   name: 'askai',
   description: 'Prompts AI to answer a question.',
   async execute(message, args) {
     try {
-      const data = await prompt(args.join(' '));
+      const data = await usePrompt(args.join(' '));
 
       if (data.error) {
         await message.channel.send(data.error.message);
@@ -15,7 +16,7 @@ module.exports = {
       }
 
       if (!data.choices || !data.choices[0].message) {
-        await message.channel.send('No response found from the AI.');
+        await message.channel.send(messages.emptyState.noResponseAI);
         return;
       }
 

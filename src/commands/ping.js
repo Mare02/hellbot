@@ -7,6 +7,7 @@ module.exports = {
       msg.edit(`Pong! Latency is ${msg.createdTimestamp - message.createdTimestamp}ms.`);
     } catch (error) {
       console.error(error);
+      message.channel.send(error.message);
     }
   },
 };

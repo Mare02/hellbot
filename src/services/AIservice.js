@@ -1,9 +1,9 @@
 require('dotenv').config();
-const aiModels = require('../utils/aiModels');
+const { aiModels } = require('../utils/config');
 const apiKey = process.env.OPEN_ROUTER_API_KEY;
 
 module.exports = {
-  prompt: async (prompt) => {
+  usePrompt: async (prompt) => {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: "POST",
       headers: {

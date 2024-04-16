@@ -1,5 +1,3 @@
-const gifs = require('../data/mikeOhearnGifsList');
-
 module.exports = {
   name: 'mariofacts',
   description: "Displays a random fact about Mario (SFS Master).",
@@ -26,6 +24,7 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
+      message.channel.send(error.message);
     }
   },
 };
