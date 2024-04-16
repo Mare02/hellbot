@@ -6,7 +6,12 @@ module.exports = {
   description: 'Prompts AI to answer a question.',
   async execute(message, args) {
     try {
-      const answer = await usePrompt(args.join(' '));
+      let prompt = args.join(' ');
+      if (message.reference) {
+        const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
+        prompt = `"${referencedMessage.content}", ${prompt}`;
+      }
+      const answer = await usePrompt(prompt);
       message.channel.send(answer);
     }
     catch (error) {

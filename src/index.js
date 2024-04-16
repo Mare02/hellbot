@@ -21,8 +21,6 @@ client.on('messageCreate', async (message) => {
   const args = message.content.slice(2).split(/ +/);
   const commandName = args.shift().toLowerCase();
 
-  console.log(commandName);
-
   const command = commands[commandName];
   if (command) {
     await command.execute(message, args);
@@ -34,6 +32,6 @@ client.on('channelCreate', async(channel) => {
 
   // New user ticket verification
   if (channel.name.startsWith('ticket-')) {
-    await commands['newticketquestion'].execute({channel});
+    await commands.newticketquestion.execute({channel});
   }
 })
