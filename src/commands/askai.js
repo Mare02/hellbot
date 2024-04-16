@@ -8,25 +8,8 @@ module.exports = {
   description: 'Prompts AI to answer a question.',
   async execute(message, args) {
     try {
-      const data = await usePrompt(args.join(' '));
-
-      if (data.error) {
-        await message.channel.send(data.error.message);
-        return;
-      }
-
-      if (!data.choices || !data.choices[0].message) {
-        await message.channel.send(messages.emptyState.noResponseAI);
-        return;
-      }
-
-      const answer = data.choices[0].message.content;
-
-      const truncatedAnswer = answer.length > config.discordMsgLengthLimit
-        ? `${answer.substring(0, config.discordMsgLengthLimit - 3)}...`
-        : answer;
-
-      message.channel.send(truncatedAnswer);
+      const answer = await usePrompt(args.join(' '));
+      message.channel.send(answer);
     }
     catch (error) {
       console.log(error);

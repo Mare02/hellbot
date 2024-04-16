@@ -5,7 +5,7 @@ const config = require('../utils/config');
 const gifs = require('../data/gifs');
 
 module.exports = {
-  name: 'newmemberquestion',
+  name: 'newticketquestion',
   description: "Displays a verification question for new members in tickets.",
   async execute(message) {
     try {
@@ -15,16 +15,10 @@ module.exports = {
         Dont use "".
         Display just this message in the output without any other text.
       `;
-      const data = await usePrompt(
+      const aiMessage = await usePrompt(
         messages.welcome.newTicketMessage,
         systemPrompt
       );
-      const success = data && data.choices && data.choices[0].message;
-
-      let aiMessage;
-      if (success) {
-        aiMessage = data.choices[0].message.content;
-      }
 
       const embed = new EmbedBuilder()
         .setColor(config.embedColor)
