@@ -1,15 +1,17 @@
 const { EmbedBuilder } = require('discord.js');
 require('dotenv').config();
 const config = require('../utils/config');
+const moment = require('moment');
 
 module.exports = {
   name: 'latestnews',
   description: 'Displays the latest news.',
   async execute(message, args) {
     try {
+      const monthAgo = moment().subtract(1, 'month').format('YYYY-MM-DD');
       const query = `q=${args.join(' ')}`;
       const sortBy = 'sortBy=popularity';
-      const from = `from=2024-03-16`;
+      const from = `from=${monthAgo}`;
       const pageSize = `pageSize=3`;
       const apiKey = `apiKey=${process.env.NEWS_API_KEY}`;
       const url = `https://newsapi.org/v2/top-headlines?${apiKey}&${query}&${from}&${sortBy}&${pageSize}`;

@@ -3,7 +3,11 @@ const { aiModels } = require('../utils/config');
 const apiKey = process.env.OPEN_ROUTER_API_KEY;
 
 module.exports = {
-  usePrompt: async (prompt) => {
+  usePrompt: async (userPrompt, systemPrompt) => {
+    const requestMessages = [{ "role": "user", "content": userPrompt }];
+    if (systemPrompt) {
+      requestMessages.push({ "role": "system", "content": systemPrompt });
+    }
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: "POST",
       headers: {
@@ -12,9 +16,7 @@ module.exports = {
       },
       body: JSON.stringify({
         "model": aiModels.googleGemma,
-        "messages": [
-          {"role": "user", "content": prompt},
-        ],
+        "messages": requestMessages,
       })
     });
 

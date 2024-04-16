@@ -1,15 +1,12 @@
-const ping = require('./ping');
-const donthurtme = require('./donthurtme');
-const mariofacts = require('./mariofacts');
-const latestnews = require('./latestnews');
-const askai = require('./askai');
-const newticketquestion = require('./newticketquestion');
+const fs = require('fs');
 
-module.exports = {
-  ping,
-  donthurtme,
-  mariofacts,
-  latestnews,
-  askai,
-  newticketquestion,
-}
+const commandFiles = fs.readdirSync(__dirname)
+  .filter(file => file.endsWith('.js') && file !== 'index.js');
+
+const commands = commandFiles.reduce((cmds, file) => {
+  const commandName = file.split('.')[0];
+  cmds[commandName] = require(`./${file}`);
+  return cmds;
+}, {});
+
+module.exports = commands;

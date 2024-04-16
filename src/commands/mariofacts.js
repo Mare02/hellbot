@@ -16,9 +16,8 @@ module.exports = {
         throw new Error(`API request failed with status: ${response.status}`);
       }
       const data = await response.json();
-      const rawText = data.value;
 
-      const marioFact = rawText.replace(/chuck norris/gi, 'Mario').replace(/chuck/gi, 'Mario');
+      const marioFact = data.value.replace(/chuck norris/gi, 'Mario').replace(/chuck/gi, 'Mario');
 
       message.channel.send(marioFact);
 

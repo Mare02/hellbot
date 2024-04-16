@@ -1,4 +1,6 @@
 module.exports = {
+  commandsPrefix: "::",
+  adminUserId: "652993719808557087",
   discordMsgLengthLimit: 2000,
   embedColor: '#007bff',
   aiModels: {

@@ -10,5 +10,10 @@ module.exports = {
 
   errorState: {
     commandError: 'There was an error with your command.',
+  },
+
+  system: {
+    logout: "Ight I'm logging off chat, skibidi fanum tax.",
+    unauthorized: "Unauthorized bitch!",
   }
 }

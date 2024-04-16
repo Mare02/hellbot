@@ -1,9 +1,9 @@
 const { ChannelType } = require('discord.js');
-
-
-const { client } = require('./client');
+const { getInstance } = require('./client');
 const commands = require('./commands');
-const commandPrefix = '!';
+const config = require('./utils/config');
+
+const client = getInstance();
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -11,15 +11,17 @@ client.on('ready', () => {
 
 client.on('messageCreate', async (message) => {
   if (
-    !message.content.startsWith(commandPrefix)
+    !message.content.startsWith(config.commandsPrefix)
     || message.author.bot
   ) {
     return;
   };
 
   // get command name + arguments
-  const args = message.content.slice(1).split(/ +/);
+  const args = message.content.slice(2).split(/ +/);
   const commandName = args.shift().toLowerCase();
+
+  console.log(commandName);
 
   const command = commands[commandName];
   if (command) {

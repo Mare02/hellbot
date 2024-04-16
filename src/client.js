@@ -1,17 +1,27 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
 
-const token = process.env.DISCORD_TOKEN;
+let instance;
 
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,
-  ],
-});
+function getInstance() {
+  if (!instance) {
+    const token = process.env.DISCORD_TOKEN;
 
-client.login(token);
+    instance = new Client({
+      intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildMembers,
+      ],
+    });
 
-module.exports = { client };
+    instance.login(token);
+  }
+
+  return instance;
+}
+
+module.exports = {
+  getInstance,
+};
