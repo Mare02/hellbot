@@ -19,10 +19,6 @@ module.exports = {
       }
       const messagesContentString = messagesArray.map(msg => msg.content).join('<br>');
       const summary = await usePrompt(`Please summarize the following conversation: \n${messagesContentString}`);
-      if (!summary.length) {
-        await message.channel.send(emptyState.noResponseAI);
-        return;
-      }
       message.channel.send(summary);
     } catch (error) {
       console.error(error);

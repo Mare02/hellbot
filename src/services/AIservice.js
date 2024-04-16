@@ -2,6 +2,7 @@ require('dotenv').config();
 const { aiModels } = require('../utils/config');
 const apiKey = process.env.OPEN_ROUTER_API_KEY;
 const config = require('../utils/config');
+const messages = require('../utils/messages');
 
 module.exports = {
   usePrompt: async (userPrompt, systemPrompt) => {
@@ -27,7 +28,7 @@ module.exports = {
       throw new Error(data.error.message);
     }
 
-    if (!data.choices || !data.choices[0].message) {
+    if (!data.choices || !data.choices[0].message || !data.choices[0].message.content.length) {
       throw new Error(messages.emptyState.noResponseAI);
     }
 

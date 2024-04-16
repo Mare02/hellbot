@@ -1,7 +1,5 @@
 require('dotenv').config();
-const config = require('../utils/config');
 const { usePrompt } = require('../services/AIservice');
-const messages = require('../utils/messages');
 
 module.exports = {
   name: 'askai',
