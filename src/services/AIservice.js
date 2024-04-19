@@ -1,5 +1,4 @@
 require('dotenv').config();
-const { aiModels } = require('../utils/config');
 const apiKey = process.env.OPEN_ROUTER_API_KEY;
 const config = require('../utils/config');
 const messages = require('../utils/messages');
@@ -17,7 +16,7 @@ module.exports = {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        "model": aiModels.mistral7b,
+        "model": config.currentAiModel,
         "messages": requestMessages,
       })
     });
