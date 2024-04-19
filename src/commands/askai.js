@@ -7,11 +7,12 @@ module.exports = {
   async execute(message, args) {
     try {
       let prompt = args.join(' ');
+      let systemPrompt;
       if (message.reference) {
         const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
-        prompt = `"${referencedMessage.content}", ${prompt}`;
+        systemPrompt = referencedMessage.content;
       }
-      const answer = await usePrompt(prompt);
+      const answer = await usePrompt(prompt, systemPrompt);
       message.channel.send(answer);
     }
     catch (error) {

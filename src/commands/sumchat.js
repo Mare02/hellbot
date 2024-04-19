@@ -11,13 +11,12 @@ module.exports = {
       const messagesArray = messages.map(message => ({
         content: message.content,
         author: message.author.username,
-        timestamp: message.createdTimestamp
       }));
       if (!messagesArray.length) {
         await message.channel.send(emptyState.noResponseSummarize);
         return;
       }
-      const messagesContentString = messagesArray.map(msg => msg.content).join('<br>');
+      const messagesContentString = messagesArray.map(msg => `${msg.author}: ${msg.content}`).join('<br>');
       const summary = await usePrompt(`Please summarize the following conversation: \n${messagesContentString}`);
       message.channel.send(summary);
     } catch (error) {

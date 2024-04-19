@@ -17,7 +17,7 @@ module.exports = {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        "model": aiModels.googleGemma,
+        "model": aiModels.mistral7b,
         "messages": requestMessages,
       })
     });
