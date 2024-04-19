@@ -2,8 +2,15 @@ const { ChannelType } = require('discord.js');
 const { getInstance } = require('./client');
 const commands = require('./commands');
 const config = require('./utils/config');
+const { ADMIN } = require('./utils/permissions');
+const messages = require('./utils/messages');
+require('dotenv').config();
 
 const client = getInstance();
+
+const prefix = process.env.NODE_ENV === 'production'
+  ? config.commandsPrefix
+  : config.commandsPrefixDev;
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -11,18 +18,26 @@ client.on('ready', () => {
 
 client.on('messageCreate', async (message) => {
   if (
-    !message.content.startsWith(config.commandsPrefix)
+    !message.content.startsWith(prefix)
     || message.author.bot
   ) {
     return;
   };
 
   // get command name + arguments
-  const args = message.content.slice(2).split(/ +/);
+  const args = message.content.slice(prefix.length).split(/ +/);
   const commandName = args.shift().toLowerCase();
 
   const command = commands[commandName];
   if (command) {
+    // Check permission
+    if (
+      command.perm === ADMIN
+      && !config.staffIds.includes(String(message.author.id))
+    ) {
+      message.channel.send(messages.system.noPermission);
+      return;
+    }
     await command.execute(message, args);
   }
 });

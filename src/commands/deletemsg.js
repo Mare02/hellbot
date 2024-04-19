@@ -1,10 +1,13 @@
+const { ADMIN } = require('../utils/permissions');
+
 module.exports = {
-  name: 'askai',
-  description: 'Prompts AI to answer a question.',
+  name: 'deletemsg',
+  description: 'Deletes a specified number of messages.',
+  perm: ADMIN,
   async execute(message, args) {
     try {
-      const limitParam = args[0];
-      const messagesData = await message.channel.messages.fetch({ limit: limitParam || 2 });
+      const limit = args[0] || 2;
+      const messagesData = await message.channel.messages.fetch({ limit });
       await message.channel.bulkDelete(messagesData);
     }
     catch (error) {
