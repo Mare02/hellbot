@@ -31,13 +31,13 @@ client.on('messageCreate', async (message) => {
   const command = commands[commandName];
   if (command) {
     // Check permission
-    if (
-      command.perm === ADMIN
-      && !config.staffIds.includes(String(message.author.id))
-    ) {
-      message.channel.send(messages.system.noPermission);
-      return;
-    }
+    // if (
+    //   command.perm === ADMIN
+    //   && !config.staffIds.includes(String(message.author.id))
+    // ) {
+    //   message.channel.send(messages.system.noPermission);
+    //   return;
+    // }
     await command.execute(message, args);
   }
 });
