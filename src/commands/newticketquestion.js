@@ -9,7 +9,6 @@ module.exports = {
   description: "Displays a verification question for new members in tickets.",
   async execute(message) {
     if (config.ticketMessageServerBlacklist.includes(message.channel.guild.id)) {
-      message.channel.send(messages.system.blacklisted);
       return;
     }
     try {
