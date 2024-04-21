@@ -15,6 +15,9 @@ module.exports = {
   staffIds: [
     "652993719808557087",
   ],
+  ticketMessageServerBlacklist: [
+    '700100389575458897',
+  ],
   discordMsgLengthLimit: 2000,
   embedColor: '#007bff',
   currentAiModel: aiModels.mistral7b,

@@ -8,6 +8,10 @@ module.exports = {
   name: 'newticketquestion',
   description: "Displays a verification question for new members in tickets.",
   async execute(message) {
+    if (config.ticketMessageServerBlacklist.includes(message.channel.guild.id)) {
+      message.channel.send(messages.system.blacklisted);
+      return;
+    }
     try {
       const systemPrompt = `
         Make this message seem more natural and human like.
