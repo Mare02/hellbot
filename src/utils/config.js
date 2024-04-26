@@ -2,9 +2,9 @@ const aiModels = require('../data/aiModels');
 
 module.exports = {
   bot: {
-    name: "Hell-e",
+    name: "Hellbot",
     decription: "Hell's Resting Place - custom made model",
-    version: "0.5",
+    version: "0.8",
   },
   commandsPrefix: "::",
   commandsPrefixDev: "dev::",

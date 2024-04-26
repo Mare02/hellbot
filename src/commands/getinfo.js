@@ -8,7 +8,7 @@ module.exports = {
   perm: ADMIN,
   async execute(message, args) {
     message.channel.send(`
-**Name:** ${config.bot.name} ${config.bot.version} (${config.bot.decription})
+**Name:** ${config.bot.name} (${config.bot.version}) (${config.bot.decription})
 **Owner:** ${config.owner.name} (${config.owner.id})
 **Environment:** ${process.env.NODE_ENV}
 **Command prefix:** ${
