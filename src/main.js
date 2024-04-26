@@ -32,7 +32,7 @@ client.on('messageCreate', async (message) => {
   if (command) {
     // Check permission
     if (
-      roles.includes(command.perm)
+      Object.values(roles).includes(command.perm)
       && !config.staffIds.includes(String(message.author.id))
     ) {
       message.channel.send(messages.system.noPermission);
