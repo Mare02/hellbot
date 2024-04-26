@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const messages = require('../utils/messages');
 const config = require('../utils/config');
 const { ADMIN } = require('../utils/roles');
 
@@ -10,19 +10,24 @@ module.exports = {
     try {
       if (
         !message.reference
-        || !message.reference.attachments
-        || !message.reference.attachments.first().contentType.includes('image')
       ) {
-        message.channel.send('Please reply to a message containing the image attachment.');
+        message.channel.send(messages.emptyState.noAttachmentInReply);
         return;
       }
       const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
       const attachment = repliedMessage.attachments.first();
 
-      const channel = await message.guild.channels.fetch('720012600938594306');
-      await channel.send({content: repliedMessage.author.username, files: [attachment]});
+      if (!attachment) {
+        message.channel.send(messages.emptyState.noAttachmentInReply, { reply: { messageReference: null } });
+        return;
+      }
 
-      message.channel.send('The design has been sent to the Master Creations channel.');
+      const authorText = args.join(' ');
+
+      const channel = await message.guild.channels.fetch(config.masterCreationsChannelId);
+      await channel.send({content: authorText, files: [attachment], reply: { messageReference: null }});
+
+      message.channel.send(messages.success.sentToMasterCreations);
     } catch (error) {
       console.log(error);
       await message.channel.send(error.message);

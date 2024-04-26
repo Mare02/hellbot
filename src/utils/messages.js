@@ -7,10 +7,15 @@ module.exports = {
   emptyState: {
     noResponseAI: 'No response found from the AI.',
     noResponseSummarize: 'No chat messages found.',
+    noAttachmentInReply: 'Please reply to a message containing the image attachment.',
   },
 
   errorState: {
     commandError: 'There was an error with your command.',
+  },
+
+  success: {
+    sentToMasterCreations: 'The design is now displayed in the Master Creations.',
   },
 
   system: {
