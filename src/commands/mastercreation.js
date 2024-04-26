@@ -22,7 +22,7 @@ module.exports = {
         return;
       }
 
-      const authorText = args.join(' ');
+      const authorText = args.join(' ') || repliedMessage.author.username;
 
       const channel = await message.guild.channels.fetch(config.masterCreationsChannelId);
       await channel.send({content: authorText, files: [attachment], reply: { messageReference: null }});
