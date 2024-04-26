@@ -15,6 +15,8 @@ module.exports = {
   staffIds: [
     "652993719808557087",
   ],
+  homeServerId: "720011764934115400",
+  logChannelId: "732790467615391846",
   ticketMessageServerBlacklist: [
     '700100389575458897',
   ],

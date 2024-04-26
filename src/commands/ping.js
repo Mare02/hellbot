@@ -4,7 +4,7 @@ module.exports = {
   async execute(message, args) {
     try {
       const msg = await message.reply('Pinging...');
-      msg.edit(`Pong! Latency is ${msg.createdTimestamp - message.createdTimestamp}ms.`);
+      await msg.edit(`Pong! Latency is ${msg.createdTimestamp - message.createdTimestamp}ms.`);
     } catch (error) {
       console.error(error);
       message.channel.send(error.message);

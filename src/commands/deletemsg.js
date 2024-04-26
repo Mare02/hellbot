@@ -1,4 +1,4 @@
-const { ADMIN } = require('../utils/permissions');
+const { ADMIN } = require('../utils/roles');
 
 module.exports = {
   name: 'deletemsg',

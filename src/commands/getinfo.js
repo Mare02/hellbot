@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { ADMIN } = require('../utils/permissions');
+const { ADMIN } = require('../utils/roles');
 const config = require('../utils/config');
 
 module.exports = {

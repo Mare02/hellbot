@@ -3,14 +3,15 @@ const messages = require('../utils/messages');
 const { usePrompt } = require('../services/AIservice');
 const config = require('../utils/config');
 const gifs = require('../data/gifs');
+const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'newticketquestion',
   description: "Displays a verification question for new members in tickets.",
+  perm: MODERATOR,
   async execute(message) {
-    if (config.ticketMessageServerBlacklist.includes(message.channel.guild.id)) {
-      return;
-    }
+    if (config.ticketMessageServerBlacklist.includes(message.channel.guild.id)) return;
+
     try {
       const systemPrompt = `
         Make this message seem more natural and human like.

@@ -2,11 +2,12 @@ const { ChannelType } = require('discord.js');
 const { getInstance } = require('./client');
 const commands = require('./commands');
 const config = require('./utils/config');
-const { ADMIN } = require('./utils/permissions');
+const roles = require('./utils/roles');
 const messages = require('./utils/messages');
 require('dotenv').config();
 
 const client = getInstance();
+client.commands = commands;
 
 const prefix = process.env.NODE_ENV === 'production'
   ? config.commandsPrefix
@@ -32,7 +33,7 @@ client.on('messageCreate', async (message) => {
   if (command) {
     // Check permission
     if (
-      command.perm === ADMIN
+      roles.include(command.perm)
       && !config.staffIds.includes(String(message.author.id))
     ) {
       message.channel.send(messages.system.noPermission);
