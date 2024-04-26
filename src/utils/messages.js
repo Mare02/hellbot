@@ -15,7 +15,7 @@ module.exports = {
   },
 
   success: {
-    sentToMasterCreations: 'The design is now displayed in the Master Creations.',
+    sentToMasterCreations: 'Selected design is now displayed in the Master Creations.',
   },
 
   system: {
