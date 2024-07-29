@@ -1,23 +1,29 @@
 const syslog = require('../commands/syslog');
 const { readdirSync } = require('fs');
 const path = require('path');
-const { ADMIN } = require('../utils/roles');
+const { ADMIN, MODERATOR } = require('../utils/roles');
 
 module.exports = {
   logToSystem: async (message, logMessage) => {
     await syslog.execute(message, logMessage);
   },
 
-  getCommandsList(author) {
+  getCommandsList(filter) {
     const commandsPath = path.join(__dirname, '..', 'commands');
     const commands = readdirSync(commandsPath).filter(file => file.endsWith('.js'))
       .map(file => require(path.join(commandsPath, file)));
-    const commandEntries = Object.entries(commands).filter(([_, value]) =>
-      typeof value?.name === 'string' && typeof value?.description === 'string' && !value?.perm
+    let commandEntries = Object.entries(commands).filter(([_, value]) =>
+      typeof value?.name === 'string'
+      && typeof value?.description === 'string'
+      && !value?.name.startsWith('test')
     );
 
+    if (filter && filter.show === 'base') {
+      commandEntries = commandEntries.filter(([_, value]) => ![ADMIN, MODERATOR].includes(value.perm));
+    }
+
     const commandsList = commandEntries.map(([_, value]) =>
-      `**::${value.name}** - ${value.description}`
+      `**::${value.name}** - ${value.description} ${value.perm ? `(${value.perm})` : ''}`
     ).join('\n');
 
     return commandsList;

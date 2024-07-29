@@ -19,9 +19,10 @@ module.exports = {
       ].filter(Boolean).join(', ');
 
       const embed = new EmbedBuilder()
-        .setAuthor({ name: 'Uptime' })
+        .setAuthor({ name: 'Uptime 🕛' })
         .setTitle(uptimeString)
-        .setColor(config.embedColor);
+        .setColor(config.embedColor)
+        .setThumbnail();
 
       await message.channel.send({ embeds: [embed] });
     } catch (error) {

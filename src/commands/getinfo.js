@@ -5,7 +5,6 @@ const config = require('../utils/config');
 module.exports = {
   name: 'getinfo',
   description: 'Get technical bot information.',
-  perm: ADMIN,
   async execute(message, args) {
     message.channel.send(`
 **Name:** ${config.bot.name} (${config.bot.version}) (${config.bot.decription})

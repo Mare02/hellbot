@@ -22,6 +22,6 @@ module.exports = {
     '700100389575458897',
   ],
   discordMsgLengthLimit: 2000,
-  embedColor: '#007bff',
+  embedColor: '#fc9803',
   currentAiModel: aiModels.mistral7b,
 }
