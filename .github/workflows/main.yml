@@ -11,8 +11,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: cd to hellbot
-        run: cd hellbot
       - name: Pull changes
         run: git pull origin main
       - name: Install dependencies
