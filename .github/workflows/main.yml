@@ -10,6 +10,10 @@ jobs:
     runs-on: self-hosted
 
     steps:
-    - run: git pull origin main
-    - run: pm2 restart src/main.js
-    - run: echo "updated code from git"
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: npm install
+      - name: Restart PM2
+        run: pm2 restart src/main.js
+      - name: Log update
+        run: echo "Updated code from Git" >> ./hook_log.txt
