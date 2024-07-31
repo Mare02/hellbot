@@ -23,5 +23,5 @@ module.exports = {
   ],
   discordMsgLengthLimit: 2000,
   embedColor: '#fc9803',
-  currentAiModel: aiModels.mistral7b,
+  currentAiModel: aiModels.googleGemma,
 }
