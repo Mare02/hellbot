@@ -7,7 +7,7 @@ module.exports = {
   usePrompt: async (userPrompt, systemPrompt) => {
     const requestMessages = [{ "role": "user", "content": userPrompt }];
     if (systemPrompt) {
-      requestMessages.push({ "role": "system", "content": systemPrompt });
+      requestMessages.push({ "role": "system", "content": `Context: ${systemPrompt}` });
     }
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: "POST",
