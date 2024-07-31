@@ -12,3 +12,4 @@ jobs:
     steps:
     - run: git pull origin main
     - run: pm2 restart src/main.js
+    - run: echo "updated code from hit"
