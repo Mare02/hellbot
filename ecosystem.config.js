@@ -10,14 +10,6 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
       },
-      notify: {
-        restart: true,
-        update: true,
-        error: true,
-        success: true,
-        message: 'Hellbot has been updated!',
-        email: 'marko123obradovic@gmail.com',
-      },
     },
   ],
 };
