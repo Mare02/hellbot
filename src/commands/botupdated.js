@@ -13,7 +13,6 @@ module.exports = {
       await generalChannel.send(`${config.bot.name} code has been updated!`);
     } catch (error) {
       console.log(error);
-      await generalChannel.send(error.message);
     }
   },
 };
