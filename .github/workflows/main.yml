@@ -18,6 +18,6 @@ jobs:
       - name: Restart PM2
         run: pm2 restart default
       - name: Send bot updated message
-        run: node -e "require('./src/commands/botupdated').execute()" 
+        run: node -e "require('./src/commands/botupdated').execute()"
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
