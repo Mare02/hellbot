@@ -15,7 +15,6 @@ jobs:
         run: |
           cd ../../../../hellbot
           git pull origin main
-        run: git pull origin main
       - name: Install dependencies
         run: npm install
       - name: Restart PM2
