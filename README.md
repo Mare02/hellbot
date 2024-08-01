@@ -8,4 +8,5 @@
 
 ### How to run:
 - npm install
+- npm install nodemon
 - npm run dev
