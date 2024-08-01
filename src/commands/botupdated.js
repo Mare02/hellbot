@@ -12,7 +12,7 @@ module.exports = {
 
       let messageText = `${config.bot.name}'s code has been updated!`;
       if (commitMessage && commitMessage.length) {
-        messageText += `\n Commit message: \"${commitMessage}\"`;
+        messageText += `\n||Message: "${commitMessage}"||`;
       }
       await generalChannel.send(messageText);
     } catch (error) {
