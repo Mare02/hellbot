@@ -4,13 +4,17 @@ const config = require('../utils/config');
 module.exports = {
   name: 'botupdated',
   description: 'Show a message when bot code has been updated.',
-  async execute() {
+  async execute(commitMessage) {
     try {
       const client = getInstance();
       const server = await client.guilds.fetch(config.homeServerId);
       const generalChannel = await server.channels.fetch(config.generalChannelId);
 
-      await generalChannel.send(`${config.bot.name}'s code has been updated!`);
+      let messageText = `${config.bot.name}'s code has been updated!`;
+      if (commitMessage && commitMessage.length) {
+        messageText += `\n Commit message: \"${commitMessage}\"`;
+      }
+      await generalChannel.send(messageText);
     } catch (error) {
       console.log(error);
     } finally {
