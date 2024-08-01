@@ -1,5 +1,6 @@
-const { useImageGen } = require('../services/AIservice');
+// const { useImageGen } = require('../services/AIservice');
 
+// ToDo: Add an nsfw safe image generation AI model
 module.exports = {
   name: 'imagen',
   description: 'Prompts AI to generate an image.',
