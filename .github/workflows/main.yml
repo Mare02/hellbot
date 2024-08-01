@@ -16,7 +16,7 @@ jobs:
       - name: Install dependencies
         run: npm install
       - name: Restart PM2
-        run: pm2 restart default
+        run: pm2 restart hellbot
       - name: Send bot updated message
         run: node -e "require('./src/commands/botupdated').execute()"
         env:
