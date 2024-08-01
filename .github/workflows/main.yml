@@ -11,12 +11,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-          path: hellbot
       - name: Pull changes
+        run: |
+          cd ../../../../hellbot
+          git pull origin main
         run: git pull origin main
-        working-directory: ./hellbot
       - name: Install dependencies
         run: npm install
       - name: Restart PM2
