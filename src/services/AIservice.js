@@ -1,5 +1,4 @@
 require('dotenv').config();
-const apiKey = process.env.OPEN_ROUTER_API_KEY;
 const config = require('../utils/config');
 const messages = require('../utils/messages');
 
@@ -12,7 +11,7 @@ module.exports = {
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": `Bearer ${process.env.OPEN_ROUTER_API_KEY}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -38,5 +37,29 @@ module.exports = {
       : answer;
 
     return truncatedAnswer;
+  },
+
+  useImageGen: async (userPrompt) => {
+    const provider = 'replicate/classic';
+    const response = await fetch('https://api.edenai.run/v2/image/generation', {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.EDENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        providers: provider,
+        text: String(userPrompt).trim(),
+        resolution: "512x512",
+      })
+    });
+
+    const data = await response.json();
+
+    if (data[provider] && data[provider].items && data[provider].items[0].image_resource_url) {
+      return data[provider].items[0].image_resource_url;
+    } else {
+      throw new Error(messages.emptyState.noResponseAI);
+    }
   },
 }
