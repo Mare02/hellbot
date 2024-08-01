@@ -8,6 +8,7 @@ module.exports = {
   },
   commandsPrefix: "::",
   commandsPrefixDev: "dev::",
+  isDevMode: process.env.NODE_ENV === 'development',
   owner: {
     id: "652993719808557087",
     name: "hellismyrestingplace",
@@ -17,6 +18,7 @@ module.exports = {
   ],
   homeServerId: "720011764934115400",
   logChannelId: "732790467615391846",
+  verifyChannelId: "830224625350344724",
   generalChannelId: "720011765672444007",
   masterCreationsChannelId: "858872397935018024",
   ticketMessageServerBlacklist: [

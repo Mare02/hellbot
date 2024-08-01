@@ -1,6 +1,6 @@
-const { ChannelType } = require('discord.js');
 const { getInstance } = require('./client');
 const commands = require('./commands');
+const listeners = require('./listeners');
 const config = require('./utils/config');
 const roles = require('./utils/roles');
 const messages = require('./utils/messages');
@@ -8,9 +8,9 @@ require('dotenv').config();
 
 const client = getInstance();
 
-const prefix = process.env.NODE_ENV === 'production'
-  ? config.commandsPrefix
-  : config.commandsPrefixDev;
+const prefix = config.isDevMode
+  ? config.commandsPrefixDev
+  : config.commandsPrefix;
 
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
@@ -42,11 +42,4 @@ client.on('messageCreate', async (message) => {
   }
 });
 
-client.on('channelCreate', async(channel) => {
-  if (channel.type !== ChannelType.GuildText) return;
-
-  // New user ticket verification
-  if (channel.name.startsWith('ticket-')) {
-    await commands.newticketquestion.execute({channel});
-  }
-})
+Object.values(listeners).forEach(listener => listener(client));
