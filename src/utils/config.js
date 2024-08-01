@@ -17,6 +17,7 @@ module.exports = {
   ],
   homeServerId: "720011764934115400",
   logChannelId: "732790467615391846",
+  generalChannelId: "720011765672444007",
   masterCreationsChannelId: "858872397935018024",
   ticketMessageServerBlacklist: [
     '700100389575458897',
