@@ -1,8 +1,10 @@
 const { getInstance } = require('../client');
 const config = require('../utils/config');
+const { ADMIN } = require('../utils/roles')
 
 module.exports = {
   name: 'botupdated',
+  perm: ADMIN,
   description: 'Show a message when bot code has been updated.',
   async execute(commitMessage) {
     try {
@@ -12,7 +14,7 @@ module.exports = {
 
       let messageText = `${config.bot.name}'s code has been updated!`;
       if (commitMessage && commitMessage.length) {
-        messageText += `\n||Message: "${commitMessage}"||`;
+        messageText += `\n||*Update note: "${commitMessage}"*||`;
       }
       await generalChannel.send(messageText);
     } catch (error) {
