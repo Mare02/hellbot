@@ -18,11 +18,10 @@ jobs:
       - name: Restart PM2
         run: pm2 restart hellbot
       - name: Get commit message
-        id: get_commit
-        run: echo "::set-output name=commit_message::$(git log -1 --pretty=format:'%s')
+        run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
       - name: Send bot updated message
         run: node -e "require('./src/commands/botupdated').execute(process.env.COMMIT_MESSAGE)"
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          COMMIT_MESSAGE: ${{ steps.get_commit.outputs.commit_message }}
+          COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
 
