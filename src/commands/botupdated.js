@@ -6,15 +6,15 @@ module.exports = {
   name: 'botupdated',
   perm: ADMIN,
   description: 'Show a message when bot code has been updated.',
-  async execute(commitMessage) {
+  async execute(commitMessage, commitLink) {
     try {
       const client = getInstance();
       const server = await client.guilds.fetch(config.homeServerId);
       const generalChannel = await server.channels.fetch(config.generalChannelId);
 
       let messageText = `${config.bot.name}'s code has been updated!`;
-      if (commitMessage && commitMessage.length) {
-        messageText += `\n-# Update note: "${commitMessage}"`;
+      if (commitMessage && commitMessage.length && commitLink && commitLink.length) {
+        messageText += `\n-# Update note: ["${commitMessage}"](${commitLink})`;
       }
       await generalChannel.send(messageText);
     } catch (error) {

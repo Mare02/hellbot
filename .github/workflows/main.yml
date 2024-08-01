@@ -19,11 +19,15 @@ jobs:
         run: npm install
       - name: Restart PM2
         run: pm2 restart hellbot
-      - name: Get commit message
-        run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+      - name: Get commit message and link
+        run: |
+          echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+          echo "COMMIT_LINK=$(git log -1 --pretty=format:'https://github.com/Mare02/hellbot/commit/%H')" >> $GITHUB_ENV
       - name: Send bot updated message
-        run: node -e "require('./src/commands/botupdated').execute(process.env.COMMIT_MESSAGE)"
+          run: node -e "require('./src/commands/botupdated').execute(process.env.COMMIT_MESSAGE, process.env.COMMIT_LINK)"
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
+          COMMIT_LINK: ${{ env.COMMIT_LINK }}
+
 
