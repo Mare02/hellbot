@@ -40,7 +40,7 @@ module.exports = {
   },
 
   useImageGen: async (userPrompt) => {
-    const provider = 'replicate/classic';
+    const provider = 'amazon/titan-image-generator-v1_standard';
     const response = await fetch('https://api.edenai.run/v2/image/generation', {
       method: "POST",
       headers: {
