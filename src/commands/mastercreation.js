@@ -15,19 +15,19 @@ module.exports = {
         return;
       }
       const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
-      const attachment = repliedMessage.attachments.first();
+      const attachments = repliedMessage.attachments;
 
-      if (!attachment) {
+      if (!attachments.size) {
         message.channel.send(messages.emptyState.noAttachmentInReply, { reply: { messageReference: null } });
         return;
       }
 
-      const authorText = args.join(' ') || repliedMessage.author.username;
+      const authorText = args.join(' ') || repliedMessage.author.displayName;
 
       const channel = await message.guild.channels.fetch(config.masterCreationsChannelId);
-      await channel.send({content: authorText, files: [attachment], reply: { messageReference: null }});
+      await channel.send({content: authorText, files: attachments.map(a => a.url), reply: { messageReference: null }});
 
-      message.channel.send(messages.success.sentToMasterCreations);
+      message.channel.send(`Selected design is now displayed in the <#${config.masterCreationsChannelId}>`);
     } catch (error) {
       console.log(error);
       await message.channel.send(error.message);

@@ -14,10 +14,6 @@ module.exports = {
     commandError: 'There was an error with your command.',
   },
 
-  success: {
-    sentToMasterCreations: 'Selected design is now displayed in the Master Creations.',
-  },
-
   system: {
     logout: "Ight I'm logging off chat, skibidi fanum tax.",
     unauthorized: "Unauthorized bitch!",
