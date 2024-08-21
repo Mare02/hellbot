@@ -21,6 +21,7 @@ module.exports = {
   verifyChannelId: "830224625350344724",
   generalChannelId: "720011765672444007",
   masterCreationsChannelId: "858872397935018024",
+  masterPhotosChannelId: "1275913045981397105",
   ticketMessageServerBlacklist: [
     '700100389575458897',
   ],
