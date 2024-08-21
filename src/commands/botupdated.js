@@ -12,7 +12,7 @@ module.exports = {
       const server = await client.guilds.fetch(config.homeServerId);
       const generalChannel = await server.channels.fetch(config.generalChannelId);
 
-      let messageText = `${config.bot.name}'s code has been updated!`;
+      let messageText = `${config.bot.name} has been updated!`;
       if (commitMessage && commitMessage.length) {
         messageText += `\n-# Update note: "${commitMessage}"`;
       }

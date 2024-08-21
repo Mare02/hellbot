@@ -1,7 +1,8 @@
-const syslog = require('../commands/syslog');
 const { readdirSync } = require('fs');
 const path = require('path');
 const { ADMIN, MODERATOR } = require('../utils/roles');
+const syslog = require('../commands/syslog');
+const messages = require('../utils/messages');
 
 module.exports = {
   logToSystem: async (message, logMessage) => {
@@ -36,5 +37,32 @@ module.exports = {
       return;
     }
     return prompt;
+  },
+
+  forwardAttachmentsToChannel: async (message, args, channelConfig, mediaType) => {
+    try {
+      if (!message.reference) {
+        message.channel.send(messages.emptyState.noAttachmentInReply);
+        return;
+      }
+
+      const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
+      const attachments = repliedMessage.attachments;
+
+      if (!attachments.size) {
+        message.channel.send(messages.emptyState.noAttachmentInReply, { reply: { messageReference: null } });
+        return;
+      }
+
+      const authorText = args.join(' ') || repliedMessage.author.displayName;
+
+      const channel = await message.guild.channels.fetch(channelConfig);
+      await channel.send({ content: authorText, files: attachments.map(a => a.url), reply: { messageReference: null } });
+
+      message.channel.send(`Selected ${mediaType} is now displayed in the <#${channelConfig}>`);
+    } catch (error) {
+      console.log(error);
+      await message.channel.send(error.message);
+    }
   },
 }
