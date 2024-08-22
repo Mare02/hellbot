@@ -24,7 +24,7 @@ const hasPermission = (commandPerm, userId) => {
 const getStaffRole = (userId) => {
   if (
     staffIds.unlockedStaffIds.includes(String(userId))
-    || owner.id === String(userId)
+    || String(userId) === owner.id
   ) {
     return roles.UNLOCKED;
   } else if (staffIds.adminStaffIds.includes(String(userId))) {

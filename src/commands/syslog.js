@@ -1,10 +1,10 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../utils/config');
-const { ADMIN } = require('../utils/roles');
+const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'syslog',
-  perm: ADMIN,
+  perm: MODERATOR,
   description: 'Sends a message to the logs channel.',
   async execute(message, args,  logMessage) {
     if (message.channel.guild.id !== config.homeServerId) return;

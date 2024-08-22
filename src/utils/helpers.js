@@ -40,7 +40,7 @@ module.exports = {
     return prompt;
   },
 
-  forwardAttachmentsToChannel: async (message, args, channelConfig, mediaType) => {
+  forwardAttachmentsToChannel: async (message, args, channelId, mediaType) => {
     try {
       if (!message.reference) {
         message.channel.send(messages.emptyState.noAttachmentInReply);
@@ -57,10 +57,10 @@ module.exports = {
 
       const authorText = args.join(' ') || repliedMessage.author.displayName;
 
-      const channel = await message.guild.channels.fetch(channelConfig);
+      const channel = await message.guild.channels.fetch(channelId);
       await channel.send({ content: authorText, files: attachments.map(a => a.url), reply: { messageReference: null } });
 
-      message.channel.send(`Selected ${mediaType} is now displayed in the <#${channelConfig}>`);
+      message.channel.send(`Selected ${mediaType} is now displayed in the <#${channelId}>`);
     } catch (error) {
       console.log(error);
       await message.channel.send(error.message);

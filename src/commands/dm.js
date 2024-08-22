@@ -1,4 +1,3 @@
-const { getInstance } = require('../client');
 const { ADMIN } = require('../utils/roles')
 
 module.exports = {
@@ -14,13 +13,12 @@ module.exports = {
         return message.channel.send('Please provide a user ID and a message text.');
       }
 
-      const client = getInstance();
-      const user = await client.users.fetch(args[0]);
+      const user = await message.guild.members.fetch(args[0]);
 
       const messageContent = args.slice(1).join(' ');
 
       await user.send(messageContent);
-      message.channel.send(`DM sent to ${user.tag}`);
+      message.channel.send(`DM sent to ${user.displayName}`);
     } catch (error) {
       message.channel.send(error.message);
     }

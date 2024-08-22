@@ -1,11 +1,11 @@
 const { getInstance } = require('../client');
 const config = require('../utils/config');
-const { ADMIN } = require('../utils/roles')
+const { UNLOCKED } = require('../utils/roles')
 
 module.exports = {
   name: 'botupdated',
-  description: 'Show a message when bot code has been updated.',
-  perm: ADMIN,
+  description: 'Show a message when the bot code has been updated.',
+  perm: UNLOCKED,
   async execute(commitMessage) {
     try {
       const client = getInstance();

@@ -1,9 +1,9 @@
-const { ADMIN } = require('../utils/roles');
+const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'deletemsg',
   description: 'Deletes a specified number of messages.',
-  perm: ADMIN,
+  perm: MODERATOR,
   async execute(message, args) {
     try {
       const limit = args[0] || 2;
