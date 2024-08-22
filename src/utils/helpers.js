@@ -1,8 +1,9 @@
-const { readdirSync } = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { ADMIN, MODERATOR } = require('../utils/roles');
 const syslog = require('../commands/syslog');
 const messages = require('../utils/messages');
+require('dotenv').config();
 
 module.exports = {
   logToSystem: async (message, logMessage) => {
@@ -11,7 +12,7 @@ module.exports = {
 
   getCommandsList(filter) {
     const commandsPath = path.join(__dirname, '..', 'commands');
-    const commands = readdirSync(commandsPath).filter(file => file.endsWith('.js'))
+    const commands = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'))
       .map(file => require(path.join(commandsPath, file)));
     let commandEntries = Object.entries(commands).filter(([_, value]) =>
       typeof value?.name === 'string'
@@ -64,5 +65,28 @@ module.exports = {
       console.log(error);
       await message.channel.send(error.message);
     }
+  },
+
+  saveToEnv: async (name, value) => {
+    const envFile = fs.readFileSync('.env', 'utf8');
+    const envLines = envFile.split('\n');
+
+    const index = envLines.findIndex(line => line.startsWith(`${name}=`));
+
+    if (index !== -1) {
+      envLines[index] = `${name}=${JSON.stringify(value)}`;
+    } else {
+      envLines.push(`${name}=${JSON.stringify(value)}`);
+    }
+
+    fs.writeFileSync('.env', envLines.join('\n'));
+  },
+
+  getFromEnv(name) {
+    const envFile = fs.readFileSync('.env', 'utf8');
+    const envLines = envFile.split('\n');
+
+    const index = envLines.findIndex(line => line.startsWith(`${name}=`));
+    return index !== -1 ? JSON.parse(envLines[index].split('=')[1]) : '';
   },
 }

@@ -1,5 +1,4 @@
 const { EmbedBuilder } = require('discord.js');
-const { getInstance } = require('../client');
 const config = require('../utils/config');
 const { ADMIN } = require('../utils/roles');
 
@@ -11,10 +10,7 @@ module.exports = {
     if (message.channel.guild.id !== config.homeServerId) return;
 
     try {
-      const client = getInstance();
-
-      const server = await client.guilds.fetch(config.homeServerId);
-      const logsChannel = await server.channels.fetch(config.logChannelId);
+      const logsChannel = await message.guild.channels.fetch(config.logChannelId);
 
       const embed = new EmbedBuilder()
         .setColor(config.embedColor)

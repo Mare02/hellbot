@@ -4,8 +4,8 @@ const { ADMIN } = require('../utils/roles')
 
 module.exports = {
   name: 'botupdated',
-  perm: ADMIN,
   description: 'Show a message when bot code has been updated.',
+  perm: ADMIN,
   async execute(commitMessage) {
     try {
       const client = getInstance();

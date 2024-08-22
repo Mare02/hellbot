@@ -4,7 +4,7 @@ const { emptyState } = require('../utils/messages');
 module.exports = {
   name: 'sumchat',
   description: 'Summarizes the recent chat.',
-  async execute(message, args) {
+  async execute(message) {
     try {
       const channel = message.channel;
       const messages = await channel.messages.fetch({ limit: 20 });

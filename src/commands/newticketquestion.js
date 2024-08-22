@@ -9,7 +9,7 @@ module.exports = {
   description: "Displays a verification question for new members in tickets.",
   perm: MODERATOR,
   async execute(message) {
-    if (config.ticketMessageServerBlacklist.includes(message.channel.guild.id)) return;
+    if (message.channel.guild.id !== config.homeServerId) return;
 
     try {
       const embed = new EmbedBuilder()

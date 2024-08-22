@@ -1,8 +1,8 @@
 const { getInstance } = require('../client');
 const commands = require('../commands');
 const config = require('../utils/config');
-const roles = require('../utils/roles');
 const messages = require('../utils/messages');
+const { hasPermission } = require('../utils/roles');
 
 const client = getInstance();
 
@@ -26,13 +26,11 @@ module.exports = () => {
     const command = commands[commandName];
     if (command) {
       // Check permission
-      if (
-        Object.values(roles).includes(command.perm)
-        && !config.staffIds.includes(String(message.author.id))
-      ) {
+      if (command.perm && !hasPermission(command.perm, message.author.id)) {
         message.channel.send(messages.system.noPermission);
         return;
       }
+
       await command.execute(message, args);
     }
   });
