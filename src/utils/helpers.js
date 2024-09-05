@@ -70,13 +70,14 @@ module.exports = {
   saveToEnv: async (name, value) => {
     const envFile = fs.readFileSync('.env', 'utf8');
     const envLines = envFile.split('\n');
+    let nameUpperCase = name.toUpperCase();
 
-    const index = envLines.findIndex(line => line.startsWith(`${name}=`));
+    const index = envLines.findIndex(line => line.startsWith(`${nameUpperCase}=`));
 
     if (index !== -1) {
-      envLines[index] = `${name}=${JSON.stringify(value)}`;
+      envLines[index] = `${nameUpperCase}=${JSON.stringify(value)}`;
     } else {
-      envLines.push(`${name}=${JSON.stringify(value)}`);
+      envLines.push(`${nameUpperCase}=${JSON.stringify(value)}`);
     }
 
     fs.writeFileSync('.env', envLines.join('\n'));
@@ -86,7 +87,7 @@ module.exports = {
     const envFile = fs.readFileSync('.env', 'utf8');
     const envLines = envFile.split('\n');
 
-    const index = envLines.findIndex(line => line.startsWith(`${name}=`));
-    return index !== -1 ? JSON.parse(envLines[index].split('=')[1]) : '';
+    const index = envLines.findIndex(line => line.startsWith(`${name.toUpperCase()}=`));
+    return index !== -1 ? JSON.parse(envLines[index].split('=')[1]) : null;
   },
 }
