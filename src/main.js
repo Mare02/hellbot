@@ -1,6 +1,7 @@
 const { getInstance } = require('./client');
 const listeners = require('./listeners');
 require('dotenv').config();
+require('./kernel');
 
 const client = getInstance();
 
