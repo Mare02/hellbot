@@ -90,4 +90,13 @@ module.exports = {
     const index = envLines.findIndex(line => line.startsWith(`${name.toUpperCase()}=`));
     return index !== -1 ? JSON.parse(envLines[index].split('=')[1]) : null;
   },
+
+  formatDate: (year, month, day) => {
+    const formattedMonth = new Date(year, month, day)
+      .toLocaleString('default', { month: 'long' });
+
+    const formattedDay = day.toString();
+
+    return `${formattedMonth} ${formattedDay}${year ? `, ${year}` : ''}`;
+  },
 }

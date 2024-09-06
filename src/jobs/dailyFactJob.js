@@ -42,7 +42,6 @@ module.exports = {
       await channel.send({ embeds: [embed] });
     } catch (error) {
       console.error(error);
-      channel.send('An error occurred while fetching the fact.');
     }
   },
 };
