@@ -91,7 +91,7 @@ module.exports = {
     return index !== -1 ? JSON.parse(envLines[index].split('=')[1]) : null;
   },
 
-  formatDate: (year, month, day) => {
+  formatDate: (day, month, year) => {
     const formattedMonth = new Date(year, month, day)
       .toLocaleString('default', { month: 'long' });
 

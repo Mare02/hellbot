@@ -25,11 +25,11 @@ module.exports = {
 
     try {
       const today = new Date();
-      const month = today.getMonth() + 1;
+      const month = today.getMonth();
       const day = today.getDate();
 
       BASE_URL = 'https://api.api-ninjas.com/v1/historicalevents';
-      const url = `${BASE_URL}?month=${month}&day=${day}`;
+      const url = `${BASE_URL}?month=${month + 1}&day=${day}`;
 
       const response = await fetch(url, {
         method: 'GET',
@@ -45,7 +45,7 @@ module.exports = {
       const data = await response.json();
 
       if (!isSentAsScheduledTask && data.length === 0) {
-        message.channel.send(`No events found for this day: ${formatDate(today.getFullYear(), today.getMonth() + 1, today.getDate())}`);
+        message.channel.send(`No events found for this day: ${formatDate(day, month)}`);
         return;
       }
 
@@ -53,7 +53,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor(embedColor)
-        .setTitle(`On this day: ${formatDate(event.year, event.month, event.day)}`)
+        .setTitle(`On this day: ${formatDate(day, month, event.year)}`)
         .setDescription(event.event);
 
       if (isSentAsScheduledTask) {
