@@ -6,7 +6,7 @@ const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
   name: 'onthisday',
-  description: 'Returns an event that happened on this day in history to all servers.',
+  description: 'Displays an event that happened on this day in history.',
   async execute(message, args, isSentAsScheduledTask) {
     try {
       const today = new Date();
