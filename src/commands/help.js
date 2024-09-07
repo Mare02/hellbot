@@ -11,7 +11,7 @@ module.exports = {
 
       const embed = new EmbedBuilder()
         .setColor(config.embedColor)
-        .setTitle(`**${config.bot.name}** Help Menu 📜`)
+        .setTitle(`**${config.bot.name}**'s Help Menu 📜`)
         .addFields(
           { name: '**Prefix:**', value: config.commandsPrefix, inline: true },
           {
