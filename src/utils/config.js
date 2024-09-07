@@ -30,6 +30,7 @@ module.exports = {
     headModerator: '834772331922063400',
     moderator: '1037545653087256657',
   },
+  verifiedRoleId: '1051882112057348146',
 
   discordMsgLengthLimit: 2000,
   embedColor: '#fc9803',
