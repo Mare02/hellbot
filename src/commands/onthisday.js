@@ -1,28 +1,13 @@
 require('dotenv').config();
 const { getInstance } = require('../client');
 const { formatDate } = require('../utils/helpers');
-const { homeServerId, generalChannelId, embedColor } = require('../utils/config');
+const { embedColor } = require('../utils/config');
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
   name: 'onthisday',
-  description: 'Returns an event that happened on this day in history.',
+  description: 'Returns an event that happened on this day in history to all servers.',
   async execute(message, args, isSentAsScheduledTask) {
-    let channel;
-    if (isSentAsScheduledTask) {
-      const client = getInstance();
-
-      const guild = await client.guilds.fetch(homeServerId);
-      if (!guild) {
-        return;
-      }
-
-      channel = await guild.channels.fetch(generalChannelId);
-      if (!channel) {
-        return;
-      }
-    }
-
     try {
       const today = new Date();
       const month = today.getMonth();
@@ -44,9 +29,11 @@ module.exports = {
 
       const data = await response.json();
 
-      if (!isSentAsScheduledTask && data.length === 0) {
-        message.channel.send(`No events found for this day: ${formatDate(day, month)}`);
-        return;
+      if (data.length === 0) {
+        if (!isSentAsScheduledTask) {
+          message.channel.send(`No events found for this day: ${formatDate(day, month)}`);
+          return;
+        }
       }
 
       const event = data[Math.floor(Math.random() * data.length)];
@@ -57,7 +44,24 @@ module.exports = {
         .setDescription(event.event);
 
       if (isSentAsScheduledTask) {
-        await channel.send({ embeds: [embed] });
+        const client = getInstance();
+
+        const guilds = await client.guilds.fetch();
+        if (!guilds.size) {
+          return;
+        }
+
+        for (const [guildId, guild] of guilds) {
+          const fetchedGuild = await client.guilds.fetch(guildId);
+          const channels = await fetchedGuild.channels.fetch();
+          const generalChannel = channels.find(channel =>
+            channel.type === 0 && channel.name.startsWith('general')
+          );
+
+          if (generalChannel) {
+            await generalChannel.send({ embeds: [embed] });
+          }
+        }
       } else {
         await message.channel.send({ embeds: [embed] });
       }

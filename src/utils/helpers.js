@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { ADMIN, MODERATOR } = require('../utils/roles');
 const syslog = require('../commands/syslog');
 const messages = require('../utils/messages');
 require('dotenv').config();
@@ -21,7 +20,7 @@ module.exports = {
     );
 
     if (filter && filter.show === 'base') {
-      commandEntries = commandEntries.filter(([_, value]) => ![ADMIN, MODERATOR].includes(value.perm));
+      commandEntries = commandEntries.filter(([_, value]) => !value.perm);
     }
 
     const commandsList = commandEntries.map(([_, value]) =>

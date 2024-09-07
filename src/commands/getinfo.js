@@ -10,11 +10,7 @@ module.exports = {
 **Name:** ${config.bot.name} (${config.bot.version}) (${config.bot.decription})
 **Owner:** ${config.owner.name} (${config.owner.id})
 **Environment:** ${process.env.NODE_ENV}
-**Command prefix:** ${
-  process.env.NODE_ENV === 'production'
-    ? config.commandsPrefix
-    : config.commandsPrefixDev
-}
+**Commands prefix:** ${config.commandsPrefix}
 **Using AI model:** ${config.currentAiModel}
 **Host sytem:** ${process.platform} ${process.arch}
     `);

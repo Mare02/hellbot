@@ -4,11 +4,10 @@ module.exports = {
   bot: {
     name: "Hellbot",
     decription: "Hell's Custom Discord Bot",
-    version: "1.0",
+    version: "1.1",
   },
 
-  commandsPrefix: "::",
-  commandsPrefixDev: "dev::",
+  commandsPrefix: process.env.NODE_ENV === 'development' ? "dev::" : "::",
 
   isDevMode: process.env.NODE_ENV === 'development',
 

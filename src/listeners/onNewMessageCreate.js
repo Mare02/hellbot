@@ -6,21 +6,17 @@ const { hasPermission } = require('../utils/roles');
 
 const client = getInstance();
 
-const commandPrefix = config.isDevMode
-    ? config.commandsPrefixDev
-    : config.commandsPrefix;
-
 module.exports = () => {
   client.on('messageCreate', async (message) => {
     if (
-      !message.content.startsWith(commandPrefix)
+      !message.content.startsWith(config.commandsPrefix)
       || message.author.bot
     ) {
       return;
     };
 
     // get command name + arguments
-    const args = message.content.slice(commandPrefix.length).split(/ +/);
+    const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
     const commandName = args.shift().toLowerCase();
 
     const command = commands[commandName];
