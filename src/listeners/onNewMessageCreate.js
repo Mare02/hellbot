@@ -2,6 +2,7 @@ const { getInstance } = require('../client');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
 const { hasPermission } = require('../utils/roles');
+const commands = require('../commands');
 const registerslashcommands = require('../commands/registerslashcommands');
 
 const client = getInstance();
@@ -19,14 +20,17 @@ module.exports = () => {
     const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
     const commandName = args.shift().toLowerCase();
 
-    if (commandName === 'registerslashcommands') {
-      let command = registerslashcommands;
-      if (command.perm && !hasPermission(command.perm, message.author.id)) {
-        message.channel.send(messages.system.noPermission);
-        return;
-      }
+    let command = commands[commandName];
 
-      await command.execute(message, args);
+    if (commandName === 'registerslashcommands') {
+      command = registerslashcommands;
     }
+
+    if (command.perm && !hasPermission(command.perm, message.author.id)) {
+      message.channel.send(messages.system.noPermission);
+      return;
+    }
+
+    await command.execute(message, args);
   });
 };

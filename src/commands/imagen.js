@@ -11,21 +11,41 @@ module.exports = {
       required: true,
     },
   ],
-  async execute(interaction) {
+  async execute(interaction, args) {
     try {
-      await interaction.deferReply();
+      if (!args) {
+        await interaction.deferReply();
+      }
 
-      const question = interaction.options.getString('prompt');
+      let userInput;
+      if (args) {
+        userInput = args.join(' ');
+      } else {
+        userInput = interaction.options.getString('prompt');
+      }
 
-      let prompt = validateUserPromptInput(question, interaction.channel);
+      let prompt = validateUserPromptInput(userInput, interaction.channel);
       if (!prompt) return;
 
       const imageUrl = await useImageGen(prompt);
 
-      interaction.editReply(`<@${interaction.user.id}> ${prompt} \n [open image](${imageUrl})`);
+      let userId;
+      if (args) {
+        userId = interaction.author.id;
+      } else {
+        userId = interaction.user.id;
+      }
+      const result = `<@${userId}> ${prompt} \n [open image](${imageUrl})`;
+
+      if (!args) {
+        interaction.editReply(result);
+      } else {
+        interaction.reply(result);
+      }
     }
     catch (error) {
-      interaction.reply(error.interaction);
+      console.error(error.message);
+      interaction.reply(error.message);
     }
   },
 };

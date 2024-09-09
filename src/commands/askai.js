@@ -12,13 +12,20 @@ module.exports = {
       required: true,
     },
   ],
-  async execute(interaction) {
+  async execute(interaction, args) {
     try {
-      await interaction.deferReply();
+      if (!args) {
+        await interaction.deferReply();
+      }
 
-      const question = interaction.options.getString('prompt');
+      let userInput;
+      if (args) {
+        userInput = args.join(' ');
+      } else {
+        userInput = interaction.options.getString('prompt');
+      }
 
-      let prompt = validateUserPromptInput(question, interaction.channel);
+      let prompt = validateUserPromptInput(userInput, interaction.channel);
       if (!prompt) return;
 
       let systemPrompt;
@@ -27,11 +34,19 @@ module.exports = {
         systemPrompt = referencedMessage.content;
       }
       const answer = await usePrompt(prompt, systemPrompt);
-      await interaction.editReply(answer);
+      if (!args) {
+        await interaction.editReply(answer);
+      } else {
+        await interaction.reply(answer);
+      }
     }
     catch (error) {
-      console.log(error);
-      await interaction.editReply(error.message);
+      console.error(error);
+      if (!args) {
+        await interaction.editReply(error.message);
+      } else {
+        await interaction.reply(error.message);
+      }
     }
   },
 };
