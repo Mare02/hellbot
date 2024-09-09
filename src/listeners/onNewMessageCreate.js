@@ -1,8 +1,8 @@
 const { getInstance } = require('../client');
-const commands = require('../commands');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
 const { hasPermission } = require('../utils/roles');
+const registerslashcommands = require('../commands/registerslashcommands');
 
 const client = getInstance();
 
@@ -19,9 +19,8 @@ module.exports = () => {
     const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
     const commandName = args.shift().toLowerCase();
 
-    const command = commands[commandName];
-    if (command) {
-      // Check permission
+    if (commandName === 'registerslashcommands') {
+      let command = registerslashcommands;
       if (command.perm && !hasPermission(command.perm, message.author.id)) {
         message.channel.send(messages.system.noPermission);
         return;

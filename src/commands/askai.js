@@ -1,26 +1,37 @@
 require('dotenv').config();
 const { usePrompt } = require('../services/AIservice');
-const { handleUserPromptInput } = require('../utils/helpers');
+const { validateUserPromptInput } = require('../utils/helpers');
 
 module.exports = {
   name: 'askai',
-  description: 'Prompts AI to answer a question.',
-  async execute(message, args) {
+  description: "Prompts AI to answer a question",
+  params: [
+    {
+      name: 'prompt',
+      description: "The prompt to send to the AI",
+      required: true,
+    },
+  ],
+  async execute(interaction) {
     try {
-      let prompt = await handleUserPromptInput(args.join(' '), message.channel);
+      await interaction.deferReply();
+
+      const question = interaction.options.getString('prompt');
+
+      let prompt = validateUserPromptInput(question, interaction.channel);
       if (!prompt) return;
 
       let systemPrompt;
-      if (message.reference) {
-        const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
+      if (interaction.reference) {
+        const referencedMessage = await interaction.channel.messages.fetch(interaction.reference.messageId);
         systemPrompt = referencedMessage.content;
       }
       const answer = await usePrompt(prompt, systemPrompt);
-      message.channel.send(answer);
+      await interaction.editReply(answer);
     }
     catch (error) {
       console.log(error);
-      message.channel.send(error.message);
+      await interaction.editReply(error.message);
     }
   },
 };

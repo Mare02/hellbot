@@ -5,7 +5,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
   name: 'help',
   description: 'Show a list of commands and how to use them.',
-  async execute(message, args) {
+  async execute(interaction) {
     try {
       const commandsList = getCommandsList({ show: 'base' });
 
@@ -25,10 +25,10 @@ module.exports = {
           { name: '**Available Commands:**', value: `\n${commandsList}`, inline: false }
         );
 
-      await message.channel.send({ embeds: [embed] });
+      await interaction.reply({ embeds: [embed] });
     } catch (error) {
-      console.log(error);
-      await message.channel.send(error.message);
+      console.error(error);
+      await interaction.reply(error.message);
     }
   },
 };

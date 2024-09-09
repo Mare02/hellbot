@@ -1,19 +1,31 @@
 const { useImageGen } = require('../services/AIservice');
+const { validateUserPromptInput } = require('../utils/helpers');
 
-// ToDo: Add an nsfw safe image generation AI model
 module.exports = {
   name: 'imagen',
   description: 'Prompts AI to generate an image.',
-  async execute(message, args) {
+  params: [
+    {
+      name: 'prompt',
+      description: "The prompt for the image generation",
+      required: true,
+    },
+  ],
+  async execute(interaction) {
     try {
-      let prompt = args.join(' ');
+      await interaction.deferReply();
+
+      const question = interaction.options.getString('prompt');
+
+      let prompt = validateUserPromptInput(question, interaction.channel);
+      if (!prompt) return;
+
       const imageUrl = await useImageGen(prompt);
 
-      message.channel.send(`<@${message.author.id}> ${prompt} \n [open image](${imageUrl})`);
-      // message.channel.send('Sorry, this command is currently unavailable due to technical reasons. We are working towards the solution.');
+      interaction.editReply(`<@${interaction.user.id}> ${prompt} \n [open image](${imageUrl})`);
     }
     catch (error) {
-      message.channel.send(error.message);
+      interaction.reply(error.interaction);
     }
   },
 };

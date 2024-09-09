@@ -5,6 +5,7 @@ module.exports = {
     name: "Hellbot",
     decription: "Hell's Custom Discord Bot",
     version: "1.1",
+    appId: "1227757599215063040",
   },
 
   commandsPrefix: process.env.NODE_ENV === 'development' ? "dev::" : "::",

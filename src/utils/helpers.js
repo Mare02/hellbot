@@ -30,10 +30,10 @@ module.exports = {
     return commandsList;
   },
 
-  handleUserPromptInput: async (promptInput, channel) => {
+  validateUserPromptInput: (promptInput, channel) => {
     const prompt = promptInput.trim();
     if (prompt === '' || /^\s+$/.test(prompt)) {
-      await channel.send('Please provide a prompt!');
+      channel.send('Please provide a prompt!');
       return;
     }
     return prompt;
