@@ -4,9 +4,16 @@ const config = require('../utils/config');
 module.exports = {
   name: 'serverinfo',
   description: 'Displays information about the server.',
-  async execute(interaction) {
+  async execute(interaction, args) {
     console.log(interaction);
     const { guild } = interaction;
+
+    let user;
+    if (!args) {
+      user = interaction.user;
+    } else {
+      user = interaction.author;
+    }
 
     const embed = new EmbedBuilder()
       .setColor(config.embedColor)
@@ -20,7 +27,7 @@ module.exports = {
         { name: 'Roles', value: `${guild.roles.cache.size}`, inline: true }
       )
       .setThumbnail(guild.iconURL({ dynamic: true }))
-      .setFooter({ text: `Requested by ${interaction.user.username}`, iconURL: interaction.user.displayAvatarURL() });
+      .setFooter({ text: `Requested by ${user.username}`, iconURL: user.displayAvatarURL() });
 
     await interaction.reply({ embeds: [embed] });
   },
