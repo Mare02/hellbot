@@ -14,12 +14,9 @@ module.exports = {
     try {
       const client = getInstance();
 
-      let guildId = config.homeServerId;
-      if (message) {
-        guildId = message.guild.id;
-      }
-
       const guilds = await client.guilds.fetch();
+      const homeServer = await client.guilds.fetch(config.homeServerId);
+      const generalChannel = await homeServer.channels.fetch(config.generalChannelId);
 
       for (const [guildId] of guilds) {
         await rest.put(Routes.applicationGuildCommands(config.bot.appId, guildId), {
@@ -29,14 +26,24 @@ module.exports = {
         });
       }
 
+      const messageText = 'Slash commands updated!';
       if (message) {
-        message.channel.send('Slash commands updated!');
+        message.channel.send(messageText);
       }
+      else if (generalChannel) {
+        generalChannel.send(messageText);
+      }
+
     } catch (error) {
       console.error(error);
+      const errorText = `Failed to update slash commands: ${error.message}`;
       if (message) {
-        message.channel.send(`Failed to updated slash commands: ${error.message}`);
+        message.channel.send(errorText);
+      } else if (generalChannel) {
+        generalChannel.send(errorText);
       }
+    } finally {
+      process.exit();
     }
   }
 }
