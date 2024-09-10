@@ -4,11 +4,9 @@
 This project is a Discord bot built using Node.js and the Discord.js library. It includes various commands and features that enhance user interaction within Discord servers.
 
 ### Features
-- **Slash Commands**
-- **AI Service**: for generating text responses and images.
-- **Event Listeners**
-- **Scheduled Jobs**: Implements cron jobs for things like daily facts and historical events.
-
+- **AI**: Implements AI API for generating text and images responses.
+- **Slash Commands**: Implements DiscordJS slash commands.
+- **Scheduled Jobs**: Implements cron jobs for things like daily facts.new members.
 
 ### How to run:
 - npm install
