@@ -1,7 +1,8 @@
 module.exports = {
   name: 'mariofacts',
   description: "Displays a random fact about Mario (SFS Master).",
-  async execute(message, args) {
+  slash: true,
+  async execute(interaction, args) {
     try {
       const response = await fetch('https://matchilling-chuck-norris-jokes-v1.p.rapidapi.com/jokes/random', {
         method: 'GET',
@@ -19,11 +20,19 @@ module.exports = {
 
       const marioFact = data.value.replace(/chuck norris/gi, 'Mario').replace(/chuck/gi, 'Mario');
 
-      message.channel.send(marioFact);
+      if (!args) {
+        interaction.reply(marioFact);
+      } else {
+        interaction.channel.send(marioFact);
+      }
 
     } catch (error) {
       console.error(error);
-      message.channel.send(error.message);
+      if (!args) {
+        interaction.reply(error.message);
+      } else {
+        interaction.channel.send(error.message);
+      }
     }
   },
 };
