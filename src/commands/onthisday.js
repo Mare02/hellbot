@@ -7,7 +7,8 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
   name: 'onthisday',
   description: 'Displays an event that happened on this day in history.',
-  async execute(message, args, isSentAsScheduledTask) {
+  slash: true,
+  async execute(interaction, args, isSentAsScheduledTask) {
     try {
       const today = new Date();
       const month = today.getMonth();
@@ -30,8 +31,13 @@ module.exports = {
       const data = await response.json();
 
       if (data.length === 0) {
+        const message = `No events found for this day: ${formatDate(day, month)}`;
         if (!isSentAsScheduledTask) {
-          message.channel.send(`No events found for this day: ${formatDate(day, month)}`);
+          if (!args) {
+            interaction.reply(message);
+          } else {
+            interaction.channel.send(message);
+          }
           return;
         }
       }
@@ -63,10 +69,19 @@ module.exports = {
           }
         }
       } else {
-        await message.channel.send({ embeds: [embed] });
+        if (!args) {
+          interaction.reply({ embeds: [embed] });
+        } else {
+          interaction.channel.send({ embeds: [embed] });
+        }
       }
     } catch (error) {
       console.error(error);
+      if (!args) {
+        interaction.reply(error.message);
+      } else {
+        interaction.channel.send(error.message);
+      }
     }
   },
 };
