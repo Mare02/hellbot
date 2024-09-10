@@ -1,7 +1,9 @@
 const { SlashCommandBuilder } = require('discord.js');
-const commands = require('../commands');
+const commands = require('../../commands');
 
-const slashCommands = Object.values(commands).map(command => {
+const filteredCommands = Object.values(commands).filter(command => command.slash);
+
+const slashCommands = filteredCommands.map(command => {
   const slashCommand = new SlashCommandBuilder()
     .setName(command.name)
     .setDescription(command.description);
@@ -18,7 +20,6 @@ const slashCommands = Object.values(commands).map(command => {
   }
 
   return slashCommand;
-}
-).map(command => command.toJSON());
+});
 
-module.exports = slashCommands;
+module.exports = slashCommands.map(command => command.toJSON());

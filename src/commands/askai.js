@@ -5,6 +5,7 @@ const { validateUserPromptInput } = require('../utils/helpers');
 module.exports = {
   name: 'askai',
   description: "Prompts AI to answer a question",
+  slash: true,
   params: [
     {
       name: 'prompt',

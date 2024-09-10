@@ -5,6 +5,7 @@ const { EmbedBuilder } = require('discord.js');
 module.exports = {
   name: 'help',
   description: 'Show a list of commands and how to use them.',
+  slash: true,
   async execute(interaction) {
     try {
       const commandsList = getCommandsList({ show: 'base' });

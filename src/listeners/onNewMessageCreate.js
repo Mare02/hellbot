@@ -3,7 +3,7 @@ const config = require('../utils/config');
 const messages = require('../utils/messages');
 const { hasPermission } = require('../utils/roles');
 const commands = require('../commands');
-const registerslashcommands = require('../commands/registerslashcommands');
+const registerslashcommands = require('../commands/slashCommands/registerslashcommands');
 
 const client = getInstance();
 

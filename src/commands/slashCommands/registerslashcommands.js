@@ -1,8 +1,8 @@
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v10');
-const config = require('../utils/config');
-const slashCommands = require('./slashCommands');
-const { ADMIN } = require('../utils/roles');
+const config = require('../../utils/config');
+const slashCommands = require('../slashCommands');
+const { ADMIN } = require('../../utils/roles');
 
 const rest = new REST({ version: '9' }).setToken(process.env.DISCORD_TOKEN);
 

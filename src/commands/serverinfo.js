@@ -4,8 +4,8 @@ const config = require('../utils/config');
 module.exports = {
   name: 'serverinfo',
   description: 'Displays information about the server.',
+  slash: true,
   async execute(interaction, args) {
-    console.log(interaction);
     const { guild } = interaction;
 
     let user;

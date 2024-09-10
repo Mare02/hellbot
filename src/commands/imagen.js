@@ -4,6 +4,7 @@ const { validateUserPromptInput } = require('../utils/helpers');
 module.exports = {
   name: 'imagen',
   description: 'Prompts AI to generate an image.',
+  slash: true,
   params: [
     {
       name: 'prompt',

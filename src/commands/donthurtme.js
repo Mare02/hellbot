@@ -3,6 +3,7 @@ const gifs = require('../data/gifs');
 module.exports = {
   name: 'donthurtme',
   description: "Displays a radom Mike O'Hearn gif.",
+  slash: true,
   async execute(interaction, args) {
     try {
       const randomIndex = Math.floor(Math.random() * gifs.mikeoHearnGifs.length);
