@@ -28,19 +28,22 @@ module.exports = {
 
       const messageText = 'Slash commands updated!';
       if (message) {
-        message.channel.send(messageText);
-      }
-      else if (generalChannel) {
-        generalChannel.send(messageText);
+        if (generalChannel) {
+          generalChannel.send(messageText);
+        } else {
+          message.channel.send(messageText);
+        }
       }
 
     } catch (error) {
       console.error(error);
       const errorText = `Failed to update slash commands: ${error.message}`;
       if (message) {
-        message.channel.send(errorText);
-      } else if (generalChannel) {
-        generalChannel.send(errorText);
+        if (generalChannel) {
+          generalChannel.send(errorText);
+        } else {
+          message.channel.send(errorText);
+        }
       }
     } finally {
       if (isCalledAsJob) {
