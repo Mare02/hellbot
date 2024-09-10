@@ -31,4 +31,5 @@ jobs:
         run: node -e "require('./src/commands/slashCommands/updateslashcommands').execute(null, true)"
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
 

@@ -47,7 +47,7 @@ module.exports = {
         generalChannel.send(errorText);
       }
     } finally {
-      if (isCalledAsJob) {
+      if (!message && isCalledAsJob) {
         process.exit();
       }
     }

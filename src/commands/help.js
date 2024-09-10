@@ -14,7 +14,7 @@ module.exports = {
         .setColor(config.embedColor)
         .setTitle(`**${config.bot.name}**'s Help Menu 📜`)
         .addFields(
-          { name: '**Prefix:**', value: config.commandsPrefix, inline: true },
+          { name: '**Prefix:**', value: `"${config.commandsPrefix}" or "/"`, inline: true },
           {
             name: '**How to use the bot:**',
             value: `

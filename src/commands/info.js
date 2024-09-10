@@ -16,12 +16,12 @@ module.exports = {
       .addFields(
         {
           name: 'Name',
-          value: `${config.bot.name} (${config.bot.decription})`,
+          value: config.bot.name,
           inline: true,
         },
         { name: 'Description', value: config.bot.decription, inline: true },
         { name: 'Version', value: config.bot.version, inline: true },
-        { name: 'Owner', value: `${config.owner.name} (${config.owner.id})`, inline: true },
+        { name: 'Owner', value: config.owner.name, inline: true },
         { name: 'Environment', value: process.env.NODE_ENV, inline: true },
         { name: 'Commands prefix', value: `"${config.commandsPrefix}" or "/"`, inline: true },
         { name: 'AI model', value: config.currentAiModel, inline: true },
@@ -31,10 +31,6 @@ module.exports = {
       .setThumbnail(client.user.displayAvatarURL())
       .setColor(config.embedColor);
 
-    if (!args) {
-      interaction.reply({ embeds: [embed] });
-    } else {
-      interaction.channel.send({ embeds: [embed] });
-    }
+    interaction.reply({ embeds: [embed] });
   },
 };
