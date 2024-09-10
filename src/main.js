@@ -4,7 +4,7 @@ require('./kernel');
 const listeners = require('./listeners');
 const Bugsnag = require('@bugsnag/js');
 const commands = require('./commands');
-const registerslashcommands = require('./commands/slashCommands/registerslashcommands');
+const updateslashcommands = require('./commands/slashCommands/updateslashcommands');
 
 const client = getInstance();
 
@@ -14,7 +14,7 @@ client.on('ready', () => {
 
 Object.values(listeners).forEach(listener => listener(client));
 
-registerslashcommands.execute();
+updateslashcommands.execute();
 
 Bugsnag.start({
   apiKey: process.env.BUGSNAG_API_KEY

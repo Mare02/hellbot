@@ -21,11 +21,11 @@ jobs:
       - name: Restart PM2
         run: pm2 restart hellbot
       - name: Update slash commands
-        run: node -e "require('./src/commands/slashCommands/registerslashcommands').execute()"
+        run: node -e "require('./src/commands/slashCommands/updateslashcommands').execute()"
       - name: Get commit message
         run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
       - name: Send bot updated message
-        run: node -e "require('./src/commands/botupdated').execute(process.env.COMMIT_MESSAGE)"
+        run: node -e "require('./src/jobs/botUpdatedJob').execute(process.env.COMMIT_MESSAGE)"
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}

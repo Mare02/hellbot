@@ -3,7 +3,7 @@ const config = require('../utils/config');
 const messages = require('../utils/messages');
 const { hasPermission } = require('../utils/roles');
 const commands = require('../commands');
-const registerslashcommands = require('../commands/slashCommands/registerslashcommands');
+const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
 
 const client = getInstance();
 
@@ -22,8 +22,8 @@ module.exports = () => {
 
     let command = commands[commandName];
 
-    if (commandName === 'registerslashcommands') {
-      command = registerslashcommands;
+    if (commandName === 'updateslashcommands') {
+      command = updateslashcommands;
     }
 
     if (command.perm && !hasPermission(command.perm, message.author.id)) {
