@@ -14,10 +14,13 @@ module.exports = {
     try {
       const client = getInstance();
 
-      const guilds = await client.guilds.fetch();
-      const homeServer = await client.guilds.fetch(config.homeServerId);
-      const generalChannel = await homeServer.channels.fetch(config.generalChannelId);
+      let generalChannel;
+      if (isCalledAsJob) {
+        const homeServer = await client.guilds.fetch(config.homeServerId);
+        generalChannel = await homeServer.channels.fetch(config.generalChannelId);
+      }
 
+      const guilds = await client.guilds.fetch();
       for (const [guildId] of guilds) {
         await rest.put(Routes.applicationGuildCommands(config.bot.appId, guildId), {
           body: slashCommands,
@@ -28,22 +31,20 @@ module.exports = {
 
       const messageText = 'Slash commands updated!';
       if (message) {
-        if (generalChannel) {
-          generalChannel.send(messageText);
-        } else {
-          message.channel.send(messageText);
-        }
+        message.channel.send(messageText);
+      }
+      else if (generalChannel) {
+        generalChannel.send(messageText);
       }
 
     } catch (error) {
       console.error(error);
       const errorText = `Failed to update slash commands: ${error.message}`;
       if (message) {
-        if (generalChannel) {
-          generalChannel.send(errorText);
-        } else {
-          message.channel.send(errorText);
-        }
+        message.channel.send(errorText);
+      }
+      else if (generalChannel) {
+        generalChannel.send(errorText);
       }
     } finally {
       if (isCalledAsJob) {
