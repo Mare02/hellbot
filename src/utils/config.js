@@ -4,7 +4,7 @@ module.exports = {
   bot: {
     name: "Hellbot",
     decription: "Hell's Custom Discord Bot",
-    version: "1.1",
+    version: "1.2",
     appId: "1227757599215063040",
   },
 
