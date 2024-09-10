@@ -28,7 +28,7 @@ jobs:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
           COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
       - name: Update slash commands
-        run: node -e "require('./src/commands/slashCommands/updateslashcommands').execute()"
+        run: node -e "require('./src/commands/slashCommands/updateslashcommands').execute(null, true)"
         env:
           DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
 

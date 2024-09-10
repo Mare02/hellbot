@@ -10,7 +10,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 module.exports = {
   perm: ADMIN,
   name: 'updateslashcommands',
-  async execute(message) {
+  async execute(message, isCalledAsJob) {
     try {
       const client = getInstance();
 
@@ -43,7 +43,9 @@ module.exports = {
         generalChannel.send(errorText);
       }
     } finally {
-      process.exit();
+      if (isCalledAsJob) {
+        process.exit();
+      }
     }
   }
 }

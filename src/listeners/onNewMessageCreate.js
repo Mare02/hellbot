@@ -26,11 +26,13 @@ module.exports = () => {
       command = updateslashcommands;
     }
 
-    if (command.perm && !hasPermission(command.perm, message.author.id)) {
-      message.channel.send(messages.system.noPermission);
-      return;
-    }
+    if (command) {
+      if (command.perm && !hasPermission(command.perm, message.author.id)) {
+        message.channel.send(messages.system.noPermission);
+        return;
+      }
 
-    await command.execute(message, args);
+      await command.execute(message, args);
+    }
   });
 };
