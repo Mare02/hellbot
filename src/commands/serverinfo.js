@@ -7,6 +7,7 @@ module.exports = {
   slash: true,
   async execute(interaction, args) {
     const { guild } = interaction;
+    const owner = await guild.fetchOwner();
 
     let user;
     if (!args) {
@@ -20,7 +21,7 @@ module.exports = {
       .setTitle(`Server Information for "${guild.name}"`)
       .addFields(
         { name: 'Server ID', value: guild.id, inline: true },
-        { name: 'Owner', value: config.owner.name, inline: true },
+        { name: 'Owner', value: owner.user.username, inline: true },
         { name: 'Member Count', value: `${guild.memberCount}`, inline: true },
         { name: 'Created At', value: `${guild.createdAt.toDateString()}`, inline: true },
         { name: 'Region', value: `${guild.preferredLocale}`, inline: true },
