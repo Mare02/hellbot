@@ -1,9 +1,13 @@
-## This is an intellectual property of hellismyrestingplace, CEO and Founder.
+## Hellbot™ - Discord Bot
 
-### Make sure this thing doesn't provoke world wars, political disturbances or a fourth reich.
+### Project Overview
+This project is a Discord bot built using Node.js and the Discord.js library. It includes various commands and features that enhance user interaction within Discord servers.
 
-### From Serbia with love
-
+### Features
+- **Slash Commands**
+- **AI Service**: for generating text responses and images.
+- **Event Listeners**
+- **Scheduled Jobs**: Implements cron jobs for things like daily facts and historical events.
 
 
 ### How to run:
