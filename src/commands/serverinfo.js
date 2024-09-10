@@ -17,7 +17,7 @@ module.exports = {
 
     const embed = new EmbedBuilder()
       .setColor(config.embedColor)
-      .setTitle(`Server Information for ${guild.name}`)
+      .setTitle(`Server Information for "${guild.name}"`)
       .addFields(
         { name: 'Server ID', value: guild.id, inline: true },
         { name: 'Owner', value: config.owner.name, inline: true },
