@@ -22,6 +22,8 @@ jobs:
         run: pm2 restart hellbot
       - name: Update slash commands
         run: node -e "require('./src/commands/slashCommands/updateslashcommands').execute()"
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
       - name: Get commit message
         run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
       - name: Send bot updated message
