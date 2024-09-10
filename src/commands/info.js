@@ -11,6 +11,13 @@ module.exports = {
     const client = getInstance();
     const serverCount = client.guilds.cache.size;
 
+    let user;
+    if (!args) {
+      user = interaction.user;
+    } else {
+      user = interaction.author;
+    }
+
     const embed = new EmbedBuilder()
       .setTitle('Bot Information')
       .addFields(
@@ -29,6 +36,7 @@ module.exports = {
         { name: 'Invite link', value: `[Invite ${config.bot.name}](<${config.bot.inviteLink}>)`, inline: true },
       )
       .setThumbnail(client.user.displayAvatarURL())
+      .setFooter({ text: `Requested by ${user.username}`, iconURL: user.displayAvatarURL() })
       .setColor(config.embedColor);
 
     interaction.reply({ embeds: [embed] });

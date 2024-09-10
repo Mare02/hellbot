@@ -4,6 +4,7 @@ const config = require('../../utils/config');
 const slashCommands = require('.');
 const { ADMIN } = require('../../utils/roles');
 const { getInstance } = require('../../client');
+require('dotenv').config();
 
 const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 

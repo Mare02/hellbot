@@ -20,7 +20,7 @@ module.exports = {
       .setTitle(`Server Information for ${guild.name}`)
       .addFields(
         { name: 'Server ID', value: guild.id, inline: true },
-        { name: 'Owner', value: `<@${guild.ownerId}>`, inline: true },
+        { name: 'Owner', value: config.owner.name, inline: true },
         { name: 'Member Count', value: `${guild.memberCount}`, inline: true },
         { name: 'Created At', value: `${guild.createdAt.toDateString()}`, inline: true },
         { name: 'Region', value: `${guild.preferredLocale}`, inline: true },
