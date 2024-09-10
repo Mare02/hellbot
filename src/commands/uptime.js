@@ -4,7 +4,8 @@ const config = require('../utils/config');
 module.exports = {
   name: 'uptime',
   description: 'Displays the bot uptime.',
-  async execute(message, args) {
+  slash: true,
+  async execute(interaction, args) {
     try {
       const uptime = process.uptime();
       const uptimeDays = Math.floor(uptime / 86400);
@@ -24,10 +25,18 @@ module.exports = {
         .setColor(config.embedColor)
         .setThumbnail();
 
-      await message.channel.send({ embeds: [embed] });
+      if(!args){
+        interaction.reply({ embeds: [embed] });
+      } else {
+        interaction.channel.send({ embeds: [embed] });
+      }
     } catch (error) {
       console.error(error);
-      message.channel.send(error.message);
+      if(!args){
+        interaction.reply(error.message);
+      } else {
+        interaction.channel.send(error.message);
+      }
     }
   },
 };
