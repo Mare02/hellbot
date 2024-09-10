@@ -6,19 +6,35 @@ const moment = require('moment');
 module.exports = {
   name: 'latestnews',
   description: 'Displays the latest news.',
-  async execute(message, args) {
+  slash: true,
+  params: [
+    {
+      name: 'query',
+      description: 'Search query for the news titles.',
+      required: true,
+    }
+  ],
+  async execute(interaction, args) {
     try {
+      let queryInput;
+      if (!args) {
+        queryInput = interaction.options.getString('query');
+      } else {
+        queryInput = args.join(' ');
+      }
+
+      if (args && !queryInput.length) {
+        interaction.channel.send('Please provide a search query.');
+        return;
+      }
+
       const monthAgo = moment().subtract(1, 'month').format('YYYY-MM-DD');
-      const query = `q=${args.join(' ')}`;
+      const query = `q=${queryInput}`;
       const sortBy = 'sortBy=popularity';
       const from = `from=${monthAgo}`;
       const pageSize = `pageSize=3`;
       const apiKey = `apiKey=${process.env.NEWS_API_KEY}`;
       const url = `https://newsapi.org/v2/top-headlines?${apiKey}&${query}&${from}&${sortBy}&${pageSize}`;
-
-      if (args.join(' ').length === 0) {
-        return message.channel.send('Please provide a search query.');
-      }
 
       const response = await fetch(url);
       const data = await response.json();
@@ -37,14 +53,22 @@ module.exports = {
         embeds.push(embed);
       }
 
-      await message.channel.send(
-        embeds.length
-          ? { embeds }
-          : 'No articles found.'
-      );
+      const news = embeds.length
+        ? { embeds }
+        : 'No articles found.'
+
+      if(!args){
+        interaction.reply(news);
+      } else {
+        interaction.channel.send(news);
+      }
     } catch (error) {
       console.error(error);
-      message.channel.send(error.message);
+      if(!args){
+        interaction.reply(error.message);
+      } else {
+        interaction.channel.send(error.message);
+      }
     }
   },
 };
