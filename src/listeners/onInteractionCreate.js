@@ -19,7 +19,7 @@ module.exports = () => {
         return;
       }
 
-      commands[commandName].execute(interaction);
+      command.execute(interaction);
     }
   });
 };

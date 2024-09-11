@@ -12,6 +12,7 @@ module.exports = {
 
   errorState: {
     commandError: 'There was an error executing this command.',
+    permissionError: 'There was an error, please check the bot permissions and try again.',
   },
 
   system: {

@@ -48,7 +48,11 @@ module.exports = {
     }
     catch (error) {
       console.error(error.message);
-      await reply(messages.errorState.commandError);
+      await reply(
+        error.message.includes('permission')
+          ? messages.errorState.permissionError
+          : messages.errorState.commandError
+      );
     }
   },
 };
