@@ -13,11 +13,24 @@ module.exports = {
       type: 6,
       required: true,
     },
+    {
+      name: 'duration',
+      description: 'Duration of the mute in milliseconds (ms)',
+      required: false,
+    },
   ],
   async execute(interaction, args) {
     try {
+      if (!args) {
+        await interaction.deferReply();
+      }
+
       if (!interaction.member.permissions.has('MUTE_MEMBERS')) {
-        return interaction.reply(messages.system.noPermission);
+        if (!args) {
+          return await interaction.editReply(messages.system.noPermission);
+        } else {
+          return await interaction.reply(messages.system.noPermission);
+        }
       }
 
       let userToMute;
@@ -25,38 +38,49 @@ module.exports = {
         userToMute = await interaction.guild.members.fetch(
           interaction.options.getUser('user')
         );
-      }
-      else if (interaction.mentions.users.size) {
+      } else if (interaction.mentions.users.size) {
         userToMute = await interaction.guild.members.fetch(
           interaction.mentions.users.first().id
         );
-      }
-      else if (!interaction.mentions.users.size && args.length) {
+      } else if (!interaction.mentions.users.size && args.length) {
         userToMute = await interaction.guild.members.fetch(args[0]);
       }
 
       if (!userToMute || Array.isArray(userToMute)) {
-        return interaction.reply('User not found. Please provide a valid user ID or mention.');
+        const message = 'User not found. Please provide a valid user ID or mention.';
+        if (!args) {
+          return await interaction.editReply(message);
+        } else {
+          return await interaction.reply(message);
+        }
       }
 
-      const muteRole = interaction.guild.roles.cache.find(role => role.name === 'Muted');
-      if (!muteRole) {
-        return interaction.reply('Mute role not found. Please create a role called "Muted" with correct permission and try again.');
+      let duration;
+      if (!args && interaction.options.getString('duration')) {
+        duration = parseInt(interaction.options.getString('duration'));
+      } else if (args && args[1] && args[1].length) {
+        duration = parseInt(args[1]);
       }
-      await userToMute.roles.add(muteRole);
 
-      const message = `**${userToMute.displayName}** has been muted.`;
+      await userToMute.timeout(duration);
+      const successMessage = `**${userToMute.displayName}** has been muted${
+        duration
+          ? ` for ${duration / 1000} ${duration / 1000 > 1 ? 'seconds' : 'second'}`
+          : ''
+      }.`;
+
       if (!args) {
-        interaction.reply(message);
+        return await interaction.editReply(successMessage);
       } else {
-        interaction.channel.send(message);
+        return await interaction.reply(successMessage);
       }
-    } catch (error) {
-        console.error(error.message);
+    }
+    catch (error) {
+      console.error(error.message);
       if (!args) {
-        interaction.reply(messages.errorState.commandError);
+        return await interaction.editReply(messages.errorState.commandError);
       } else {
-        interaction.channel.send(messages.errorState.commandError);
+        return await interaction.reply(messages.errorState.commandError);
       }
     }
   },

@@ -17,7 +17,7 @@ module.exports = {
   system: {
     logout: "Ight I'm logging off chat, skibidi fanum tax.",
     unauthorized: "Unauthorized!",
-    noPermission: "You don't have permission to use this command.",
+    noPermission: "You do not have permission to use this command.",
     blacklisted: "Target server is blacklisted.",
     ownerServerOnly: "This command can only be used in the owner's server.",
   },
