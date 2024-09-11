@@ -23,7 +23,7 @@ module.exports = {
       }
 
       if (!interaction.member.permissions.has('MUTE_MEMBERS')) {
-        return await reply(messages.system.noPermission);
+        return reply(messages.system.noPermission);
       }
 
       let userToUnmute;
@@ -40,15 +40,15 @@ module.exports = {
       }
 
       if (!userToUnmute || Array.isArray(userToUnmute)) {
-        return await reply('User not found. Please provide a valid user ID or mention.');
+        return reply('User not found. Please provide a valid user ID or mention.');
       }
 
       await userToUnmute.timeout(null);
-      await reply(`**${userToUnmute.displayName}** has been unmuted.`);
+      reply(`**${userToUnmute.displayName}** has been unmuted.`);
     }
     catch (error) {
       console.error(error.message);
-      await reply(
+      reply(
         error.message.includes('permission')
           ? messages.errorState.permissionError
           : messages.errorState.commandError
