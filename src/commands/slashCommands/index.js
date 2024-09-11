@@ -10,12 +10,21 @@ const slashCommands = filteredCommands.map(command => {
 
   if (command.params) {
     command.params.forEach(param => {
-      slashCommand.addStringOption(option =>
-        option.setName(param.name)
-          .setDescription(param.description)
-          .setRequired(param.required)
-          .setAutocomplete(true)
-      );
+      if (param.type === 6) {
+        slashCommand.addUserOption(option =>
+          option.setName('user')
+            .setDescription('The user to mute')
+            .setRequired(true)
+        );
+      }
+      else {
+        slashCommand.addStringOption(option =>
+          option.setName(param.name)
+            .setDescription(param.description)
+            .setRequired(param.required)
+            .setAutocomplete(true)
+        );
+      }
     });
   }
 

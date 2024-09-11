@@ -25,8 +25,6 @@ module.exports = {
       for (const [guildId] of guilds) {
         await rest.put(Routes.applicationGuildCommands(config.bot.appId, guildId), {
           body: slashCommands,
-        }).catch(error => {
-          throw error;
         });
       }
 
@@ -37,8 +35,8 @@ module.exports = {
       else if (generalChannel) {
         generalChannel.send(messageText);
       }
-
-    } catch (error) {
+    }
+    catch (error) {
       console.error(error);
       const errorText = `Failed to update slash commands: ${error.message}`;
       if (message) {
