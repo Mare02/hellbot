@@ -54,9 +54,9 @@ module.exports = {
     } catch (error) {
         console.error(error.message);
       if (!args) {
-        interaction.reply(error.message);
+        interaction.reply(messages.errorState.commandError);
       } else {
-        interaction.channel.send(error.message);
+        interaction.channel.send(messages.errorState.commandError);
       }
     }
   },

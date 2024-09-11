@@ -11,7 +11,7 @@ module.exports = {
   },
 
   errorState: {
-    commandError: 'There was an error with your command.',
+    commandError: 'There was an error executing this command.',
   },
 
   system: {
