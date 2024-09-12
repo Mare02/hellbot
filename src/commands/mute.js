@@ -18,17 +18,21 @@ module.exports = {
     },
   ],
   async execute(interaction, args) {
+    async function reply(content) {
+      if (!args) {
+        await interaction.editReply(content);
+      } else {
+        await interaction.reply(content);
+      }
+    }
+
     try {
       if (!args) {
         await interaction.deferReply();
       }
 
       if (!interaction.member.permissions.has('MUTE_MEMBERS')) {
-        if (!args) {
-          await interaction.editReply(messages.system.noPermission);
-        } else {
-          await interaction.reply(messages.system.noPermission);
-        }
+        await reply(messages.system.noPermission);
         return;
       }
 
@@ -46,12 +50,7 @@ module.exports = {
       }
 
       if (!userToMute || Array.isArray(userToMute)) {
-        const message = 'User not found. Please provide a valid user ID or mention.';
-        if (!args) {
-          await interaction.editReply(message);
-        } else {
-          await interaction.reply(message);
-        }
+        await reply('User not found. Please provide a valid user ID or mention.');
         return;
       }
 
@@ -64,28 +63,21 @@ module.exports = {
 
       await userToMute.timeout(duration);
 
-      const successMessage = `**${userToMute.displayName}** has been muted${
-        duration
-          ? ` for ${duration / 1000} ${duration / 1000 > 1 ? 'seconds' : 'second'}`
-          : ''
-      }.`;
-      if (!args) {
-        await interaction.editReply(successMessage);
-      } else {
-        await interaction.reply(successMessage);
-      }
+      await reply(
+        `**${userToMute.displayName}** has been muted${
+          duration
+            ? ` for ${duration / 1000} ${duration / 1000 > 1 ? 'seconds' : 'second'}`
+            : ''
+        }.`
+      );
     }
     catch (error) {
       console.error(error.message);
-      const errorMessage = error.message.includes('permission')
-        ? messages.errorState.permissionError
-        : messages.errorState.commandError;
-
-      if (!args) {
-        await interaction.editReply(errorMessage);
-      } else {
-        await interaction.reply(errorMessage);
-      }
+      await reply(
+        error.message.includes('permission')
+          ? messages.errorState.permissionError
+          : messages.errorState.commandError
+      );
     }
   },
 };
