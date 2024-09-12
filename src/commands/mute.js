@@ -25,7 +25,7 @@ module.exports = {
       }
 
       if (!interaction.member.permissions.has('MUTE_MEMBERS')) {
-        await reply(messages.system.noPermission);
+        await reply(interaction, args, messages.system.noPermission);
         return;
       }
 
@@ -43,7 +43,7 @@ module.exports = {
       }
 
       if (!userToMute || Array.isArray(userToMute)) {
-        await reply('User not found. Please provide a valid user ID or mention.');
+        await reply(interaction, args, 'User not found. Please provide a valid user ID or mention.');
         return;
       }
 
@@ -56,7 +56,7 @@ module.exports = {
 
       await userToMute.timeout(duration);
 
-      await reply(
+      await reply(interaction, args,
         `**${userToMute.displayName}** has been muted${
           duration
             ? ` for ${duration / 1000} ${duration / 1000 > 1 ? 'seconds' : 'second'}`
@@ -66,7 +66,7 @@ module.exports = {
     }
     catch (error) {
       console.error(error.message);
-      await reply(
+      await reply(interaction, args,
         error.message.includes('permission')
           ? messages.errorState.permissionError
           : messages.errorState.commandError

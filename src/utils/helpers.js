@@ -39,7 +39,7 @@ module.exports = {
     return prompt;
   },
 
-  reply: async (interaction, content) => {
+  reply: async (interaction, args, content) => {
     if (!args) {
       await interaction.editReply(content);
     } else {
