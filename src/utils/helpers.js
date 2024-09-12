@@ -39,6 +39,14 @@ module.exports = {
     return prompt;
   },
 
+  reply: async (interaction, content) => {
+    if (!args) {
+      await interaction.editReply(content);
+    } else {
+      await interaction.reply(content);
+    }
+  },
+
   forwardAttachmentsToChannel: async (message, args, channelId, mediaType) => {
     try {
       if (!message.reference) {

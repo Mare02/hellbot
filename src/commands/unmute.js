@@ -1,4 +1,5 @@
 const messages = require('../utils/messages');
+const { reply } = require('../utils/helpers');
 
 module.exports = {
   name: 'unmute',
@@ -13,14 +14,6 @@ module.exports = {
     },
   ],
   async execute(interaction, args) {
-    async function reply(content) {
-      if (!args) {
-        await interaction.editReply(content);
-      } else {
-        await interaction.reply(content);
-      }
-    }
-
     try {
       if (!args) {
         await interaction.deferReply();
