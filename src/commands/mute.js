@@ -18,17 +18,18 @@ module.exports = {
     },
   ],
   async execute(interaction, args) {
-    const reply = (args && interaction.editReply)
-      ? interaction.editReply.bind(interaction)
-      : interaction.reply.bind(interaction);
-
     try {
       if (!args) {
         await interaction.deferReply();
       }
 
       if (!interaction.member.permissions.has('MUTE_MEMBERS')) {
-        return reply(messages.system.noPermission);
+        if (!args) {
+          await interaction.editReply(messages.system.noPermission);
+        } else {
+          await interaction.reply(messages.system.noPermission);
+        }
+        return;
       }
 
       let userToMute;
@@ -45,7 +46,13 @@ module.exports = {
       }
 
       if (!userToMute || Array.isArray(userToMute)) {
-        return reply('User not found. Please provide a valid user ID or mention.');
+        const message = 'User not found. Please provide a valid user ID or mention.';
+        if (!args) {
+          await interaction.editReply(message);
+        } else {
+          await interaction.reply(message);
+        }
+        return;
       }
 
       let duration;
@@ -56,19 +63,29 @@ module.exports = {
       }
 
       await userToMute.timeout(duration);
-      reply(`**${userToMute.displayName}** has been muted${
+
+      const successMessage = `**${userToMute.displayName}** has been muted${
         duration
           ? ` for ${duration / 1000} ${duration / 1000 > 1 ? 'seconds' : 'second'}`
           : ''
-      }.`);
+      }.`;
+      if (!args) {
+        await interaction.editReply(successMessage);
+      } else {
+        await interaction.reply(successMessage);
+      }
     }
     catch (error) {
       console.error(error.message);
-      reply(
-        error.message.includes('permission')
-          ? messages.errorState.permissionError
-          : messages.errorState.commandError
-      );
+      const errorMessage = error.message.includes('permission')
+        ? messages.errorState.permissionError
+        : messages.errorState.commandError;
+
+      if (!args) {
+        await interaction.editReply(errorMessage);
+      } else {
+        await interaction.reply(errorMessage);
+      }
     }
   },
 };
