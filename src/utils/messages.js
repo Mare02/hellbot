@@ -12,6 +12,7 @@ module.exports = {
 
   errorState: {
     commandError: 'There was an error executing this command.',
+    apiError: 'There was an error fetching the data.',
     permissionError: 'There was an error, please check the bot permissions and try again.',
   },
 
