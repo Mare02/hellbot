@@ -1,6 +1,8 @@
 require('dotenv').config();
 const { usePrompt } = require('../services/AIservice');
 const { validateUserPromptInput } = require('../utils/helpers');
+const { reply } = require('../utils/helpers');
+const messages = require('../utils/messages');
 
 module.exports = {
   name: 'askai',
@@ -26,8 +28,11 @@ module.exports = {
         userInput = interaction.options.getString('prompt');
       }
 
+      if (!userInput || !userInput.length) {
+        return await reply(interaction, args, messages.inputError.noPrompt);
+      };
+
       let prompt = validateUserPromptInput(userInput, interaction.channel);
-      if (!prompt) return;
 
       let systemPrompt;
       if (interaction.reference) {
@@ -35,11 +40,7 @@ module.exports = {
         systemPrompt = referencedMessage.content;
       }
       const answer = await usePrompt(prompt, systemPrompt);
-      if (!args) {
-        await interaction.editReply(answer);
-      } else {
-        await interaction.reply(answer);
-      }
+      await reply(interaction, args, answer);
     }
     catch (error) {
       console.error(error);

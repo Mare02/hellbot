@@ -1,5 +1,6 @@
 const { usePrompt } = require('../services/AIservice');
 const { emptyState } = require('../utils/messages');
+const { reply } = require('../utils/helpers');
 
 module.exports = {
   name: 'sumchat',
@@ -26,29 +27,17 @@ module.exports = {
       }));
 
       if (!messagesArray.length) {
-        if (!args) {
-          interaction.editReply(emptyState.noResponseSummarize);
-        } else {
-          interaction.channel.send(emptyState.noResponseSummarize);
-        }
-        return;
+        return await reply(interaction, args, emptyState.noResponseSummarize);
       }
 
       const messagesContentString = messagesArray.reverse().map(msg => `${msg.author}: ${msg.content}`).join('<br>');
       const summary = await usePrompt(`Please summarize the following conversation: \n${messagesContentString}`);
 
-      if (!args) {
-        interaction.editReply(summary);
-      } else {
-        interaction.channel.send(summary);
-      }
-    } catch (error) {
+      await reply(interaction, args, summary);
+    }
+    catch (error) {
       console.error(error);
-      if (!args) {
-        interaction.editReply(error.message);
-      } else {
-        interaction.channel.send(error.message);
-      }
+      await reply(interaction, args, error.message);
     }
   },
 };

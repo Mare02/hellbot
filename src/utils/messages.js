@@ -4,6 +4,10 @@ module.exports = {
     newTicketMessage: 'Please state your age and the source of your server invitation.',
   },
 
+  inputError: {
+    noPrompt: 'Please provide a prompt.',
+  },
+
   emptyState: {
     noResponseAI: 'No response found from the AI.',
     noResponseSummarize: 'No chat messages found.',

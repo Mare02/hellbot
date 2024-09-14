@@ -1,5 +1,7 @@
 const { useImageGen } = require('../services/AIservice');
 const { validateUserPromptInput } = require('../utils/helpers');
+const { reply } = require('../utils/messages');
+const messages = require('../utils/messages');
 
 module.exports = {
   name: 'imagen',
@@ -25,8 +27,11 @@ module.exports = {
         userInput = interaction.options.getString('prompt');
       }
 
+      if (!userInput || !userInput.length) {
+        return await reply(interaction, args, messages.inputError.noPrompt);
+      };
+
       let prompt = validateUserPromptInput(userInput, interaction.channel);
-      if (!prompt) return;
 
       const imageUrl = await useImageGen(prompt);
 
@@ -38,11 +43,7 @@ module.exports = {
       }
       const result = `<@${userId}> ${prompt} \n [open image](${imageUrl})`;
 
-      if (!args) {
-        interaction.editReply(result);
-      } else {
-        interaction.reply(result);
-      }
+      await reply(interaction, args, result);
     }
     catch (error) {
       console.error(error.message);
