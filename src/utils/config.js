@@ -4,7 +4,7 @@ require('dotenv').config();
 module.exports = {
   bot: {
     name: "Hellbot",
-    decription: "Hell's Custom Discord Bot",
+    decription: "The Custom General-Purpose Bot for Hell's Resting Place™",
     version: "1.2",
     appId: process.env.CLIENT_ID,
     inviteLink: `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&permissions=8&scope=bot`,

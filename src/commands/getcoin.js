@@ -29,8 +29,7 @@ module.exports = {
       }
 
       if (!coin) {
-        await reply(interaction, args, 'Please provide a coin name.');
-        return;
+        return await reply(interaction, args, 'Please provide a coin name.');
       }
 
       const response = await fetch(`https://api.coingecko.com/api/v3/coins/${coin}`);
@@ -41,15 +40,28 @@ module.exports = {
         return;
       }
 
-      const price = Number(data.market_data.current_price.eur)
-        .toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
+      const toHumanReadablePrice = (price, decimals = 2) => {
+        return Number(price)
+          .toLocaleString('en-US', {
+            style: 'currency',
+            currency: 'EUR',
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+          });
+      };
+      const price = toHumanReadablePrice(data.market_data.current_price.eur, 4);
+      const ath = toHumanReadablePrice(data.market_data.ath.eur);
+      const atl = toHumanReadablePrice(data.market_data.atl.eur);
 
       const change24h = Number(data.market_data.price_change_percentage_24h);
       const change7d = Number(data.market_data.price_change_percentage_7d);
       const change1m = Number(data.market_data.price_change_percentage_30d);
 
-      const marketCap = Number(data.market_data.market_cap.eur)
-        .toLocaleString('en-US', { style: 'currency', currency: 'EUR' });
+      const marketCap = toHumanReadablePrice(data.market_data.market_cap.eur);
+      const circulatingSupply = Number(data.market_data.circulating_supply)
+        .toLocaleString('en-US');
+
+      const homepage = data.links.homepage[0];
 
       const embed = new EmbedBuilder()
         .setColor(config.embedColor)
@@ -58,10 +70,17 @@ module.exports = {
           {
             name: 'Current Price',
             value: price,
+            inline: true,
           },
           {
-            name: 'Market Cap',
-            value: marketCap,
+            name: 'All-Time High',
+            value: ath,
+            inline: true,
+          },
+          {
+            name: 'All-Time Low',
+            value: atl,
+            inline: true,
           },
           {
             name: '24h Change',
@@ -74,8 +93,23 @@ module.exports = {
             inline: true,
           },
           {
-            name: '1M Change',
+            name: '1m Change',
             value: `${change1m.toFixed(2)}%`,
+            inline: true,
+          },
+          {
+            name: 'Market Cap',
+            value: marketCap,
+            inline: true,
+          },
+          {
+            name: 'Circulating Supply',
+            value: circulatingSupply,
+            inline: true,
+          },
+          {
+            name: 'Homepage',
+            value: homepage,
             inline: true,
           },
         )
