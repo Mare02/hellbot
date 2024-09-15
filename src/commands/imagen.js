@@ -1,6 +1,6 @@
 const { useImageGen } = require('../services/AIservice');
 const { validateUserPromptInput } = require('../utils/helpers');
-const { reply } = require('../utils/messages');
+const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
 
 module.exports = {
