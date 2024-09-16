@@ -4,6 +4,9 @@ const messages = require('../utils/messages');
 
 module.exports = {
   usePrompt: async (userPrompt, systemPrompt) => {
+    if (!userPrompt || !userPrompt.length) {
+      throw new Error(messages.inputError.noPrompt);
+    }
     const requestMessages = [{ "role": "user", "content": userPrompt }];
     if (systemPrompt) {
       requestMessages.push({ "role": "system", "content": `Context: ${systemPrompt}` });
