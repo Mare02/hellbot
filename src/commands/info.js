@@ -21,17 +21,13 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setTitle('Bot Information')
       .addFields(
-        {
-          name: 'Name',
-          value: config.bot.name,
-          inline: true,
-        },
-        { name: 'Description', value: config.bot.decription, inline: true },
-        { name: 'Version', value: config.bot.version, inline: true },
-        { name: 'Owner', value: config.owner.name, inline: true },
-        { name: 'Environment', value: process.env.NODE_ENV, inline: true },
+        { name: 'Name', value: config.bot.name, inline: true },
         { name: 'Commands prefix', value: `"${config.commandsPrefix}" or "/"`, inline: true },
+        { name: 'Version', value: config.bot.version, inline: true },
+        { name: 'Description', value: config.bot.decription, inline: true },
         { name: 'AI model', value: config.currentAiModel, inline: true },
+        { name: 'Environment', value: process.env.NODE_ENV, inline: true },
+        { name: 'Owner', value: config.owner.name, inline: true },
         { name: 'Servers count', value: serverCount.toString(), inline: true },
         { name: 'Invite link', value: `[Invite ${config.bot.name}](<${config.bot.inviteLink}>)`, inline: true },
       )
