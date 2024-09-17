@@ -35,11 +35,20 @@ module.exports = {
       let prompt = validateUserPromptInput(userInput, interaction.channel);
 
       let systemPrompt;
+      let imageUrl;
       if (interaction.reference) {
         const referencedMessage = await interaction.channel.messages.fetch(interaction.reference.messageId);
-        systemPrompt = referencedMessage.content;
+
+        if (referencedMessage.attachments && referencedMessage.attachments.size) {
+          if (referencedMessage.attachments.first().url) {
+            imageUrl = referencedMessage.attachments.first().url;
+          }
+        } else {
+          systemPrompt = referencedMessage.content;
+        }
       }
-      const answer = await usePrompt(prompt, systemPrompt);
+
+      const answer = await usePrompt(prompt, systemPrompt, imageUrl);
       await reply(interaction, args, answer);
     }
     catch (error) {
