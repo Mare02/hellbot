@@ -15,18 +15,13 @@ module.exports = {
 
     if (imageUrl) {
       aiModel = aiModels.llava_7b_4096;
-      requestMessages = [
-        {
+      requestMessages = [{
           role: "user",
           content: [
             { type: "text", text: userPrompt },
-            {
-              type: "image_url",
-              image_url: { url: imageUrl },
-            },
+            { type: "image_url", image_url: { url: imageUrl } },
           ],
-        },
-      ];
+      }];
     } else {
       requestMessages = [{ "role": "user", "content": userPrompt }];
     }
@@ -41,8 +36,6 @@ module.exports = {
       messages: requestMessages,
       model: aiModel,
     });
-
-    console.log(data);
 
     if (data.error) {
       throw new Error(data.error.message);
