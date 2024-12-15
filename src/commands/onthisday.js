@@ -64,8 +64,16 @@ module.exports = {
             channel.type === 0 && channel.name.startsWith('general')
           );
 
-          if (generalChannel) {
-            await generalChannel.send({ embeds: [embed] });
+          try {
+            if (generalChannel) {
+              await generalChannel.send({ embeds: [embed] });
+            }
+          }
+          catch (error) {
+            if (generalChannel.guild) {
+              console.error(`Failed to send message in guild: ${generalChannel.guild.name} (ID: ${generalChannel.guild.id})`);
+            }
+            continue;
           }
         }
       } else {
@@ -77,10 +85,12 @@ module.exports = {
       }
     } catch (error) {
       console.error(error);
-      if (!args) {
-        interaction.reply(error.message);
-      } else {
-        interaction.channel.send(error.message);
+      if (interaction) {
+        if (!args) {
+          interaction.reply(error.message);
+        } else {
+          interaction.channel.send(error.message);
+        }
       }
     }
   },
