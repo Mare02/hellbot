@@ -11,10 +11,10 @@ module.exports = {
     }
 
     let requestMessages;
-    let aiModel = aiModels.llama3_8b_instant;
+    let aiModel = config.currentAiModel;
 
     if (imageUrl) {
-      aiModel = aiModels.llava_7b_4096;
+      aiModel = aiModels.llama3_11b_vision_preview;
       requestMessages = [{
           role: "user",
           content: [
