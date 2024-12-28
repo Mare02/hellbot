@@ -24,7 +24,7 @@ module.exports = {
         { name: 'Name', value: config.bot.name, inline: true },
         { name: 'Commands prefix', value: `"${config.commandsPrefix}" or "/"`, inline: true },
         { name: 'Version', value: config.bot.version, inline: true },
-        { name: 'Description', value: config.bot.decription, inline: true },
+        { name: 'Description', value: config.bot.description, inline: true },
         { name: 'AI model', value: config.currentAiModel, inline: true },
         { name: 'Environment', value: process.env.NODE_ENV, inline: true },
         { name: 'Owner', value: config.owner.name, inline: true },
