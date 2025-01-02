@@ -26,8 +26,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor(embedColor)
         .setTitle('Daily Fact!')
-        .setDescription(fact)
-        .setTimestamp();
+        .setDescription(fact);
 
       const guilds = await client.guilds.fetch();
       if (!guilds.size) {
