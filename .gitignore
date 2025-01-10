@@ -1,9 +1,5 @@
 /node_modules
 /build
 /dist
-<<<<<<< Updated upstream
 /.env
 /media
-=======
-.env
->>>>>>> Stashed changes
