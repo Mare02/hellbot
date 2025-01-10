@@ -3,7 +3,6 @@ require('dotenv').config();
 require('./kernel');
 const listeners = require('./listeners');
 const Bugsnag = require('@bugsnag/js');
-const commands = require('./commands');
 const updateslashcommands = require('./commands/slashCommands/updateslashcommands');
 
 const client = getInstance();

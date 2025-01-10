@@ -113,8 +113,7 @@ module.exports = {
             inline: true,
           },
         )
-        .setThumbnail(data.image.small)
-        .setTimestamp();
+        .setThumbnail(data.image.small);
 
       await reply(interaction, args, { embeds: [embed] });
     }

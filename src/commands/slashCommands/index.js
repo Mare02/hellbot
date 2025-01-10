@@ -29,7 +29,7 @@ const slashCommands = filteredCommands.map(command => {
     });
   }
 
-  slashCommand.integration_type = [1, 2];
+  slashCommand.integration_types = [1, 2];
   slashCommand.contexts = [1, 2];
 
   return slashCommand;

@@ -2,9 +2,11 @@ const fs = require('fs');
 const path = require('path');
 const syslog = require('../commands/syslog');
 const messages = require('../utils/messages');
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+
 require('dotenv').config();
 
-module.exports = {
+const helpers = {
   logToSystem: async (message, logMessage) => {
     await syslog.execute(message, logMessage);
   },
@@ -106,4 +108,80 @@ module.exports = {
 
     return `${formattedMonth} ${formattedDay}${year ? `, ${year}` : ''}`;
   },
-}
+
+  getMediaPath() {
+    return path.join(process.cwd(), 'media');
+  },
+
+  getMediaFolders() {
+    const mediaPath = helpers.getMediaPath();
+    if (!fs.existsSync(mediaPath)) {
+      return null;
+    }
+    return fs.readdirSync(mediaPath, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => dirent.name);
+  },
+
+  async confirmAction(message, promptText) {
+    const row = new ActionRowBuilder()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('confirm_action')
+          .setLabel('YES')
+          .setStyle(ButtonStyle.Danger),
+        new ButtonBuilder()
+          .setCustomId('cancel_action')
+          .setLabel('NO')
+          .setStyle(ButtonStyle.Secondary),
+      );
+
+    const confirmationMsg = await message.reply({
+      content: promptText,
+      components: [row]
+    });
+
+    try {
+      const confirmation = await confirmationMsg.awaitMessageComponent({
+        filter: i => i.user.id === message.author.id,
+        time: 30000
+      });
+
+      // Remove the buttons after selection
+      await confirmationMsg.edit({ components: [] });
+      return confirmation.customId === 'confirm_action';
+    } catch (error) {
+      // Remove the buttons if timeout occurs
+      await confirmationMsg.edit({ components: [] });
+      return false;
+    }
+  },
+
+  findFileInMediaFolders(fileName) {
+    const mediaPath = helpers.getMediaPath();
+    const mediaFolders = helpers.getMediaFolders();
+
+    if (!mediaFolders) return null;
+
+    for (const folder of mediaFolders) {
+      const testPath = path.join(mediaPath, folder, fileName);
+      if (fs.existsSync(testPath)) {
+        return {
+          filePath: testPath,
+          folder: folder
+        };
+      }
+    }
+    return null;
+  },
+
+  getFileInfo(filePath) {
+    const stats = fs.statSync(filePath);
+    return {
+      size: (stats.size / 1024).toFixed(2),
+      created: stats.birthtime.toLocaleString()
+    };
+  },
+};
+
+module.exports = helpers;
