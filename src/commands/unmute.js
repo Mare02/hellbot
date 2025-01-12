@@ -1,10 +1,13 @@
 const messages = require('../utils/messages');
 const { reply } = require('../utils/helpers');
+const syslog = require('../commands/syslog');
+const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'unmute',
   description: 'Unmutes a user in the server.',
   slash: true,
+  perm: MODERATOR,
   params: [
     {
       name: 'user',
@@ -42,8 +45,17 @@ module.exports = {
         return;
       }
 
+      if (!userToUnmute.communicationDisabledUntil) {
+        await reply(interaction, args, 'User is not muted.');
+        return;
+      }
+
       await userToUnmute.timeout(null);
-      await reply(interaction, args, `**${userToUnmute.displayName}** has been unmuted.`);
+
+      const message = `**${userToUnmute.displayName}** has been unmuted.`;
+      await reply(interaction, args, message);
+
+      await syslog.execute(interaction, [], message, userToUnmute);
     }
     catch (error) {
       console.error(error.message);

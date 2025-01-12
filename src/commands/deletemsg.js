@@ -6,9 +6,19 @@ module.exports = {
   perm: MODERATOR,
   async execute(message, args) {
     try {
-      const limit = args[0] || 2;
-      const messagesData = await message.channel.messages.fetch({ limit });
-      await message.channel.bulkDelete(messagesData);
+      const limit = Math.max(args[0] || 2, 2);
+      let totalDeleted = 0;
+
+      while (totalDeleted < limit) {
+        const remaining = limit - totalDeleted;
+        const fetchLimit = Math.min(remaining, 100);
+        const messagesData = await message.channel.messages.fetch({ limit: fetchLimit });
+
+        if (messagesData.size === 0) break;
+
+        await message.channel.bulkDelete(messagesData);
+        totalDeleted += messagesData.size;
+      }
     }
     catch (error) {
       console.log(error);

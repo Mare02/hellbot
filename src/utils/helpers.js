@@ -1,16 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const syslog = require('../commands/syslog');
 const messages = require('../utils/messages');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 
 require('dotenv').config();
 
 const helpers = {
-  logToSystem: async (message, logMessage) => {
-    await syslog.execute(message, logMessage);
-  },
-
   getCommandsList(filter) {
     const commandsPath = path.join(__dirname, '..', 'commands');
     const commands = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'))
