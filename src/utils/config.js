@@ -5,7 +5,7 @@ module.exports = {
   bot: {
     name: "Hellbot",
     description: "The Custom General-Purpose Bot for Hell's Resting Place™",
-    version: "1.2",
+    version: "1.5",
     appId: process.env.CLIENT_ID,
     inviteLink: `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&permissions=8&scope=bot`,
   },
