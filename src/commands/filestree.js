@@ -35,20 +35,36 @@ module.exports = {
         // Add folder to tree
         treeString += `├── 📁 ${folder}/ (${files.length} files)\n`;
 
-        // Process files in folder
-        files.forEach((file, index) => {
-          const isLast = index === files.length - 1;
+        // Process files in folder (limit to 5)
+        const displayLimit = 3;
+        files.slice(0, displayLimit).forEach((file, index) => {
+          const isLast = index === Math.min(files.length - 1, displayLimit - 1);
           const fileIcon = getFileIcon(folder);
           const filePath = path.join(folderPath, file);
           const fileSize = (fs.statSync(filePath).size / 1024).toFixed(2); // Size in KB
 
-          treeString += `│   ${isLast ? '└── ' : '├── '}${fileIcon} ${file} (${fileSize} KB)\n`;
+          treeString += `│   ${isLast && files.length <= displayLimit ? '└── ' : '├── '}${fileIcon} ${file} (${fileSize} KB)\n`;
 
           // Update statistics
           stats[folder].count++;
           stats[folder].size += parseFloat(fileSize);
           totalFiles++;
         });
+
+        // Add indication of more files if necessary
+        if (files.length > displayLimit) {
+          treeString += `│   └── ... and ${files.length - displayLimit} more files\n`;
+
+          // Update statistics for remaining files
+          const remainingFiles = files.slice(displayLimit);
+          remainingFiles.forEach(file => {
+            const filePath = path.join(folderPath, file);
+            const fileSize = (fs.statSync(filePath).size / 1024).toFixed(2);
+            stats[folder].count++;
+            stats[folder].size += parseFloat(fileSize);
+            totalFiles++;
+          });
+        }
       }
 
       // Create embed
