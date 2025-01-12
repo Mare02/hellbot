@@ -37,7 +37,7 @@ const helpers = {
   },
 
   reply: async (interaction, args, content) => {
-    if (!args) {
+    if (interaction.deferred) {
       await interaction.editReply(content);
     } else {
       await interaction.reply(content);

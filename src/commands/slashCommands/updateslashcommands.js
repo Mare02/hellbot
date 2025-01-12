@@ -21,12 +21,9 @@ module.exports = {
     }
 
     try {
-      const guilds = await client.guilds.fetch();
-      for (const [guildId] of guilds) {
-        await rest.put(Routes.applicationGuildCommands(config.bot.appId, guildId), {
-          body: slashCommands,
-        });
-      }
+      await rest.put(Routes.applicationCommands(config.bot.appId), {
+        body: slashCommands,
+      });
 
       const messageText = 'Slash commands updated!';
       if (message) {

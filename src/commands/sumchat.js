@@ -12,7 +12,17 @@ module.exports = {
         await interaction.deferReply();
       }
 
-      const channel = interaction.channel;
+      let channel;
+      if (!interaction.guildId) {
+        channel = await interaction.client.channels.fetch(interaction.channelId);
+      } else {
+        channel = interaction.channel;
+      }
+
+      if (!channel) {
+        return await reply(interaction, args, 'Could not access the channel');
+      }
+
       const messages = await channel.messages.fetch({ limit: 20 });
 
       let username;

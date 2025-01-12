@@ -18,7 +18,7 @@ module.exports = () => {
 
     // get command name + arguments
     const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
-    const commandName = args.shift().toLowerCase();
+    const commandName = args.shift();
 
     let command = commands[commandName];
 
