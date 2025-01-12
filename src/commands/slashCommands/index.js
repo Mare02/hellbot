@@ -30,7 +30,7 @@ const slashCommands = filteredCommands.map(command => {
   }
 
   slashCommand.integration_types = [0, 1];
-  slashCommand.contexts = [1, 2];
+  slashCommand.contexts = [0, 1, 2];
 
   return slashCommand;
 });
