@@ -6,9 +6,7 @@ const filteredCommands = Object.values(commands).filter(command => command.slash
 const slashCommands = filteredCommands.map(command => {
   const slashCommand = new SlashCommandBuilder()
     .setName(command.name)
-    .setDescription(command.description)
-    .setIntegrationTypes(0, 1)
-    .setContexts(0, 1, 2);
+    .setDescription(command.description);
 
   if (command.params) {
     command.params.forEach(param => {
@@ -29,6 +27,9 @@ const slashCommands = filteredCommands.map(command => {
       }
     });
   }
+
+  slashCommand.integration_types = [0, 1];
+  slashCommand.contexts = [0, 1, 2];
 
   return slashCommand;
 });
