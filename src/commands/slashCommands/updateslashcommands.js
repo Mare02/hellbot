@@ -12,15 +12,15 @@ module.exports = {
   perm: ADMIN,
   name: 'updateslashcommands',
   async execute(message, isCalledAsJob) {
+    const client = getInstance();
+
+    let generalChannel;
+    if (isCalledAsJob) {
+      const homeServer = await client.guilds.fetch(config.homeServerId);
+      generalChannel = await homeServer.channels.fetch(config.generalChannelId);
+    }
+
     try {
-      const client = getInstance();
-
-      let generalChannel;
-      if (isCalledAsJob) {
-        const homeServer = await client.guilds.fetch(config.homeServerId);
-        generalChannel = await homeServer.channels.fetch(config.generalChannelId);
-      }
-
       const guilds = await client.guilds.fetch();
       for (const [guildId] of guilds) {
         await rest.put(Routes.applicationGuildCommands(config.bot.appId, guildId), {

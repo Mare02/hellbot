@@ -1,12 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
-const { ADMIN } = require('../utils/roles');
+const { OWNER } = require('../utils/roles');
 
 module.exports = {
   name: 'uploadfiles',
   description: 'Upload files.',
-  perm: ADMIN,
+  perm: OWNER,
   async execute(message, args) {
     try {
       // Check if there are any attachments

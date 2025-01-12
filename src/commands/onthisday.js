@@ -64,16 +64,14 @@ module.exports = {
             channel.type === 0 && channel.name.startsWith('general')
           );
 
-          try {
-            if (generalChannel) {
+          if (generalChannel) {
+            try {
               await generalChannel.send({ embeds: [embed] });
             }
-          }
-          catch (error) {
-            if (generalChannel.guild) {
+            catch (error) {
               console.error(`Failed to send message in guild: ${generalChannel.guild.name} (ID: ${generalChannel.guild.id})`);
+              continue;
             }
-            continue;
           }
         }
       } else {

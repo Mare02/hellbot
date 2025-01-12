@@ -1,11 +1,11 @@
 const fs = require('fs');
 const path = require('path');
-const { ADMIN } = require('../utils/roles');
+const { OWNER } = require('../utils/roles');
 
 module.exports = {
   name: 'savechat',
   description: `Save chat history to a text file.`,
-  perm: ADMIN,
+  perm: OWNER,
   async execute(message, args) {
     try {
       // Parse days argument, default to 7 if not specified or invalid

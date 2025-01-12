@@ -2,12 +2,14 @@ const staffIds = require('./staffIds');
 const { owner } = require('../utils/config');
 
 const roles = {
+  OWNER: 'owner',
   UNLOCKED: 'unlocked',
   ADMIN: 'admin',
   MODERATOR: 'moderator',
 }
 
 const ROLE_ORDER = [
+  roles.OWNER,
   roles.UNLOCKED,
   roles.ADMIN,
   roles.MODERATOR
@@ -22,10 +24,9 @@ const hasPermission = (commandPerm, userId) => {
 }
 
 const getStaffRole = (userId) => {
-  if (
-    staffIds.unlockedStaffIds.includes(String(userId))
-    || String(userId) === owner.id
-  ) {
+  if (String(userId) === owner.id) {
+    return roles.OWNER;
+  } else if (staffIds.unlockedStaffIds.includes(String(userId))) {
     return roles.UNLOCKED;
   } else if (staffIds.adminStaffIds.includes(String(userId))) {
     return roles.ADMIN;

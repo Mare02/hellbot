@@ -1,12 +1,12 @@
 const { EmbedBuilder, AttachmentBuilder } = require('discord.js');
 const { commandsPrefix } = require('../utils/config');
 const { findFileInMediaFolders, getFileInfo } = require('../utils/helpers');
-const { ADMIN } = require('../utils/roles');
+const { OWNER } = require('../utils/roles');
 
 module.exports = {
   name: 'showfile',
   description: 'Retrieves a specific file from the media folders',
-  perm: ADMIN,
+  perm: OWNER,
   async execute(message, args) {
     try {
       if (!args.length) {

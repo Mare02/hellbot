@@ -3,12 +3,12 @@ const path = require('path');
 const { EmbedBuilder } = require('discord.js');
 const { commandsPrefix } = require('../utils/config');
 const { getMediaPath, getMediaFolders, confirmAction, findFileInMediaFolders } = require('../utils/helpers');
-const { ADMIN } = require('../utils/roles');
+const { OWNER } = require('../utils/roles');
 
 module.exports = {
-  name: 'deletefile',
+  name: 'deletefiles',
   description: `Deletes files from the media folders. Usage: ${commandsPrefix}deletefile <filename> | --all | --category <categoryName>`,
-  perm: ADMIN,
+  perm: OWNER,
   async execute(message, args) {
     try {
       if (!args.length) {

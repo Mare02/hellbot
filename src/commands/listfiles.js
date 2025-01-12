@@ -2,12 +2,12 @@ const fs = require('fs');
 const path = require('path');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { getMediaPath, getMediaFolders, getFileInfo } = require('../utils/helpers');
-const { ADMIN } = require('../utils/roles');
+const { OWNER } = require('../utils/roles');
 
 module.exports = {
   name: 'listfiles',
   description: 'Lists files in media folders. Use --category <folder> to filter by category',
-  perm: ADMIN,
+  perm: OWNER,
   async execute(message, args) {
     try {
       const mediaFolders = getMediaFolders();

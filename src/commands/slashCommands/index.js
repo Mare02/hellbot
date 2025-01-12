@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, InteractionContextType } = require('discord.js');
 const commands = require('../../commands');
 
 const filteredCommands = Object.values(commands).filter(command => command.slash);
@@ -29,8 +29,9 @@ const slashCommands = filteredCommands.map(command => {
     });
   }
 
-  slashCommand.integration_types = [1, 2];
-  slashCommand.contexts = [1, 2];
+  slashCommand
+    .setIntegrationTypes([0, 1])
+    .setContexts([1, 2]);
 
   return slashCommand;
 });
