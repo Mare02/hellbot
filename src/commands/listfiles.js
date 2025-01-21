@@ -20,14 +20,45 @@ module.exports = {
         return message.reply('No media folders found.');
       }
 
-      // Parse category argument
+      // Parse category and subfolder arguments
       let categoryFilter = null;
+      let subfolderFilter = null;
+
       const categoryIndex = args.indexOf('--category');
       if (categoryIndex !== -1 && args[categoryIndex + 1]) {
-        categoryFilter = args[categoryIndex + 1].toLowerCase();
-        if (!mediaFolders.includes(categoryFilter)) {
-          return message.reply(`Invalid category. Available categories: ${mediaFolders.join(', ')}`);
+        categoryFilter = args[categoryIndex + 1];
+        // Get top-level folders by taking the first part of each path
+        const topLevelFolders = [...new Set(mediaFolders.map(folder => folder.split('/')[0]))];
+        const matchingFolder = topLevelFolders.find(
+          folder => folder.toLowerCase() === categoryFilter.toLowerCase()
+        );
+        if (!matchingFolder) {
+          return message.reply(`Invalid category. Available categories: ${topLevelFolders.join(', ')}`);
         }
+        categoryFilter = matchingFolder;
+      }
+
+      const subfolderIndex = args.indexOf('--subfolder');
+      if (subfolderIndex !== -1 && args[subfolderIndex + 1]) {
+        if (!categoryFilter) {
+          return message.reply('You must specify a category (--category) when using --subfolder');
+        }
+        subfolderFilter = args[subfolderIndex + 1];
+
+        // Get available subfolders for the category
+        const subfolders = mediaFolders
+          .filter(folder => folder.startsWith(categoryFilter + '/'))
+          .map(folder => folder.split('/')[1])
+          .filter(Boolean);
+
+        const matchingSubfolder = subfolders.find(
+          folder => folder.toLowerCase() === subfolderFilter.toLowerCase()
+        );
+
+        if (!matchingSubfolder) {
+          return message.reply(`Invalid subfolder. Available subfolders for ${categoryFilter}: ${subfolders.join(', ')}`);
+        }
+        subfolderFilter = matchingSubfolder;
       }
 
       const embeds = [];
@@ -45,44 +76,60 @@ module.exports = {
 
       // Process each media folder
       for (const folder of mediaFolders) {
-        if (categoryFilter && folder !== categoryFilter) continue;
+        // Check if the folder matches category and subfolder filters
+        if (categoryFilter && !folder.startsWith(categoryFilter)) continue;
+        if (subfolderFilter && !folder.includes(`${categoryFilter}/${subfolderFilter}`)) continue;
 
         const folderPath = path.join(mediaPath, folder);
-        const files = fs.readdirSync(folderPath);
-        folderCounts[folder] = files.length;
-        totalFiles += files.length;
 
-        if (files.length > 0) {
+        // Recursively get files in folder and subfolders
+        const {files, subfolderCounts} = await getFilesRecursive(folderPath);
+
+        const folderCount = files.length;
+        folderCounts[folder] = folderCount;
+        totalFiles += folderCount;
+
+        if (folderCount > 0) {
           const folderEmbed = new EmbedBuilder()
             .setColor('#0099ff')
             .setTitle(`📁 ${folder.charAt(0).toUpperCase() + folder.slice(1)}`)
-            .setDescription(`Contains ${files.length} files`);
+            .setDescription(`Contains ${folderCount} files`);
 
           // Only show first 5 files initially
           const displayFiles = files.slice(0, 5);
           displayFiles.forEach((file, index) => {
-            const filePath = path.join(folderPath, file);
-            const fileInfo = getFileInfo(filePath);
+            const fileInfo = getFileInfo(file.path);
             const fileInfoText = `📦 Size: ${fileInfo.size} KB\n📅 Created: ${fileInfo.created}`;
             let icon;
-            switch(folder) {
+            switch(folder.split('/')[0].toLowerCase()) {  // Get the top-level folder and compare in lowercase
               case 'images': icon = '🖼️'; break;
               case 'audio': icon = '🎵'; break;
               case 'videos': icon = '🎥'; break;
               case 'documents': icon = '📄'; break;
-              default: icon = '📁';
+              default: icon = '📄';  // Changed from '📁' to '📄' for files
             }
 
             folderEmbed.addFields({
-              name: `${icon} ${index + 1}. ${file}`,
+              name: `${icon} ${index + 1}. ${file.subfolderPath}${file.name}`,
               value: fileInfoText
             });
           });
 
-          if (files.length > 5) {
+          if (folderCount > 5) {
             folderEmbed.addFields({
               name: '⚠️ Note',
-              value: `Showing 5/${files.length} files. Click 'Show All' to view all files.`
+              value: `Showing 5/${folderCount} files. Click 'Show All' to view all files.`
+            });
+          }
+
+          // Add subfolder counts
+          if (Object.keys(subfolderCounts).length > 0) {
+            const subfolderText = Object.entries(subfolderCounts)
+              .map(([subfolder, count]) => `${subfolder}: ${count} files`)
+              .join('\n');
+            folderEmbed.addFields({
+              name: 'Subfolders',
+              value: subfolderText
             });
           }
 
@@ -113,7 +160,7 @@ module.exports = {
         if (hasMoreFiles) {
           // Create buttons for each folder that has more than 5 files
           for (const folder of mediaFolders) {
-            if (categoryFilter && folder !== categoryFilter) continue;
+            if (categoryFilter && !folder.startsWith(categoryFilter)) continue;
             if (folderCounts[folder] > 5) {
               const button = new ButtonBuilder()
                 .setCustomId(`showAll_${folder}`)
@@ -168,6 +215,30 @@ module.exports = {
   },
 };
 
+// Helper function to recursively get files in a directory and its subfolders
+async function getFilesRecursive(directory) {
+  const fileList = [];
+  const subfolderCounts = {};
+
+  const items = fs.readdirSync(directory, {withFileTypes: true});
+
+  for (const item of items) {
+    if (item.isDirectory()) {
+      const subfolderPath = `${item.name}/`;
+      const subfolderResults = await getFilesRecursive(path.join(directory, item.name));
+      fileList.push(...subfolderResults.files.map(file => ({...file, subfolderPath})));
+      subfolderCounts[item.name] = subfolderResults.files.length;
+      Object.entries(subfolderResults.subfolderCounts).forEach(([subfolder, count]) => {
+        subfolderCounts[`${item.name}/${subfolder}`] = count;
+      });
+    } else {
+      fileList.push({name: item.name, path: path.join(directory, item.name), subfolderPath: ''});
+    }
+  }
+
+  return {files: fileList, subfolderCounts};
+}
+
 // Helper function to generate full embeds with all files
 async function generateFullEmbeds(mediaPath, mediaFolders, categoryFilter) {
   const embeds = [];
@@ -180,37 +251,48 @@ async function generateFullEmbeds(mediaPath, mediaFolders, categoryFilter) {
   const folderCounts = {};
 
   for (const folder of mediaFolders) {
-    if (categoryFilter && folder !== categoryFilter) continue;
+    if (categoryFilter && !folder.startsWith(categoryFilter)) continue;
 
     const folderPath = path.join(mediaPath, folder);
-    const files = fs.readdirSync(folderPath);
-    folderCounts[folder] = files.length;
-    totalFiles += files.length;
+    const {files, subfolderCounts} = await getFilesRecursive(folderPath);
+    const folderCount = files.length;
+    folderCounts[folder] = folderCount;
+    totalFiles += folderCount;
 
-    if (files.length > 0) {
+    if (folderCount > 0) {
       const folderEmbed = new EmbedBuilder()
         .setColor('#0099ff')
         .setTitle(`📁 ${folder.charAt(0).toUpperCase() + folder.slice(1)}`)
-        .setDescription(`Contains ${files.length} files`);
+        .setDescription(`Contains ${folderCount} files`);
 
       files.forEach((file, index) => {
-        const filePath = path.join(folderPath, file);
-        const fileInfo = getFileInfo(filePath);
+        const fileInfo = getFileInfo(file.path);
         const fileInfoText = `📦 Size: ${fileInfo.size} KB\n📅 Created: ${fileInfo.created}`;
         let icon;
-        switch(folder) {
+        switch(folder.split('/')[0].toLowerCase()) {  // Get the top-level folder and compare in lowercase
           case 'images': icon = '🖼️'; break;
           case 'audio': icon = '🎵'; break;
           case 'videos': icon = '🎥'; break;
           case 'documents': icon = '📄'; break;
-          default: icon = '📁';
+          default: icon = '📄';  // Changed from '📁' to '📄' for files
         }
 
         folderEmbed.addFields({
-          name: `${icon} ${index + 1}. ${file}`,
+          name: `${icon} ${index + 1}. ${file.subfolderPath}${file.name}`,
           value: fileInfoText
         });
       });
+
+      // Add subfolder counts
+      if (Object.keys(subfolderCounts).length > 0) {
+        const subfolderText = Object.entries(subfolderCounts)
+          .map(([subfolder, count]) => `${subfolder}: ${count} files`)
+          .join('\n');
+        folderEmbed.addFields({
+          name: 'Subfolders',
+          value: subfolderText
+        });
+      }
 
       embeds.push(folderEmbed);
     }

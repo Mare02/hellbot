@@ -7,12 +7,12 @@ const { OWNER } = require('../utils/roles');
 
 module.exports = {
   name: 'deletefiles',
-  description: `Deletes files from the media folders. Usage: ${commandsPrefix}deletefile <filename> | --all | --category <categoryName>`,
+  description: `Deletes files from the media folders. Usage: ${commandsPrefix}deletefile <filename> | --all | --category <categoryName> | --subfolder <subfolderName>`,
   perm: OWNER,
   async execute(message, args) {
     try {
       if (!args.length) {
-        return message.reply(`Please provide a filename or flag. Usage: ${commandsPrefix}deletefile <filename> | --all | --category <categoryName>`);
+        return message.reply(`Please provide a filename or flag. Usage: ${commandsPrefix}deletefile <filename> | --all | --category <categoryName> | --subfolder <subfolderName>`);
       }
 
       const mediaPath = getMediaPath();
@@ -25,7 +25,10 @@ module.exports = {
       // Handle --all flag
       if (args[0] === '--all') {
         let totalFiles = mediaFolders.reduce((count, folder) => {
-          return count + fs.readdirSync(path.join(mediaPath, folder)).length;
+          const folderPath = folder.includes('/')
+            ? path.join(mediaPath, ...folder.split('/'))
+            : path.join(mediaPath, folder);
+          return count + fs.readdirSync(folderPath).length;
         }, 0);
 
         if (totalFiles === 0) {
@@ -37,7 +40,9 @@ module.exports = {
 
         let deletedCount = 0;
         for (const folder of mediaFolders) {
-          const folderPath = path.join(mediaPath, folder);
+          const folderPath = folder.includes('/')
+            ? path.join(mediaPath, ...folder.split('/'))
+            : path.join(mediaPath, folder);
           const files = fs.readdirSync(folderPath);
 
           for (const file of files) {
@@ -61,30 +66,104 @@ module.exports = {
         }
 
         const category = args[1].toLowerCase();
-        if (!mediaFolders.includes(category)) {
-          return message.reply(`Category "${category}" not found. Available categories: ${mediaFolders.join(', ')}`);
+        const matchingFolders = mediaFolders.filter(folder =>
+          folder.toLowerCase().startsWith(category)
+        );
+
+        if (matchingFolders.length === 0) {
+          return message.reply(`Category "${args[1]}" not found. Available categories: ${mediaFolders.join(', ')}`);
         }
 
-        const categoryPath = path.join(mediaPath, category);
-        const files = fs.readdirSync(categoryPath);
-
-        if (files.length === 0) {
-          return message.reply(`There are no files to delete in category "${category}".`);
-        }
-
-        const confirmed = await confirmAction(message, `Are you sure you want to delete ALL files in category "${category}"?`);
+        const confirmed = await confirmAction(message, `Are you sure you want to delete ALL files and folders in category "${args[1]}"?`);
         if (!confirmed) return message.reply('Deletion cancelled.');
 
-        for (const file of files) {
-          fs.unlinkSync(path.join(categoryPath, file));
+        let deletedCount = 0;
+        let deletedFolders = 0;
+
+        // Sort folders by depth (deepest first) to properly handle nested folders
+        const sortedFolders = [...matchingFolders].sort((a, b) =>
+          (b.match(/\//g) || []).length - (a.match(/\//g) || []).length
+        );
+
+        for (const folder of sortedFolders) {
+          const folderPath = folder.includes('/')
+            ? path.join(mediaPath, ...folder.split('/'))
+            : path.join(mediaPath, folder);
+
+          try {
+            const files = fs.readdirSync(folderPath);
+
+            // Delete all files in the folder
+            for (const file of files) {
+              fs.unlinkSync(path.join(folderPath, file));
+              deletedCount++;
+            }
+
+            // Delete the folder if it's empty (including root category folders)
+            if (fs.readdirSync(folderPath).length === 0) {
+              fs.rmdirSync(folderPath);
+              deletedFolders++;
+            }
+          } catch (error) {
+            console.error(`Error processing folder ${folderPath}:`, error);
+          }
         }
 
         const embed = new EmbedBuilder()
           .setColor('#00ff00')
           .setTitle('Category Deletion Successful')
-          .setDescription(`Deleted ${files.length} file(s) from the "${category}" category.`);
+          .setDescription(`Deleted ${deletedCount} file(s) and ${deletedFolders} folder(s) from the "${args[1]}" category.`);
 
         return message.reply({ embeds: [embed] });
+      }
+
+      // Handle --subfolder flag
+      if (args[0] === '--subfolder') {
+        if (!args[1]) {
+          return message.reply(`Please specify a subfolder name. Usage: ${commandsPrefix}deletefile --subfolder <subfolderName>`);
+        }
+
+        const subfolderName = args[1];
+        let subfolderFound = false;
+
+        // Find any folder that contains the specified subfolder
+        for (const folder of mediaFolders) {
+          if (folder.includes('/') && folder.split('/').includes(subfolderName)) {
+            subfolderFound = true;
+            const folderPath = path.join(mediaPath, ...folder.split('/'));
+
+            if (!fs.existsSync(folderPath)) {
+              continue;
+            }
+
+            const files = fs.readdirSync(folderPath);
+
+            if (files.length === 0) {
+              continue;
+            }
+
+            const confirmed = await confirmAction(message, `Are you sure you want to delete ALL files in subfolder "${subfolderName}"?`);
+            if (!confirmed) return message.reply('Deletion cancelled.');
+
+            for (const file of files) {
+              fs.unlinkSync(path.join(folderPath, file));
+            }
+
+            // Remove empty subfolder
+            fs.rmdirSync(folderPath);
+
+            const embed = new EmbedBuilder()
+              .setColor('#00ff00')
+              .setTitle('Subfolder Files Deletion Successful')
+              .setDescription(`Deleted ${files.length} file(s) from subfolder "${subfolderName}".`);
+
+            return message.reply({ embeds: [embed] });
+          }
+        }
+
+        if (!subfolderFound) {
+          return message.reply(`No subfolder named "${subfolderName}" found in any category.`);
+        }
       }
 
       // Handle single file deletion

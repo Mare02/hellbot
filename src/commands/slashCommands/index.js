@@ -17,6 +17,13 @@ const slashCommands = filteredCommands.map(command => {
             .setRequired(true)
         );
       }
+      else if (param.type === 3) {
+        slashCommand.addStringOption(option =>
+          option.setName(param.name)
+            .setDescription(param.description)
+            .setRequired(param.required)
+        );
+      }
       else {
         slashCommand.addStringOption(option =>
           option.setName(param.name)

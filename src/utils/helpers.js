@@ -113,9 +113,23 @@ const helpers = {
     if (!fs.existsSync(mediaPath)) {
       return null;
     }
-    return fs.readdirSync(mediaPath, { withFileTypes: true })
+    const folders = fs.readdirSync(mediaPath, { withFileTypes: true })
       .filter(dirent => dirent.isDirectory())
       .map(dirent => dirent.name);
+
+    // For the Submissions folder, also include user subfolders
+    if (folders.includes('Submissions')) {
+      const submissionsPath = path.join(mediaPath, 'Submissions');
+      const userFolders = fs.readdirSync(submissionsPath, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => `Submissions/${dirent.name}`);
+      
+      // Replace 'Submissions' with user-specific folders
+      const index = folders.indexOf('Submissions');
+      folders.splice(index, 1, ...userFolders);
+    }
+
+    return folders;
   },
 
   async confirmAction(message, promptText) {
@@ -156,18 +170,24 @@ const helpers = {
     const mediaPath = helpers.getMediaPath();
     const mediaFolders = helpers.getMediaFolders();
 
-    if (!mediaFolders) return null;
+    if (!mediaFolders) return [];
 
+    const matches = [];
     for (const folder of mediaFolders) {
-      const testPath = path.join(mediaPath, folder, fileName);
+      // Handle nested folders (e.g., Submissions/username)
+      const folderPath = folder.includes('/') 
+        ? path.join(mediaPath, ...folder.split('/'))
+        : path.join(mediaPath, folder);
+
+      const testPath = path.join(folderPath, fileName);
       if (fs.existsSync(testPath)) {
-        return {
+        matches.push({
           filePath: testPath,
           folder: folder
-        };
+        });
       }
     }
-    return null;
+    return matches;
   },
 
   getFileInfo(filePath) {
@@ -176,6 +196,53 @@ const helpers = {
       size: (stats.size / 1024).toFixed(2),
       created: stats.birthtime.toLocaleString()
     };
+  },
+
+  async uploadFile(attachment, targetFileName, mediaTypeFolder, mediaPath) {
+    try {
+      const fetch = require('node-fetch');
+      const fs = require('fs');
+      const path = require('path');
+
+      // Basic file name sanitization
+      const sanitizedFileName = targetFileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+
+      // Check if file already exists in the appropriate subfolder
+      const filePath = path.join(mediaPath, mediaTypeFolder, sanitizedFileName);
+      if (fs.existsSync(filePath)) {
+        throw new Error('A file with this name already exists');
+      }
+
+      const response = await fetch(attachment.url);
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`);
+      }
+      const buffer = await response.buffer();
+
+      // Check if buffer is empty
+      if (!buffer || buffer.length === 0) {
+        throw new Error('Received empty file');
+      }
+
+      // Write file with error handling
+      await fs.promises.writeFile(filePath, buffer);
+
+      // Verify file was written
+      if (!fs.existsSync(filePath)) {
+        throw new Error('File was not written successfully');
+      }
+
+      return {
+        success: true,
+        filePath: filePath,
+        fileName: sanitizedFileName
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   },
 };
 
