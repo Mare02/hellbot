@@ -1,29 +1,21 @@
-const { reply } = require('../utils/helpers');
-
 module.exports = {
   name: 'ping',
   description: 'Pings and tells the latency.',
   slash: true,
-  async execute(interaction, args) {
+  async execute(interaction) {
     try {
-      if (!args) {
-        await interaction.deferReply();
-      }
+      const start = Date.now();
 
-      const latency = Math.round(interaction.client.ws.ping);
+      const pong = await interaction.channel.send('Pinging...');
 
-      if (!args) {
-        await interaction.editReply(`Pong! Latency is ${latency}ms.`);
-      } else {
-        await interaction.reply(`Pong! Latency is ${latency}ms.`);
-      }
-    } catch (error) {
+      const end = Date.now();
+      const latency = end - start;
+
+      await pong.edit(`Pong! Latency is ${latency}ms.`);
+    }
+    catch (error) {
       console.error(error);
-      if (!args) {
-        await interaction.editReply(error.message);
-      } else {
-        await interaction.reply(error.message);
-      }
+      await interaction.channel.send(error.message);
     }
   },
 };
