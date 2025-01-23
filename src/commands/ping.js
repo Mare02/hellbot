@@ -10,10 +10,13 @@ module.exports = {
         await interaction.deferReply();
       }
 
-      const sent = await reply(interaction, null, 'Pinging...');
       const latency = Math.round(interaction.client.ws.ping);
 
-      await sent.edit(`Pong! Latency is ${latency}ms.`);
+      if (!args) {
+        await interaction.editReply(`Pong! Latency is ${latency}ms.`);
+      } else {
+        await interaction.reply(`Pong! Latency is ${latency}ms.`);
+      }
     } catch (error) {
       console.error(error);
       if (!args) {
