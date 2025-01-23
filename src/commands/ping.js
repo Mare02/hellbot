@@ -6,14 +6,13 @@ module.exports = {
   slash: true,
   async execute(interaction) {
     try {
-      const startTime = Date.now();
-      await reply(interaction, null, 'Pinging...');
-      const endTime = Date.now();
+      const sent = await reply(interaction, null, 'Pinging...');
+      const latency = sent.createdTimestamp - interaction.createdTimestamp;
 
-      await reply(interaction, null, `Pong! Latency is ${endTime - startTime}ms.`);
+      await sent.edit(`Pong! Latency is ${latency}ms.`);
     } catch (error) {
       console.error(error);
-      await reply(interaction, null, error.message);
+      await reply(interaction, null, 'An error occurred while pinging.').catch(console.error);
     }
   },
 };
