@@ -1,7 +1,6 @@
 module.exports = {
   welcome: {
     serverWelcome: 'Welcome to the server!',
-    newTicketMessage: 'Please state your age and the source of your server invitation.',
   },
 
   inputError: {

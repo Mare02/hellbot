@@ -15,13 +15,12 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor(config.embedColor)
         .setTitle(messages.welcome.serverWelcome)
-        .setDescription(messages.welcome.newTicketMessage)
         .setImage(gifs.serverWelcomeGif);
 
       await message.channel.send({ embeds: [embed] });
     } catch (error) {
       console.log(error);
-      message.channel.send(messages.welcome.newTicketMessage);
+      message.channel.send(messages.welcome.serverWelcome);
     }
   },
 };
