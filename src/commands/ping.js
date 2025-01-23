@@ -11,7 +11,7 @@ module.exports = {
       }
 
       const sent = await reply(interaction, null, 'Pinging...');
-      const latency = sent.createdTimestamp - interaction.createdTimestamp;
+      const latency = Math.round(interaction.client.ws.ping);
 
       await sent.edit(`Pong! Latency is ${latency}ms.`);
     } catch (error) {
