@@ -3,10 +3,12 @@ const path = require('path');
 const { uploadFile } = require('../utils/helpers');
 const subdesignshelp = require('../commands/subdesignshelp');
 const { EmbedBuilder } = require('discord.js');
+const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'submitdesign',
   description: 'Submit a design with images and a blueprint URL.',
+  perm: MODERATOR,
   slash: true,
   options: [
     {

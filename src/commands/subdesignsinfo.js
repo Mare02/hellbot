@@ -1,10 +1,13 @@
 const fs = require('fs');
 const path = require('path');
+const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   data: {
     name: 'subdesignsinfo',
     description: 'Get information about design submissions.',
+    perm: MODERATOR,
+    slash: true,
   },
   async execute(interaction) {
     try {
@@ -13,7 +16,7 @@ module.exports = {
 
       // Check if submissions directory exists
       if (!fs.existsSync(submissionsPath)) {
-        return interaction.reply('No design submissions found yet.');
+        return interaction.reply({ content: 'No design submissions found yet.' });
       }
 
       // Get all user directories
@@ -22,7 +25,7 @@ module.exports = {
         .map(dirent => dirent.name);
 
       if (userDirs.length === 0) {
-        return interaction.reply('No users have submitted designs yet.');
+        return interaction.reply({ content: 'No users have submitted designs yet.' });
       }
 
       // Collect statistics
@@ -40,19 +43,34 @@ module.exports = {
         }
       }
 
-      let response = `📊 **Subscriber Designs Statistics**\n\n`;
-      response += `Total Submissions: ${totalSubmissions}\n\n`;
+      // Create an embed for better formatting
+      const embed = {
+        color: 0x0099ff,
+        title: '📊 Subscriber Designs Statistics',
+        fields: [
+          {
+            name: 'Total Submissions',
+            value: `${totalSubmissions}`,
+            inline: false
+          },
+          {
+            name: 'Participants',
+            value: userStats.map(user => `• ${user.username} (ID: ${user.userId})`).join('\n'),
+            inline: false
+          }
+        ],
+        timestamp: new Date(),
+        footer: {
+          text: 'Design Submissions Info'
+        }
+      };
 
-      response += `**Participants:**\n`;
-      userDirs.forEach(username => {
-        const userStat = userStats.find(user => user.username === username);
-        response += `• ${username} (ID: ${userStat?.userId})\n`;
-      });
-
-      return interaction.reply(response);
+      return interaction.reply({ embeds: [embed] });
     } catch (error) {
       console.error('Command execution error:', error);
-      return interaction.reply({ content: 'An error occurred while fetching design submission information.', ephemeral: true });
+      return interaction.reply({ 
+        content: 'An error occurred while fetching design submission information.'
+      });
     }
   },
 }; 

@@ -1,9 +1,11 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../utils/config');
+const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'subdesignshelp',
   description: 'Shows help information for submitting designs.',
+  perm: MODERATOR,
   slash: true,
   async execute(interaction) {
     try {
