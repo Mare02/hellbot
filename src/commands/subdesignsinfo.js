@@ -68,9 +68,9 @@ module.exports = {
       return interaction.reply({ embeds: [embed] });
     } catch (error) {
       console.error('Command execution error:', error);
-      return interaction.reply({ 
+      return interaction.reply({
         content: 'An error occurred while fetching design submission information.'
       });
     }
   },
-}; 
+};
