@@ -1,13 +1,19 @@
+const { reply } = require('../utils/helpers');
+
 module.exports = {
   name: 'ping',
   description: 'Pings and tells the latency.',
-  async execute(message, args) {
+  slash: true,
+  async execute(interaction) {
     try {
-      const msg = await message.reply('Pinging...');
-      await msg.edit(`Pong! Latency is ${msg.createdTimestamp - message.createdTimestamp}ms.`);
+      const startTime = Date.now();
+      await reply(interaction, null, 'Pinging...');
+      const endTime = Date.now();
+
+      await reply(interaction, null, `Pong! Latency is ${endTime - startTime}ms.`);
     } catch (error) {
       console.error(error);
-      message.channel.send(error.message);
+      await reply(interaction, null, error.message);
     }
   },
 };
