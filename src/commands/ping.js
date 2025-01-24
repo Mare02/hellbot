@@ -1,35 +1,13 @@
 module.exports = {
   name: 'ping',
   description: 'Pings and tells the latency.',
-  slash: true,
-  async execute(interaction, args) {
-    const start = Date.now();
-
+  async execute(message) {
     try {
-      if (!args) {
-        interaction.deferReply();
-      }
-
-      if (!args) {
-        await interaction.editReply('Pinging...');
-      }
-      else {
-        await interaction.reply('Pinging...');
-      }
-
-      const end = Date.now();
-      const latency = end - start;
-
-      if (!args) {
-        await interaction.editReply(`Pong! Latency is ${latency}ms.`);
-      }
-      else {
-        await interaction.reply(`Pong! Latency is ${latency}ms.`);
-      }
-    }
-    catch (error) {
+      const msg = await message.reply('Pinging...');
+      await msg.edit(`Pong! Latency is ${msg.createdTimestamp - message.createdTimestamp}ms.`);
+    } catch (error) {
       console.error(error);
-      await interaction.channel.send(error.message);
+      message.channel.send(error.message);
     }
   },
 };
