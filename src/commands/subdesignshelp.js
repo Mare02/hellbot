@@ -14,17 +14,17 @@ module.exports = {
           {
             name: '**Requirements:**',
             value: `
-              • Must include at least one image file (maximum 3 images)
-              • Must include either a blueprint URL or a blueprint ZIP file
-              • One submission per user is allowed
+• Must include at least one image file (maximum 3 images)
+• Must include either a blueprint URL or a blueprint ZIP file
+• One submission per user is allowed
             `,
             inline: false
           },
           {
             name: '**Accepted File Types:**',
             value: `
-              • Images: .png, .jpg, .jpeg, .webp
-              • Blueprint: .zip file or a Sharing URL
+• Images: .png, .jpg, .jpeg, .webp
+• Blueprint: .zip file or a Sharing URL
             `,
             inline: false
           },
@@ -32,7 +32,7 @@ module.exports = {
             name: '**Example Usage:**',
             value: `
               **Prefix: / or ${config.commandsPrefix}:**
-              1. Type: submitdesign  https://sharing.spaceflightsimulator.app/rocket/examplecode\`
+1. Type: submitdesign  https://sharing.spaceflightsimulator.app/rocket/examplecode\`
 2. Attach your image(s) to the same message
 3. Optionally attach a ZIP file if not using a URL
             `,
