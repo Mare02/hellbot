@@ -3,12 +3,10 @@ const path = require('path');
 const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
-  data: {
-    name: 'subdesignsinfo',
-    description: 'Get information about design submissions.',
-    perm: MODERATOR,
-    slash: true,
-  },
+  name: 'subdesignsinfo',
+  description: 'Get information about design submissions.',
+  perm: MODERATOR,
+  slash: true,
   async execute(interaction) {
     try {
       const mediaPath = path.join(process.cwd(), 'media');

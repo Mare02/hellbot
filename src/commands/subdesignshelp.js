@@ -1,11 +1,9 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../utils/config');
-const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'subdesignshelp',
   description: 'Shows help information for submitting designs.',
-  perm: MODERATOR,
   slash: true,
   async execute(interaction) {
     try {
@@ -25,8 +23,8 @@ module.exports = {
           {
             name: '**Accepted File Types:**',
             value: `
-              • Images: .png, .jpg, .jpeg, .gif, .webp
-              • Blueprint: .zip file or sharing URL
+              • Images: .png, .jpg, .jpeg, .webp
+              • Blueprint: .zip file or a Sharing URL
             `,
             inline: false
           },
