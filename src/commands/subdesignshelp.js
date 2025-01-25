@@ -32,7 +32,7 @@ module.exports = {
             name: '**Example Usage:**',
             value: `
               **Prefix: / or ${config.commandsPrefix}:**
-1. Type: submitdesign  https://sharing.spaceflightsimulator.app/rocket/examplecode\`
+1. Type: submitdesign  [blueprint sharing url]
 2. Attach your image(s) to the same message
 3. Optionally attach a ZIP file if not using a URL
             `,
