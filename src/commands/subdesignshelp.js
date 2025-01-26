@@ -14,32 +14,36 @@ module.exports = {
           {
             name: '**Requirements:**',
             value: `
-• Must include at least one image file (maximum 3 images)
-• Must include either a blueprint URL or a blueprint ZIP file
+• Must include at least one image file
+• Must include either a blueprint Sharing URL or a blueprint ZIP file
 • One submission per user is allowed
             `,
             inline: false
           },
           {
-            name: '**Accepted File Types:**',
+            name: '**How to participate:**',
             value: `
-• Images: .png, .jpg, .jpeg, .webp
-• Blueprint: .zip file or a Sharing URL
+1. Go to <#1332817934157873203> and create a submission ticket.
+2. Submit your design a form of a blueprint (zipped blueprint file or a Sharing Url) and a picture along with a name of your design.
+3. Wait for the staff to review your submission.
             `,
             inline: false
           },
           {
-            name: '**Example Usage:**',
+            name: '**Rules:**',
             value: `
-              **Prefix: / or ${config.commandsPrefix}:**
-1. Type: submitdesign  [blueprint sharing url]
-2. Attach your image(s) to the same message
-3. Optionally attach a ZIP file if not using a URL
+• Your submission must be a fully complete and functional design.
+• Submissions should represent one cohesive build. Avoid combining multiple non-complementary design categories.
+• Designs with an offensive, sexual or vulgar thematic are not allowed.
             `,
             inline: false
           },
-        )
-        .setFooter({ text: 'Contact staff or server owner if you need to update your submission' });
+          {
+            name: '\u200B',
+            value: `If you have any questions or difficulties, please reach out to our staff.`,
+            inline: false
+          },
+        );
 
         await interaction.reply({ embeds: [embed] });
     }
