@@ -27,7 +27,12 @@ module.exports = () => {
     }
 
     if (command) {
-      if (command.perm && !hasPermission(command.perm, message.author.id)) {
+      if (commandName === 'submitdesign') {
+        if (!message.member.roles.cache.has(config.subscriberDesignsRoleId)) {
+          return message.channel.send({ content: `You need the Subscriber Designs role in order to submit a design.`});
+        }
+      }
+      else if (command.perm && !hasPermission(command.perm, message.author.id)) {
         message.channel.send(messages.system.noPermission);
         return;
       }
