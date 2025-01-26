@@ -12,20 +12,20 @@ module.exports = {
         .setTitle('Design Submission Help 🎨')
         .addFields(
           {
+            name: '**How to participate:**',
+            value: `
+1. Go to <#1332817934157873203> and create a submission ticket.
+2. Submit your design in a form of a blueprint (zipped blueprint file or a Sharing Url) and a picture along with a name of your design.
+3. Wait for the staff to review your submission.
+            `,
+            inline: false
+          },
+          {
             name: '**Requirements:**',
             value: `
 • Must include at least one image file
 • Must include either a blueprint Sharing URL or a blueprint ZIP file
 • One submission per user is allowed
-            `,
-            inline: false
-          },
-          {
-            name: '**How to participate:**',
-            value: `
-1. Go to <#1332817934157873203> and create a submission ticket.
-2. Submit your design a form of a blueprint (zipped blueprint file or a Sharing Url) and a picture along with a name of your design.
-3. Wait for the staff to review your submission.
             `,
             inline: false
           },
