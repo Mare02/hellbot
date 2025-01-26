@@ -21,6 +21,18 @@ module.exports = {
             inline: false
           },
           {
+            name: '**What to submit:**',
+            value: `
+- Submit your design using either a Blueprint Sharing URL or as a file (found in the Blueprints folder).
+- Include at least one picture and a name of your design in your submission.
+- If your design requires multiple blueprints, ensure you submit all of them and label each one clearly.
+- If your build is too laggy or requires tedious preparations to run, it’s preferred that you either:
+a) Submit a video recording (in landscape mode).
+b) Provide a quicksave with everything assembled and ready.
+            `,
+            inline: false
+          },
+          {
             name: '**Requirements:**',
             value: `
 • Must include at least one image file
