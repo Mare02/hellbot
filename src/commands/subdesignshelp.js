@@ -15,7 +15,7 @@ module.exports = {
             name: '**How to participate:**',
             value: `
 1. Go to <#1332817934157873203> and create a submission ticket.
-2. Submit your design in a form of a blueprint (zipped blueprint file or a Sharing Url) and a picture along with a name of your design.
+2. Submit your design in form of a blueprint (zipped blueprint file or a Sharing Url) and a picture along with a name of your design.
 3. Wait for the staff to review your submission.
             `,
             inline: false
