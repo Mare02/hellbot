@@ -1,74 +1,34 @@
-const fs = require('fs');
-const path = require('path');
-const { MODERATOR } = require('../utils/roles');
+const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
-  name: 'subdesignsinfo',
-  description: 'Get information about design submissions.',
-  perm: MODERATOR,
-  slash: true,
-  async execute(interaction) {
-    try {
-      const mediaPath = path.join(process.cwd(), 'media');
-      const submissionsPath = path.join(mediaPath, 'submissions');
+    name: 'subdesignsinfo',
+    description: 'Shows Subscriber Designs participants.',
+    slash: true,
+    async execute(message) {
+        const reply = await message.reply('Fetching Subscriber Designs participants...');
 
-      // Check if submissions directory exists
-      if (!fs.existsSync(submissionsPath)) {
-        return interaction.reply({ content: 'No design submissions found yet.' });
-      }
+        try {
+            const members = await message.guild.members.fetch();
+            const participants = members.filter(member =>
+                member.roles.cache.has('1333071192994877522')
+            );
 
-      // Get all user directories
-      const userDirs = fs.readdirSync(submissionsPath, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory())
-        .map(dirent => dirent.name);
+            if (participants.length === 0) {
+                await reply.edit('No Subscriber Designs participants found.');
+                return;
+            }
 
-      if (userDirs.length === 0) {
-        return interaction.reply({ content: 'No users have submitted designs yet.' });
-      }
+            let response = `**Subscriber Designs Participants:**\n`;
 
-      // Collect statistics
-      let totalSubmissions = 0;
-      const userStats = [];
+            participants.forEach(member => {
+                response += `- ${member.user.username} (${member.user.id})\n`;
+            });
 
-      for (const username of userDirs) {
-        const metadataPath = path.join(submissionsPath, username, 'metadata.json');
-        if (fs.existsSync(metadataPath)) {
-          const metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
-          totalSubmissions += metadata.length;
-          // Get userId from the first submission in metadata (they should all be from same user)
-          const userId = metadata[0]?.userId || 'Unknown';
-          userStats.push({ username, submissions: metadata.length, userId });
+            await reply.edit(response);
+
+        } catch (error) {
+            console.error('Error in subdesignsinfo command:', error);
+            await reply.edit('An error occurred while fetching Subscriber Designs participants.');
         }
-      }
-
-      // Create an embed for better formatting
-      const embed = {
-        color: 0x0099ff,
-        title: '📊 Subscriber Designs Statistics',
-        fields: [
-          {
-            name: 'Total Submissions',
-            value: `${totalSubmissions}`,
-            inline: false
-          },
-          {
-            name: 'Participants',
-            value: userStats.map(user => `• ${user.username} (ID: ${user.userId})`).join('\n'),
-            inline: false
-          }
-        ],
-        timestamp: new Date(),
-        footer: {
-          text: 'Design Submissions Info'
-        }
-      };
-
-      return interaction.reply({ embeds: [embed] });
-    } catch (error) {
-      console.error('Command execution error:', error);
-      return interaction.reply({
-        content: 'An error occurred while fetching design submission information.'
-      });
-    }
-  },
+    },
 };
