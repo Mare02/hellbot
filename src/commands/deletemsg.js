@@ -16,8 +16,17 @@ module.exports = {
 
         if (messagesData.size === 0) break;
 
-        await message.channel.bulkDelete(messagesData);
-        totalDeleted += messagesData.size;
+        // Filter out messages older than 14 days
+        const twoWeeksAgo = Date.now() - 14 * 24 * 60 * 60 * 1000;
+        const recentMessages = messagesData.filter(msg => msg.createdTimestamp > twoWeeksAgo);
+
+        if (recentMessages.size === 0) {
+          message.channel.send(`Deleted ${totalDeleted} messages - remaining messages are older than 14 days and cannot be deleted.`);
+          return;
+        }
+
+        await message.channel.bulkDelete(recentMessages);
+        totalDeleted += recentMessages.size;
       }
     }
     catch (error) {
