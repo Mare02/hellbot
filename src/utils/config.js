@@ -20,6 +20,7 @@ module.exports = {
   },
 
   homeServerId: "720011764934115400",
+  testingServerId: "1324427229278503043",
   logChannelId: "732790467615391846",
   verifyChannelId: "830224625350344724",
   generalChannelId: "720011765672444007",

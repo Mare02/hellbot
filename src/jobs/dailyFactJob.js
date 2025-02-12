@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { getInstance } = require('../client');
-const { embedColor } = require('../utils/config');
+const { embedColor, testingServerId } = require('../utils/config');
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -34,6 +34,10 @@ module.exports = {
       }
 
       for (const [guildId, guild] of guilds) {
+        if (guildId === testingServerId) {
+          continue;
+        }
+
         const fetchedGuild = await client.guilds.fetch(guildId);
         const channels = await fetchedGuild.channels.fetch();
         const generalChannel = channels.find(channel =>
