@@ -41,5 +41,5 @@ module.exports = {
   discordMsgLengthLimit: 2000,
   embedColor: '#fc9803',
 
-  currentAiModel: aiModels.llama3_8b_instant,
+  currentAiModel: aiModels.gemma2_9b_it,
 }
