@@ -5,7 +5,10 @@ const commandFiles = fs.readdirSync(__dirname)
 
 const commands = commandFiles.reduce((cmds, file) => {
   const commandName = file.split('.')[0];
-  cmds[commandName] = require(`./${file}`);
+  const command = require(`./${file}`);
+  if (!command.system) {
+    cmds[commandName] = command;
+  }
   return cmds;
 }, {});
 

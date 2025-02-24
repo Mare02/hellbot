@@ -4,15 +4,31 @@ const messages = require('../utils/messages');
 const { hasPermission } = require('../utils/roles');
 const commands = require('../commands');
 const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
+const freewill = require('../commands/freewill');
 
 const client = getInstance();
 
+const RANDOM_FREEWILL_PROBABILITY = 0.1;
+
 module.exports = () => {
   client.on('messageCreate', async (message) => {
+    if (message.author.bot) {
+      return;
+    };
+
     if (
-      !message.content.startsWith(config.commandsPrefix)
-      || message.author.bot
+      Math.random() < RANDOM_FREEWILL_PROBABILITY
+      && message.channel.name.startsWith('general')
     ) {
+      try {
+        await freewill.execute(message, []);
+      }
+      catch (error) {
+        console.error('Error executing random freewill command:', error);
+      }
+    }
+
+    if (!message.content.startsWith(config.commandsPrefix)) {
       return;
     };
 
@@ -27,12 +43,7 @@ module.exports = () => {
     }
 
     if (command) {
-      if (commandName === 'submitdesign') {
-        if (!message.member.roles.cache.has(config.subscriberDesignsRoleId)) {
-          return message.channel.send({ content: `You need the Subscriber Designs role in order to submit a design.`});
-        }
-      }
-      else if (command.perm && !hasPermission(command.perm, message.author.id)) {
+      if (command.perm && !hasPermission(command.perm, message.author.id)) {
         message.channel.send(messages.system.noPermission);
         return;
       }

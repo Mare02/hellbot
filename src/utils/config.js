@@ -36,7 +36,6 @@ module.exports = {
     moderator: '1037545653087256657',
   },
   verifiedRoleId: '1051882112057348146',
-  subscriberDesignsRoleId: '1333071192994877522',
 
   discordMsgLengthLimit: 2000,
   embedColor: '#fc9803',
