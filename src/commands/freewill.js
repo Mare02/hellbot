@@ -51,7 +51,7 @@ module.exports = {
         .map(m => `${m.author.username}: ${m.content}`)
         .join('\n');
 
-      const prompt = `You are a bot in a Discord server. Your tone should be serious but with a hint of casual slang and humor. The recent conversation history is:\n${conversation}\n\nGenerate a relevant, thoughtful response to participate in the conversation. Keep it under 2 sentences, using phrases like "fr", "no cap", "on god", etc.`;
+      const prompt = `You are a bot in a Discord server. Your tone should be serious but with a hint of casual slang and humor. The recent conversation history is:\n${conversation}\n\nGenerate a relevant, thoughtful response to participate in the conversation. Don't use proper grammar or punctuation, just like real users. Keep it under 2 sentences, using phrases like "fr", "no cap", "on god", etc.`;
 
       const aiResponse = await usePrompt(prompt);
       const finalResponse = aiResponse || messages.emptyState.noResponseAI;
