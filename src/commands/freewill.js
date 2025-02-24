@@ -7,7 +7,7 @@ const MAX_MESSAGES_HISTORY = 15;
 const REPLY_PROBABILITY = 0.6;
 const SLANG_RESPONSES = [
   "cap",
-  "fr fr",
+  "fr",
   "no cap",
   "based",
   "lowkey vibes",
