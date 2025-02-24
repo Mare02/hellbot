@@ -8,7 +8,7 @@ const freewill = require('../commands/freewill');
 
 const client = getInstance();
 
-const RANDOM_FREEWILL_PROBABILITY = 0.1;
+const RANDOM_FREEWILL_PROBABILITY = 0.05;
 
 module.exports = () => {
   client.on('messageCreate', async (message) => {
