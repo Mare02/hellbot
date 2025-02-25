@@ -10,12 +10,15 @@ const SLANG_RESPONSES = [
   "fr",
   "no cap",
   "based",
-  "lowkey vibes",
-  "bruh moment",
-  "sus",
+  "bruh",
   "sheesh",
   "on god",
-  "deadass"
+  "deadass",
+  "lmaooo",
+  "bro fr",
+  "im dead 💀",
+  "💀💀💀",
+  "💀",
 ];
 const RANDOM_SLANG_PROBABILITY = 0.3;
 
