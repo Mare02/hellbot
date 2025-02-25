@@ -1,10 +1,12 @@
 const { getInstance } = require('../client');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
+const { usePrompt } = require('../services/AIservice');
 const { hasPermission } = require('../utils/roles');
 const commands = require('../commands');
 const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
 const freewill = require('../commands/freewill');
+const { brainRotPrompt } = require('../utils/aiPrompts');
 
 const client = getInstance();
 
@@ -16,9 +18,21 @@ module.exports = () => {
       return;
     };
 
+    if (message.mentions.has(client.user.id)) {
+      try {
+        const prompt = brainRotPrompt(message.content);
+        const response = await usePrompt(prompt);
+        await message.reply(response);
+      } catch (error) {
+        console.error('AI response error:', error);
+      }
+      return;
+    }
+
     if (
       Math.random() < RANDOM_FREEWILL_PROBABILITY
       && message.channel.name.startsWith('general')
+      && !message.mentions.has(client.user.id)
     ) {
       try {
         await freewill.execute(message, []);

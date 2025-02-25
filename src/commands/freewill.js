@@ -2,6 +2,7 @@ const { usePrompt } = require('../services/AIservice');
 const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
 const { MODERATOR } = require('../utils/roles');
+const { brainRotPrompt } = require('../utils/aiPrompts');
 
 const MAX_MESSAGES_HISTORY = 15;
 const REPLY_PROBABILITY = 0.6;
@@ -54,7 +55,7 @@ module.exports = {
         .map(m => `${m.author.username}: ${m.content}`)
         .join('\n');
 
-      const prompt = `You are a bot in a Discord server. Your tone should be serious but with a hint of casual slang and humor. The recent conversation history is:\n${conversation}\n\nGenerate a relevant, thoughtful response to participate in the conversation. Don't use proper grammar or punctuation, just like real users. Keep it under 2 sentences, using phrases like "fr", "no cap", "on god", etc.`;
+      const prompt = brainRotPrompt(conversation);
 
       const aiResponse = await usePrompt(prompt);
       const finalResponse = aiResponse || messages.emptyState.noResponseAI;
