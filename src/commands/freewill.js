@@ -35,10 +35,6 @@ module.exports = {
         await interaction.deferReply();
       }
 
-      if (interaction.server.id !== config.serverId) {
-        return;
-      }
-
       // Random chance to use a predefined slang response
       if (Math.random() < RANDOM_SLANG_PROBABILITY) {
         const randomIndex = Math.floor(Math.random() * SLANG_RESPONSES.length);

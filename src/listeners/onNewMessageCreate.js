@@ -1,7 +1,6 @@
 const { getInstance } = require('../client');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
-const { usePrompt } = require('../services/AIservice');
 const { hasPermission } = require('../utils/roles');
 const commands = require('../commands');
 const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
@@ -41,6 +40,7 @@ module.exports = () => {
       Math.random() < RANDOM_FREEWILL_PROBABILITY
       && message.channel.name.startsWith('general')
       && !message.mentions.has(client.user.id)
+      && message.guild.id === config.homeServerId
     ) {
       try {
         await freewill.execute(message, []);
