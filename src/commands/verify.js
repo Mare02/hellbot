@@ -4,7 +4,7 @@ const config = require('../utils/config');
 
 module.exports = {
   name: 'verify',
-  description: 'Verify your account with age and invite source.',
+  description: "Get verified and gain access to Hell's Resting Place.",
   slash: true,
   params: [
     {
@@ -32,7 +32,7 @@ module.exports = {
 
       const verifiedRole = await interaction.guild.roles.fetch(config.verifiedRoleId);
       if (!verifiedRole) {
-        await reply(interaction, args, 'Role "Verified" does not exist in this server.');
+        interaction.channel.send(messages.errorState.commandError);
         return;
       }
 
