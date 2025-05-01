@@ -6,6 +6,7 @@ const { hasPermission } = require('../utils/roles');
 const commands = require('../commands');
 const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
 const freewill = require('../commands/freewill');
+const askai = require('../commands/askai');
 const { brainRotPrompt } = require('../utils/aiPrompts');
 
 const client = getInstance();
@@ -14,11 +15,17 @@ const RANDOM_FREEWILL_PROBABILITY = 0.05;
 
 module.exports = () => {
   client.on('messageCreate', async (message) => {
-    if (message.author.bot) {
-      return;
-    };
+    // get command name + arguments
+    const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
+    const commandName = args.shift();
 
-    if (message.mentions.has(client.user.id)) {
+    let command = commands[commandName];
+
+    if (commandName === 'updateslashcommands') {
+      command = updateslashcommands;
+    }
+
+    if (message.mentions.has(client.user.id) && commandName !== askai.name) {
       try {
         const prompt = brainRotPrompt(message.content);
         const response = await usePrompt(prompt);
@@ -28,6 +35,10 @@ module.exports = () => {
       }
       return;
     }
+
+    if (message.author.bot) {
+      return;
+    };
 
     if (
       Math.random() < RANDOM_FREEWILL_PROBABILITY
@@ -45,16 +56,6 @@ module.exports = () => {
     if (!message.content.startsWith(config.commandsPrefix)) {
       return;
     };
-
-    // get command name + arguments
-    const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
-    const commandName = args.shift();
-
-    let command = commands[commandName];
-
-    if (commandName === 'updateslashcommands') {
-      command = updateslashcommands;
-    }
 
     if (command) {
       if (command.perm && !hasPermission(command.perm, message.author.id)) {

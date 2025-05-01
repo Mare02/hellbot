@@ -3,6 +3,7 @@ const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
 const { MODERATOR } = require('../utils/roles');
 const { brainRotPrompt } = require('../utils/aiPrompts');
+const config = require('../utils/config');
 
 const MAX_MESSAGES_HISTORY = 15;
 const REPLY_PROBABILITY = 0.6;
@@ -34,11 +35,15 @@ module.exports = {
         await interaction.deferReply();
       }
 
+      if (interaction.server.id !== config.serverId) {
+        return;
+      }
+
       // Random chance to use a predefined slang response
       if (Math.random() < RANDOM_SLANG_PROBABILITY) {
         const randomIndex = Math.floor(Math.random() * SLANG_RESPONSES.length);
         const slangResponse = SLANG_RESPONSES[randomIndex];
-        
+
         if (Math.random() < REPLY_PROBABILITY && interaction.originalMessage) {
           await interaction.originalMessage.reply(slangResponse);
         } else {
