@@ -3,6 +3,7 @@ const { usePrompt } = require('../services/AIservice');
 const { validateUserPromptInput } = require('../utils/helpers');
 const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
+const { brainRotPrompt } = require('../utils/aiPrompts');
 
 module.exports = {
   name: 'askai',
@@ -15,7 +16,7 @@ module.exports = {
       required: true,
     },
   ],
-  async execute(interaction, args) {
+  async execute(interaction, args, options) {
     try {
       if (!args) {
         await interaction.deferReply();
@@ -45,6 +46,11 @@ module.exports = {
           }
         } else {
           systemPrompt = referencedMessage.content;
+        }
+      }
+      else {
+        if (options.useBrainRotPrompt) {
+          prompt = brainRotPrompt(prompt);
         }
       }
 

@@ -7,7 +7,6 @@ const commands = require('../commands');
 const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
 const freewill = require('../commands/freewill');
 const askai = require('../commands/askai');
-const { brainRotPrompt } = require('../utils/aiPrompts');
 
 const client = getInstance();
 
@@ -27,14 +26,7 @@ module.exports = () => {
 
     if (message.mentions.has(client.user.id) && commandName !== askai.name) {
       try {
-        let systemPrompt = null;
-        if (message.reference) {
-          const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
-          systemPrompt = referencedMessage.content;
-        }
-        const prompt = brainRotPrompt(message.content);
-        const response = await usePrompt(prompt, systemPrompt);
-        await message.reply(response);
+        await askai.execute(message, args, {useBrainRotPrompt: true});
       } catch (error) {
         console.error('AI response error:', error);
       }
