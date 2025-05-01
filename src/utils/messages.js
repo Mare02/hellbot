@@ -1,6 +1,6 @@
 module.exports = {
   welcome: {
-    serverWelcome: 'Welcome to the server!',
+    serverWelcome: 'Welcome to the server! Use /verify command for automatic verification.',
   },
 
   inputError: {
