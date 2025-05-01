@@ -23,14 +23,13 @@ module.exports = {
   async execute(interaction, args) {
     try {
       const isSlashCommand = !args;
-      if (isSlashCommand) {
+
+      if (isSlashCommand && !interaction.deferred && !interaction.replied) {
         await interaction.deferReply({ephemeral: true});
       }
 
       if (interaction.guild.id !== config.homeServerId) {
-        if (isSlashCommand) {
-          await reply(interaction, args, "This command can only be used in the bot's home server (Hell's Resting Place).");
-        }
+        await reply(interaction, args, "This command can only be used in the bot's home server (Hell's Resting Place).");
         return;
       }
 
