@@ -27,8 +27,13 @@ module.exports = () => {
 
     if (message.mentions.has(client.user.id) && commandName !== askai.name) {
       try {
+        let systemPrompt = null;
+        if (message.reference) {
+          const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
+          systemPrompt = referencedMessage.content;
+        }
         const prompt = brainRotPrompt(message.content);
-        const response = await usePrompt(prompt);
+        const response = await usePrompt(prompt, systemPrompt);
         await message.reply(response);
       } catch (error) {
         console.error('AI response error:', error);
