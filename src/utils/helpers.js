@@ -123,7 +123,7 @@ const helpers = {
       const userFolders = fs.readdirSync(submissionsPath, { withFileTypes: true })
         .filter(dirent => dirent.isDirectory())
         .map(dirent => `Submissions/${dirent.name}`);
-      
+
       // Replace 'Submissions' with user-specific folders
       const index = folders.indexOf('Submissions');
       folders.splice(index, 1, ...userFolders);

@@ -22,11 +22,15 @@ module.exports = {
   ],
   async execute(interaction, args) {
     try {
-      if (!args) {
-        await interaction.deferReply();
+      const isSlashCommand = !args;
+      if (isSlashCommand) {
+        await interaction.deferReply({ephemeral: true});
       }
 
       if (interaction.guild.id !== config.homeServerId) {
+        if (isSlashCommand) {
+          await reply(interaction, args, "This command can only be used in the bot's home server (Hell's Resting Place).");
+        }
         return;
       }
 
@@ -38,7 +42,7 @@ module.exports = {
 
       let age;
       let inviteSource;
-      if (!args) {
+      if (isSlashCommand) {
         age = interaction.options.getString('age');
         inviteSource = interaction.options.getString('invitesource');
       }
@@ -69,7 +73,7 @@ module.exports = {
         );
       }
     } catch (error) {
-      console.error(error);
+      console.error('Verification command error:', error);
       interaction.channel.send(messages.errorState.commandError);
     }
   },
