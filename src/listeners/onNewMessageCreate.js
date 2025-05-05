@@ -14,6 +14,7 @@ const RANDOM_FREEWILL_PROBABILITY = 0.05;
 module.exports = () => {
   client.on('messageCreate', async (message) => {
     // get command name + arguments
+    const fullArgs = message.content.split(' ');
     const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
     const commandName = args.shift();
 
@@ -25,7 +26,7 @@ module.exports = () => {
 
     if (message.mentions.has(client.user.id) && commandName !== askai.name) {
       try {
-        await askai.execute(message, args, {useBrainRotPrompt: true});
+        await askai.execute(message, fullArgs, {useBrainRotPrompt: true});
       } catch (error) {
         console.error('AI response error:', error);
       }

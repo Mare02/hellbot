@@ -48,10 +48,8 @@ module.exports = {
           systemPrompt = referencedMessage.content;
         }
       }
-      else {
-        if (options.useBrainRotPrompt) {
-          prompt = brainRotPrompt(prompt);
-        }
+      else if (options && options.useBrainRotPrompt) {
+        prompt = brainRotPrompt(prompt);
       }
 
       const answer = await usePrompt(prompt, systemPrompt, imageUrl);
