@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN last_rob_attempt INTEGER DEFAULT 0; 

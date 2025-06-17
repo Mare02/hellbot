@@ -20,7 +20,7 @@ const GUIDE_PAGES = [
             { name: '`/balance`', value: 'Shows your on-hand Souls (wallet) and your banked Souls.' },
             { name: '`/deposit`', value: 'Deposit Souls into the bank. Banked souls are safe from robbers!' },
             { name: '`/withdraw`', value: 'Withdraw Souls from the bank to your wallet for spending.' },
-            { name: '`/leaderboard`', value: 'See the top 10 wealthiest demons in the server, ranked by their total net worth.' }
+            { name: '`/leaderboard`', value: 'See the top 10 wealthiest people in the server, ranked by their total net worth.' }
         ),
     // Page 3: The Infernal Market
     new EmbedBuilder()
@@ -28,8 +28,7 @@ const GUIDE_PAGES = [
         .setTitle('**The Infernal Economy: A Guide (Page 3/5)**')
         .setDescription('The market is where you turn your hard-earned Souls into tangible assets. Use the shop to get ahead.')
         .addFields(
-            { name: '`/shop`', value: 'Browse a wide variety of items, from tools that boost your earnings to powerful, single-use consumables.' },
-            { name: '`/buy`', value: 'Purchase an item from the shop.' },
+            { name: '`/shop`', value: 'Browse and purchase a wide variety of items, from tools that boost your earnings to powerful consumables, using the interactive menu.' },
             { name: '`/inventory`', value: 'Check all the items you currently own.' },
             { name: '`/use`', value: 'Use a consumable item from your inventory for a special effect.' }
         ),
@@ -39,9 +38,8 @@ const GUIDE_PAGES = [
         .setTitle('**The Infernal Economy: A Guide (Page 4/5)**')
         .setDescription('Put your Souls to work for you! Purchase assets that generate passive income over time.')
         .addFields(
-            { name: '`/investments`', value: 'Browse the list of available long-term assets that generate Souls automatically.' },
-            { name: '`/buy-investment`', value: 'Purchase an asset from the list.' },
-            { name: '`/collect`', value: 'Claim the Souls that your investments have generated since your last collection.' }
+            { name: '`/investments`', value: 'Browse and purchase available long-term assets that generate Souls automatically using the interactive menu.' },
+            { name: '`/collect`', value: 'Claim the Souls that your investments have generated. If it\'s too soon, it will tell you when you can collect next.' }
         ),
     // Page 5: Player vs. Player
     new EmbedBuilder()
@@ -50,7 +48,7 @@ const GUIDE_PAGES = [
         .setDescription('Feeling brave? Interact with other souls, for better or for worse.')
         .addFields(
             { name: '`/give`', value: 'Feeling generous? Transfer some of your Souls directly to another user.' },
-            { name: '`/rob`', value: 'The ultimate risk-reward. Attempt to steal a portion of another user\'s on-hand Souls. **Be Warned:** Failure comes with a hefty penalty, and you can only attempt a heist once every few minutes.' }
+            { name: '`/rob`', value: 'The ultimate risk-reward. Attempt to steal a portion of another user\'s on-hand Souls. **Be Warned:** Failure comes with a hefty penalty, and you can only attempt a heist once every **60 minutes**.' }
         )
 ];
 
@@ -84,9 +82,9 @@ module.exports = {
             components: [getRow(currentPage)],
             fetchReply: true,
         };
-        
+
         const message = await (ctx.reply ? ctx.reply(replyOptions) : ctx.channel.send(replyOptions));
-        
+
         const collector = message.createMessageComponentCollector({
             filter: (i) => i.user.id === author.id,
             time: 180000, // 3 minutes
@@ -121,4 +119,4 @@ module.exports = {
             message.edit({ components: [finalRow] });
         });
     },
-}; 
+};

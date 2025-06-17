@@ -58,7 +58,7 @@ module.exports = {
         const inventoryString = topItems
             .map(item => `${item.name}${item.quantity > 1 ? ` (x${item.quantity})` : ''}`)
             .join('\n');
-        
+
         if (inventoryString) {
             embed.addFields({ name: '💎 Prized Possessions', value: inventoryString, inline: false });
         }
@@ -71,4 +71,4 @@ module.exports = {
 
     return isSlash ? ctx.reply({ embeds: [embed] }) : ctx.reply({ embeds: [embed] });
   },
-}; 
+};

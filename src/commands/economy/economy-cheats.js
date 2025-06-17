@@ -236,7 +236,11 @@ async function handleSelectMenuInteraction(interaction, targetUser, author) {
         const items = getItemsByCategoryId(categoryId);
         if (!items.length) return interaction.update({ content: 'This category has no items.', components: [], embeds: [] });
 
-        const itemOptions = items.map(item => ({ label: item.name, description: `ID: ${item.id}`, value: item.id.toString() }));
+        const itemOptions = items.map(item => ({
+            label: `${item.name} (${item.id})`,
+            description: item.description ? item.description.substring(0, 100) : 'No description.',
+            value: item.id.toString()
+        }));
         const itemSelect = new StringSelectMenuBuilder()
             .setCustomId(`item_select:${context}`)
             .setPlaceholder('Select an item from this category...')

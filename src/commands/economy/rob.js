@@ -46,9 +46,16 @@ module.exports = {
     if (targetUser.bot) {
         return reply("Bots have no souls to steal. It's a sad reality.");
     }
-    
+
     const authorData = getUser(author.id);
-    // Cooldown check for the author would go here if we re-implement it.
+    const now = Date.now();
+    const timeSinceLastRob = now - authorData.last_rob_attempt;
+
+    if (timeSinceLastRob < COOLDOWN_MS) {
+        const timeLeft = COOLDOWN_MS - timeSinceLastRob;
+        const minutesLeft = Math.ceil(timeLeft / (1000 * 60));
+        return reply(`You need to wait another ${minutesLeft} minute(s) before attempting another robbery.`);
+    }
 
     const targetData = getUser(targetUser.id);
     if (targetData.souls < MIN_REQUIRED_SOULS) {
@@ -61,18 +68,18 @@ module.exports = {
         const maxStealAmount = Math.floor(targetData.souls * 0.25); // Steal up to 25%
         const amountStolen = Math.floor(Math.random() * maxStealAmount) + 1;
 
-        updateUser(author.id, { souls: authorData.souls + amountStolen });
+        updateUser(author.id, { souls: authorData.souls + amountStolen, last_rob_attempt: now });
         updateUser(targetUser.id, { souls: targetData.souls - amountStolen });
-        
+
         return reply(`**Success!** You discreetly relieved ${targetUser.username} of **Ѫ ${amountStolen.toLocaleString()}**!`, false);
 
     } else {
         // Failure!
         const penaltyAmount = Math.floor(targetData.souls * 0.25 * PENALTY_MULTIPLIER);
-        
-        updateUser(author.id, { souls: authorData.souls - penaltyAmount });
+
+        updateUser(author.id, { souls: authorData.souls - penaltyAmount, last_rob_attempt: now });
 
         return reply(`**Failure!** You were caught trying to rob ${targetUser.username} and had to pay a fine of **Ѫ ${penaltyAmount.toLocaleString()}**.`, false);
     }
   },
-}; 
+};
