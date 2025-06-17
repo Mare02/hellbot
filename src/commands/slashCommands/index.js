@@ -12,9 +12,9 @@ const slashCommands = filteredCommands.map(command => {
     command.params.forEach(param => {
       if (param.type === 6) {
         slashCommand.addUserOption(option =>
-          option.setName('user')
-            .setDescription('The user to mute')
-            .setRequired(true)
+          option.setName(param.name)
+            .setDescription(param.description)
+            .setRequired(param.required)
         );
       }
       else if (param.type === 3) {
