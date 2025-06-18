@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { getUser, getUserInventory, getItemById } = require('../../services/economyService');
+const { getUser, getUserInventory, getItemById, getUserTotalStats, getUserNetWorth, getRanks } = require('../../services/economyService');
 
 module.exports = {
   name: 'profile',
@@ -24,15 +24,16 @@ module.exports = {
     }
     const userData = getUser(targetUser.id);
     const userInventory = getUserInventory(targetUser.id);
+    const userDamage = getUserTotalStats(targetUser.id, 'damage');
+    const userDefense = getUserTotalStats(targetUser.id, 'defense');
 
     // --- Dynamic Net Worth Calculation ---
-    const itemsValue = userInventory.reduce((total, invItem) => {
-        const itemDetails = getItemById(invItem.itemId);
-        // Ensure item exists and has value before adding
-        return total + (itemDetails?.value || 0) * invItem.quantity;
-    }, 0);
-    const netWorth = userData.souls + userData.bank + itemsValue;
+    const netWorth = getUserNetWorth(targetUser.id);
     // --- End Dynamic Net Worth Calculation ---
+
+    const ranks = getRanks();
+    const userRankInfo = ranks.find(r => r.name === userData.rank);
+    const rankDisplay = userRankInfo ? `${userRankInfo.name}` : userData.rank;
 
     const embed = new EmbedBuilder()
       .setTitle(`${targetUser.username}'s Infernal Profile`)
@@ -42,7 +43,8 @@ module.exports = {
         { name: '💰 Souls', value: `Ѫ ${userData.souls.toLocaleString()}`, inline: true },
         { name: '🏦 Bank', value: `Ѫ ${userData.bank.toLocaleString()}`, inline: true },
         { name: '💼 Net Worth', value: `Ѫ ${netWorth.toLocaleString()}`, inline: true },
-        { name: '🏆 Rank', value: userData.rank, inline: false },
+        { name: '⚔️ Combat Stats', value: `**Damage:** ${userDamage} 🗡️\n**Defense:** ${userDefense} 🛡️`, inline: false },
+        { name: '🏆 Rank', value: rankDisplay, inline: false },
       );
 
     // --- Inventory Showcase ---

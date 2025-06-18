@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { getAllUsers, getUserInventory, getItemById, getInvestments, getUserInvestments } = require('../../services/economyService');
+const { getAllUsers, getUserNetWorth } = require('../../services/economyService');
 
 module.exports = {
     name: 'leaderboard',
@@ -12,29 +12,11 @@ module.exports = {
             return ctx.reply({ content: 'There are no users to rank yet.', ephemeral: true });
         }
 
-        const allInvestments = getInvestments();
-        const investmentsMap = new Map(allInvestments.map(inv => [inv.id, inv.cost]));
-
         const rankedUsers = allUsers.map(user => {
-            const inventory = getUserInventory(user.userId);
-            const itemsValue = inventory.reduce((total, invItem) => {
-                const itemDetails = getItemById(invItem.itemId);
-                return total + (itemDetails?.value || 0) * invItem.quantity;
-            }, 0);
-
-            const userInvestments = getUserInvestments(user.userId);
-            const investmentsValue = userInvestments.reduce((total, inv) => {
-                return total + (investmentsMap.get(inv.id) || 0);
-            }, 0);
-
-            const assetsValue = itemsValue + investmentsValue;
-            const netWorth = user.souls + user.bank + assetsValue;
+            const netWorth = getUserNetWorth(user.userId);
             return {
                 userId: user.userId,
                 netWorth,
-                souls: user.souls,
-                bank: user.bank,
-                assetsValue,
             };
         });
 
@@ -55,7 +37,6 @@ module.exports = {
             const userName = user ? user.username : 'Unknown User';
             const userData = top10[i];
             description += `${medal} **${userName}** - Ѫ ${userData.netWorth.toLocaleString()}\n`;
-            description += `> Souls: ${userData.souls.toLocaleString()} | Bank: ${userData.bank.toLocaleString()} | Assets: ${userData.assetsValue.toLocaleString()}\n\n`;
         }
 
         if (description === '') {
@@ -68,5 +49,5 @@ module.exports = {
         return isSlash
             ? ctx.reply({ embeds: [embed] })
             : ctx.channel.send({ embeds: [embed] });
-    },
+    }
 };

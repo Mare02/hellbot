@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const { getUserInvestments, updateUserInvestments } = require('../../services/economyService');
+const { getUserInvestments, updateUserInvestments, updateUserRank } = require('../../services/economyService');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -9,6 +9,7 @@ module.exports = {
     cooldown: 60, // Cooldown to prevent spamming the check
     async execute(ctx) {
         const author = ctx.user || ctx.author;
+        const client = ctx.client;
         const userInvestments = getUserInvestments(author.id);
 
         if (!userInvestments.length) {
@@ -47,6 +48,7 @@ module.exports = {
         }
 
         updateUserInvestments(author.id, totalPayout, collectedInvestmentIds);
+        updateUserRank(author.id, client);
 
         const embed = new EmbedBuilder()
             .setTitle('💰 Earnings Collected! 💰')

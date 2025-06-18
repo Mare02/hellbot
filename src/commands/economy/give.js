@@ -1,4 +1,4 @@
-const { getUser, updateUser } = require('../../services/economyService');
+const { getUser, updateUser, updateUserRank } = require('../../services/economyService');
 
 module.exports = {
   name: 'give',
@@ -22,6 +22,7 @@ module.exports = {
   async execute(ctx, args) {
     const isSlash = !args;
     const author = isSlash ? ctx.user : ctx.author;
+    const client = isSlash ? ctx.client : ctx.channel.client;
 
     let targetUser;
     let amount;
@@ -33,7 +34,7 @@ module.exports = {
         targetUser = ctx.mentions.users.first();
         amount = parseInt(args[1], 10);
     }
-    
+
     const reply = (content) => {
         const payload = { content, ephemeral: true };
         return isSlash ? ctx.reply(payload) : ctx.reply(content);
@@ -71,10 +72,15 @@ module.exports = {
     updateUser(author.id, { souls: authorNewSouls });
     updateUser(targetUser.id, { souls: targetNewSouls });
 
+    Promise.all([
+        updateUserRank(author.id, client),
+        updateUserRank(targetUser.id, client)
+    ]);
+
     const replyMessage = `You have successfully given **Ѫ ${amount.toLocaleString()}** to ${targetUser.username}.`;
-    
+
     return isSlash
         ? ctx.reply(replyMessage)
         : ctx.channel.send(replyMessage);
   },
-}; 
+};

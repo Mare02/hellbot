@@ -1,4 +1,4 @@
-const { getUser, updateUser, addItemToUser, getUserItem, getItemById } = require('../../services/economyService');
+const { getUser, updateUser, addItemToUser, getUserItem, getItemById, updateUserRank } = require('../../services/economyService');
 
 module.exports = {
   name: 'buy',
@@ -22,6 +22,7 @@ module.exports = {
   async execute(ctx, args) {
     const isSlash = !args;
     const author = isSlash ? ctx.user : ctx.author;
+    const client = isSlash ? ctx.client : ctx.channel.client;
     const itemId = isSlash ? ctx.options.getString('item_id') : args[0];
     const quantity = isSlash ? ctx.options.getInteger('quantity') || 1 : parseInt(args[1] || '1', 10);
 
@@ -63,10 +64,10 @@ module.exports = {
 
     // All checks passed, proceed with purchase
     const newSouls = userData.souls - totalCost;
-    const newNetWorth = userData.netWorth + (itemToBuy.value * quantity);
 
-    updateUser(author.id, { souls: newSouls, netWorth: newNetWorth });
+    updateUser(author.id, { souls: newSouls });
     addItemToUser(author.id, itemToBuy.id, quantity);
+    updateUserRank(author.id, client);
 
     return reply(`You have successfully purchased **${quantity}x ${itemToBuy.name}** for **Ѫ ${totalCost.toLocaleString()}**!`);
   },

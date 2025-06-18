@@ -1,4 +1,4 @@
-const { getUser, updateUser } = require('../../services/economyService');
+const { getUser, updateUser, updateUserRank } = require('../../services/economyService');
 
 const COOLDOWN_MINUTES = 60;
 const COOLDOWN_MS = COOLDOWN_MINUTES * 60 * 1000;
@@ -22,6 +22,7 @@ module.exports = {
   async execute(ctx, args) {
     const isSlash = !args;
     const author = isSlash ? ctx.user : ctx.author;
+    const client = isSlash ? ctx.client : ctx.channel.client;
 
     const reply = (content, ephemeral = true) => {
         const payload = { content, ephemeral };
@@ -71,6 +72,11 @@ module.exports = {
         updateUser(author.id, { souls: authorData.souls + amountStolen, last_rob_attempt: now });
         updateUser(targetUser.id, { souls: targetData.souls - amountStolen });
 
+        Promise.all([
+            updateUserRank(author.id, client),
+            updateUserRank(targetUser.id, client)
+        ]);
+
         return reply(`**Success!** You discreetly relieved ${targetUser.username} of **Ѫ ${amountStolen.toLocaleString()}**!`, false);
 
     } else {
@@ -78,6 +84,8 @@ module.exports = {
         const penaltyAmount = Math.floor(targetData.souls * 0.25 * PENALTY_MULTIPLIER);
 
         updateUser(author.id, { souls: authorData.souls - penaltyAmount, last_rob_attempt: now });
+
+        updateUserRank(author.id, client);
 
         return reply(`**Failure!** You were caught trying to rob ${targetUser.username} and had to pay a fine of **Ѫ ${penaltyAmount.toLocaleString()}**.`, false);
     }

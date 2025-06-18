@@ -8,6 +8,8 @@ const db = new Database(dbPath);
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 
+let ranksCache = null;
+
 function runMigrations() {
     // Check and create migrations table if it doesn't exist
     db.exec(`
@@ -30,9 +32,12 @@ function runMigrations() {
         .filter(file => file.endsWith('.sql'))
         .sort();
 
+    let migrationsApplied = false;
+
     for (const file of migrationFiles) {
         const fileVersion = parseInt(file.split('-')[0], 10);
         if (fileVersion > currentVersion) {
+            migrationsApplied = true;
             console.log(`Applying migration: ${file}...`);
             const script = fs.readFileSync(path.join(migrationsPath, file), 'utf-8');
 
@@ -55,15 +60,25 @@ function runMigrations() {
             }
         }
     }
+    if (!migrationsApplied) {
+        console.log('Database is already up to date.');
+    }
 }
 
-// Run migrations on startup
-runMigrations();
+function getRanks() {
+    if (!ranksCache) {
+        console.log('Caching ranks from database...');
+        ranksCache = db.prepare('SELECT * FROM ranks ORDER BY netWorth ASC').all();
+    }
+    return ranksCache;
+}
 
 function getUser(userId) {
     let user = db.prepare('SELECT * FROM users WHERE userId = ?').get(userId);
     if (!user) {
-        db.prepare('INSERT INTO users (userId) VALUES (?)').run(userId);
+        const ranks = getRanks();
+        const defaultRank = ranks[0]?.name || 'Imp';
+        db.prepare('INSERT INTO users (userId, rank) VALUES (?, ?)').run(userId, defaultRank);
         user = db.prepare('SELECT * FROM users WHERE userId = ?').get(userId);
     }
     return user;
@@ -160,7 +175,7 @@ function getInvestmentByName(name) {
 
 function getUserInvestments(userId) {
     const sql = `
-        SELECT i.id, i.name, i.payout_amount, i.payout_interval_hours, ui.last_payout_date
+        SELECT i.id, i.name, i.payout_amount, i.payout_interval_hours, ui.last_payout_date, i.cost
         FROM user_investments ui
         JOIN investments i ON ui.investment_id = i.id
         WHERE ui.user_id = ?
@@ -205,8 +220,143 @@ function updateUserInvestments(userId, totalPayout, collectedInvestmentIds) {
     payoutTx();
 }
 
+// --- Contract Functions ---
+
+function getAvailableContracts() {
+    // Fetches contracts that have not expired yet
+    const now = new Date().toISOString();
+    return db.prepare('SELECT * FROM contracts WHERE expires_at > ?').all(now);
+}
+
+function getContract(contractId) {
+    return db.prepare('SELECT * FROM contracts WHERE id = ?').get(contractId);
+}
+
+function getUserContracts(userId) {
+    const stmt = db.prepare(`
+        SELECT c.*, uc.status
+        FROM user_contracts uc
+        JOIN contracts c ON uc.contract_id = c.id
+        WHERE uc.user_id = ?
+    `);
+    return stmt.all(userId);
+}
+
+function getUserContract(userId, contractId) {
+    const stmt = db.prepare('SELECT * FROM user_contracts WHERE user_id = ? AND contract_id = ?');
+    return stmt.get(userId, contractId);
+}
+
+function acceptContract(userId, contractId) {
+    // Check if the user already has this contract
+    const existingContract = getUserContract(userId, contractId);
+    if (existingContract) {
+        return { success: false, message: 'You have already accepted this contract.' };
+    }
+
+    // Check if the contract exists and is available
+    const contract = getContract(contractId);
+    if (!contract) {
+        return { success: false, message: 'This contract does not exist.' };
+    }
+
+    const now = new Date().toISOString();
+    if (contract.expires_at <= now) {
+        return { success: false, message: 'This contract has expired.' };
+    }
+
+    db.prepare('INSERT INTO user_contracts (user_id, contract_id) VALUES (?, ?)')
+      .run(userId, contractId);
+
+    return { success: true, message: `You have accepted the contract: "${contract.name}".` };
+}
+
+function createContract(contract) {
+    const { name, description, reward, requirements, expires_at } = contract;
+    const stmt = db.prepare(
+        'INSERT INTO contracts (name, description, reward, requirements, expires_at) VALUES (?, ?, ?, ?, ?)'
+    );
+    return stmt.run(name, description, reward, JSON.stringify(requirements), expires_at);
+}
+
+function deleteExpiredContracts() {
+    const now = new Date().toISOString();
+    return db.prepare('DELETE FROM contracts WHERE expires_at <= ?').run(now);
+}
+
+function updateUserContractStatus(userId, contractId, status) {
+    const stmt = db.prepare('UPDATE user_contracts SET status = ? WHERE user_id = ? AND contract_id = ?');
+    stmt.run(status, userId, contractId);
+}
+
+function getUserTotalStats(userId, statType) {
+    const inventory = db.prepare(`
+        SELECT i.stats, i.unique_item, inv.quantity
+        FROM inventory inv
+        JOIN items i ON inv.itemId = i.id
+        WHERE inv.userId = ? AND i.stats IS NOT NULL
+    `).all(userId);
+
+    let totalStat = 0;
+    for (const item of inventory) {
+        try {
+            const stats = JSON.parse(item.stats);
+            if (stats[statType]) {
+                // Unique items' stats do not stack with quantity.
+                if (item.unique_item) {
+                    totalStat += stats[statType];
+                } else {
+                    totalStat += stats[statType] * item.quantity;
+                }
+            }
+        } catch (e) {
+            console.error(`Could not parse stats for an item for user ${userId}:`, e);
+        }
+    }
+    return totalStat;
+}
+
+function getUserNetWorth(userId) {
+    const user = getUser(userId);
+    if (!user) return 0;
+
+    const inventory = getUserInventory(userId);
+    const itemsValue = inventory.reduce((total, invItem) => {
+        const itemDetails = getItemById(invItem.itemId);
+        return total + (itemDetails?.value || 0) * invItem.quantity;
+    }, 0);
+
+    const userInvestments = getUserInvestments(userId);
+    const investmentsValue = userInvestments.reduce((total, inv) => {
+        return total + (inv.cost || 0);
+    }, 0);
+
+    return user.souls + user.bank + itemsValue + investmentsValue;
+}
+
+async function updateUserRank(userId, client) {
+    const user = getUser(userId);
+    const netWorth = getUserNetWorth(userId);
+    const ranks = getRanks();
+
+    const newRank = ranks
+        .slice()
+        .sort((a, b) => b.netWorth - a.netWorth)
+        .find(rank => netWorth >= rank.netWorth);
+
+    if (newRank && newRank.name !== user.rank) {
+        updateUser(userId, { rank: newRank.name });
+        try {
+            const discordUser = await client.users.fetch(userId);
+            await discordUser.send(`Congratulations! You have been promoted to the rank of **${newRank.name}**!`);
+        } catch (error) {
+            console.error(`Failed to send rank-up DM to ${userId}:`, error);
+        }
+    }
+}
+
 module.exports = {
-    db,
+    runMigrations,
     getUser,
     updateUser,
     getUserInventory,
@@ -226,4 +376,17 @@ module.exports = {
     getUserInvestments,
     buyInvestment,
     updateUserInvestments,
+    // Contracts
+    getAvailableContracts,
+    getContract,
+    getUserContracts,
+    getUserContract,
+    acceptContract,
+    createContract,
+    deleteExpiredContracts,
+    updateUserContractStatus,
+    getUserTotalStats,
+    getUserNetWorth,
+    updateUserRank,
+    getRanks
 };

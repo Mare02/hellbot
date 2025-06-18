@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { getUser, updateUser, getUserInventory, getItemById } = require('../../services/economyService');
+const { getUser, updateUser, getUserInventory, getItemById, updateUserRank } = require('../../services/economyService');
 const workOutcomes = require('../../utils/workOutcomes');
 
 // const COOLDOWN_HOURS = 1;
@@ -28,7 +28,7 @@ module.exports = {
   slash: true,
 
   async execute(interaction) {
-    const userId = interaction.author.id;
+    const userId = interaction.author?.id || interaction.user?.id;
     const userData = getUser(userId);
     const now = Date.now();
 
@@ -64,13 +64,13 @@ module.exports = {
     // --- End Bonus Calculation ---
 
     const newSouls = userData.souls + soulsEarned;
-    const newNetWorth = userData.netWorth + soulsEarned;
 
     updateUser(userId, {
         souls: newSouls,
-        netWorth: newNetWorth,
         lastWork: now
     });
+
+    updateUserRank(userId, interaction.client);
 
     const embed = new EmbedBuilder()
       .setTitle('Back to the Grind')

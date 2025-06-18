@@ -43,9 +43,29 @@ module.exports = {
                 embed.addFields({ name: 'No items found', value: 'There are no items in this category yet.' });
             } else {
                 pageItems.forEach(item => {
+                    let description = item.description;
+                    if (item.stats) {
+                        try {
+                            const stats = JSON.parse(item.stats);
+                            const statsDisplay = [];
+                            if (stats.damage) {
+                                statsDisplay.push(`🗡️ ${stats.damage}`);
+                            }
+                            if (stats.defense) {
+                                statsDisplay.push(`🛡️ ${stats.defense}`);
+                            }
+
+                            if (statsDisplay.length > 0) {
+                                description += `\n${statsDisplay.join('\n')}`;
+                            }
+                        } catch (e) {
+                            console.error(`Could not parse stats for item ${item.id}:`, e);
+                        }
+                    }
+
                     embed.addFields({
                         name: `${item.name} - Ѫ ${item.price.toLocaleString()}`,
-                        value: item.description,
+                        value: description,
                         inline: false
                     });
                 });

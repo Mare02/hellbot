@@ -244,6 +244,19 @@ const helpers = {
       };
     }
   },
+
+  getRandomElement(arr) {
+    if (!arr || arr.length === 0) {
+      return null;
+    }
+    return arr[Math.floor(Math.random() * arr.length)];
+  },
+
+  getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  },
 };
 
 module.exports = helpers;
