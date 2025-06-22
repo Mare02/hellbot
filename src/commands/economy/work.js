@@ -70,7 +70,7 @@ module.exports = {
         lastWork: now
     });
 
-    updateUserRank(userId, interaction.client);
+    updateUserRank(userId, interaction.channel);
 
     const embed = new EmbedBuilder()
       .setTitle('Back to the Grind')

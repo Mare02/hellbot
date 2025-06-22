@@ -67,7 +67,7 @@ module.exports = {
                 await acceptContract({ reply }, author, contractId);
                 break;
             case 'attempt':
-                await attemptContract({ reply }, author, contractId);
+                await attemptContract({ reply }, author, contractId, isSlash ? interaction.channel : message.channel);
                 break;
             case 'log':
                 await showUserContractLog({ reply }, author);
@@ -259,7 +259,7 @@ async function acceptContract(responder, author, contractId) {
     }
 }
 
-async function attemptContract(responder, author, contractId) {
+async function attemptContract(responder, author, contractId, channel) {
     const { reply } = responder;
     const userId = author.id;
 
@@ -288,7 +288,7 @@ async function attemptContract(responder, author, contractId) {
         economyService.updateUserContractStatus(author.id, contract.id, 'completed');
         const user = economyService.getUser(author.id);
         economyService.updateUser(author.id, { souls: user.souls + reward });
-        economyService.updateUserRank(author.id, author.client);
+        economyService.updateUserRank(author.id, channel);
 
         return reply(`**Success!** You completed the contract "${contract.name}" and earned **${reward} souls**.`);
     } else {

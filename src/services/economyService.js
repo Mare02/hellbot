@@ -67,7 +67,6 @@ function runMigrations() {
 
 function getRanks() {
     if (!ranksCache) {
-        console.log('Caching ranks from database...');
         ranksCache = db.prepare('SELECT * FROM ranks ORDER BY netWorth ASC').all();
     }
     return ranksCache;
@@ -331,28 +330,56 @@ function getUserNetWorth(userId) {
         return total + (inv.cost || 0);
     }, 0);
 
-    return user.souls + user.bank + itemsValue + investmentsValue;
+    const totalNetWorth = user.souls + user.bank + itemsValue + investmentsValue;
+    const moneyNetWorth = user.souls + user.bank;
+    const itemsNetWorth = itemsValue;
+    const investmentNetWorth = investmentsValue;
+
+    return {
+        totalNetWorth,
+        moneyNetWorth,
+        itemsNetWorth,
+        investmentNetWorth
+    };
 }
 
-async function updateUserRank(userId, client) {
-    const user = getUser(userId);
-    const netWorth = getUserNetWorth(userId);
-    const ranks = getRanks();
+function updateUserNetWorth(userId) {
+    const { totalNetWorth } = getUserNetWorth(userId);
+    updateUser(userId, { net_worth: totalNetWorth });
+    return totalNetWorth;
+}
 
-    const newRank = ranks
+async function updateUserRank(userId, channel) {
+    const { totalNetWorth } = getUserNetWorth(userId);
+    const user = getUser(userId);
+
+    const ranks = getRanks();
+    let newRank = user.rank;
+    let rankChanged = false;
+
+    const newRankObj = ranks
         .slice()
         .sort((a, b) => b.netWorth - a.netWorth)
-        .find(rank => netWorth >= rank.netWorth);
+        .find(rank => totalNetWorth >= rank.netWorth);
 
-    if (newRank && newRank.name !== user.rank) {
-        updateUser(userId, { rank: newRank.name });
-        try {
-            const discordUser = await client.users.fetch(userId);
-            await discordUser.send(`Congratulations! You have been promoted to the rank of **${newRank.name}**!`);
-        } catch (error) {
-            console.error(`Failed to send rank-up DM to ${userId}:`, error);
+    if (newRankObj && newRankObj.name !== user.rank) {
+        newRank = newRankObj.name;
+        rankChanged = true;
+    }
+
+    if (rankChanged) {
+        updateUser(userId, { rank: newRank });
+        if (channel) {
+            try {
+                const userObject = await channel.client.users.fetch(userId);
+                await channel.send(`<@${userId}>, congratulations! You have been promoted to the rank of **${newRank}**!`);
+            } catch (error) {
+                console.error(`Error sending rank promotion message:`, error);
+            }
         }
     }
+
+    return totalNetWorth;
 }
 
 module.exports = {
@@ -387,6 +414,7 @@ module.exports = {
     updateUserContractStatus,
     getUserTotalStats,
     getUserNetWorth,
+    updateUserNetWorth,
     updateUserRank,
     getRanks
 };

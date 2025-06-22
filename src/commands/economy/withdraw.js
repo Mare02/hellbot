@@ -16,7 +16,6 @@ module.exports = {
   async execute(ctx, args) {
     const isSlash = !args;
     const author = isSlash ? ctx.user : ctx.author;
-    const client = isSlash ? ctx.client : ctx.channel.client;
     const amountStr = isSlash ? ctx.options.getString('amount') : args[0];
 
     if (!amountStr) {
@@ -51,7 +50,7 @@ module.exports = {
       bank: newBank,
     });
 
-    updateUserRank(author.id, client);
+    updateUserRank(author.id, ctx.channel);
 
     const replyContent = `You have successfully withdrawn **Ѫ ${amountToWithdraw.toLocaleString()}** from your bank.`;
     if (isSlash) {

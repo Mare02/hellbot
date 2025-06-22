@@ -9,7 +9,6 @@ module.exports = {
     cooldown: 60, // Cooldown to prevent spamming the check
     async execute(ctx) {
         const author = ctx.user || ctx.author;
-        const client = ctx.client;
         const userInvestments = getUserInvestments(author.id);
 
         if (!userInvestments.length) {
@@ -48,7 +47,7 @@ module.exports = {
         }
 
         updateUserInvestments(author.id, totalPayout, collectedInvestmentIds);
-        updateUserRank(author.id, client);
+        updateUserRank(author.id, ctx.channel);
 
         const embed = new EmbedBuilder()
             .setTitle('💰 Earnings Collected! 💰')

@@ -22,7 +22,6 @@ module.exports = {
   async execute(ctx, args) {
     const isSlash = !args;
     const author = isSlash ? ctx.user : ctx.author;
-    const client = isSlash ? ctx.client : ctx.channel.client;
 
     const reply = (content, ephemeral = true) => {
         const payload = { content, ephemeral };
@@ -73,8 +72,8 @@ module.exports = {
         updateUser(targetUser.id, { souls: targetData.souls - amountStolen });
 
         Promise.all([
-            updateUserRank(author.id, client),
-            updateUserRank(targetUser.id, client)
+            updateUserRank(author.id, ctx.channel),
+            updateUserRank(targetUser.id, ctx.channel)
         ]);
 
         return reply(`**Success!** You discreetly relieved ${targetUser.username} of **Ѫ ${amountStolen.toLocaleString()}**!`, false);
@@ -85,7 +84,7 @@ module.exports = {
 
         updateUser(author.id, { souls: authorData.souls - penaltyAmount, last_rob_attempt: now });
 
-        updateUserRank(author.id, client);
+        updateUserRank(author.id, ctx.channel);
 
         return reply(`**Failure!** You were caught trying to rob ${targetUser.username} and had to pay a fine of **Ѫ ${penaltyAmount.toLocaleString()}**.`, false);
     }

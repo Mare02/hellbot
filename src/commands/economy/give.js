@@ -22,7 +22,6 @@ module.exports = {
   async execute(ctx, args) {
     const isSlash = !args;
     const author = isSlash ? ctx.user : ctx.author;
-    const client = isSlash ? ctx.client : ctx.channel.client;
 
     let targetUser;
     let amount;
@@ -73,8 +72,8 @@ module.exports = {
     updateUser(targetUser.id, { souls: targetNewSouls });
 
     Promise.all([
-        updateUserRank(author.id, client),
-        updateUserRank(targetUser.id, client)
+        updateUserRank(author.id, ctx.channel),
+        updateUserRank(targetUser.id, ctx.channel)
     ]);
 
     const replyMessage = `You have successfully given **Ѫ ${amount.toLocaleString()}** to ${targetUser.username}.`;

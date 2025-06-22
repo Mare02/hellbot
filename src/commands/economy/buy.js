@@ -22,7 +22,6 @@ module.exports = {
   async execute(ctx, args) {
     const isSlash = !args;
     const author = isSlash ? ctx.user : ctx.author;
-    const client = isSlash ? ctx.client : ctx.channel.client;
     const itemId = isSlash ? ctx.options.getString('item_id') : args[0];
     const quantity = isSlash ? ctx.options.getInteger('quantity') || 1 : parseInt(args[1] || '1', 10);
 
@@ -67,7 +66,7 @@ module.exports = {
 
     updateUser(author.id, { souls: newSouls });
     addItemToUser(author.id, itemToBuy.id, quantity);
-    updateUserRank(author.id, client);
+    updateUserRank(author.id, ctx.channel);
 
     return reply(`You have successfully purchased **${quantity}x ${itemToBuy.name}** for **Ѫ ${totalCost.toLocaleString()}**!`);
   },

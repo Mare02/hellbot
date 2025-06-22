@@ -11,6 +11,7 @@ const {
     removeAllOfItem,
     wipeUserInventory,
     getUserItem,
+    getRanks,
 } = require('../../services/economyService');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, StringSelectMenuBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, EmbedBuilder } = require('discord.js');
 
@@ -47,7 +48,12 @@ module.exports = {
                     .setCustomId('debug_remove_panel')
                     .setLabel('Remove Assets')
                     .setStyle(ButtonStyle.Danger)
-                    .setEmoji('✖️')
+                    .setEmoji('✖️'),
+                new ButtonBuilder()
+                    .setCustomId('debug_rank_panel')
+                    .setLabel('Manage Ranks')
+                    .setStyle(ButtonStyle.Secondary)
+                    .setEmoji('👑')
             );
 
         const message = await ctx.reply({ embeds: [mainEmbed], components: [mainRow], ephemeral: true });
@@ -92,6 +98,9 @@ async function handleButtonInteraction(interaction, targetUser, author) {
             break;
         case 'debug_remove_panel':
             await showRemovePanel(interaction, targetUser);
+            break;
+        case 'debug_rank_panel':
+            await showRankPanel(interaction, targetUser);
             break;
         case 'debug_give_money':
             await showGiveMoneyOptions(interaction, targetUser);
@@ -163,6 +172,16 @@ async function handleButtonInteraction(interaction, targetUser, author) {
             }
             await interaction.editReply({ content: `Gave ${itemsInCategory.length} unique items from the category to ${targetUser.username}.`, embeds: [], components: [] });
             break;
+        case 'debug_set_rank':
+            await showRankSelect(interaction, targetUser);
+            break;
+        case 'debug_remove_rank':
+            await interaction.deferUpdate();
+            const ranks = getRanks();
+            const defaultRank = ranks[0]?.name || 'Imp';
+            updateUser(targetUser.id, { rank: defaultRank });
+            await interaction.editReply({ content: `Reset ${targetUser.username}'s rank to **${defaultRank}**.`, embeds: [], components: [] });
+            break;
         case 'cancel_action':
             await interaction.deferUpdate();
             await interaction.editReply({ content: 'Action cancelled.', embeds: [], components: [] });
@@ -187,6 +206,15 @@ async function showRemovePanel(interaction, targetUser) {
         new ButtonBuilder().setCustomId('debug_remove_money').setLabel('Remove Money...').setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId('debug_remove_item').setLabel('Remove Item...').setStyle(ButtonStyle.Danger),
         new ButtonBuilder().setCustomId('debug_wipe_inventory').setLabel('Wipe Inventory').setStyle(ButtonStyle.Danger).setEmoji('🗑️')
+    );
+    await interaction.update({ embeds: [embed], components: [row] });
+}
+
+async function showRankPanel(interaction, targetUser) {
+    const embed = new EmbedBuilder().setTitle('Manage Ranks').setDescription(`Managing ranks for **${targetUser.username}**`).setColor('#9333ea');
+    const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('debug_set_rank').setLabel('Set Rank').setStyle(ButtonStyle.Primary),
+        new ButtonBuilder().setCustomId('debug_remove_rank').setLabel('Reset to Default Rank').setStyle(ButtonStyle.Danger)
     );
     await interaction.update({ embeds: [embed], components: [row] });
 }
@@ -225,6 +253,26 @@ async function showItemCategorySelect(interaction, targetUser, context) { // con
     const embed = new EmbedBuilder()
         .setColor(context === 'give' ? '#3b82f6' : '#f97316')
         .setDescription(`Select an item category.`);
+    await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(selectMenu)] });
+}
+
+async function showRankSelect(interaction, targetUser) {
+    const ranks = getRanks();
+    if (!ranks.length) return interaction.reply({ content: 'No ranks found.', ephemeral: true });
+
+    const rankOptions = ranks.map(rank => ({
+        label: rank.name,
+        description: `Net worth requirement: ${rank.netWorth.toLocaleString()}`,
+        value: rank.name,
+    }));
+    const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('rank_select')
+        .setPlaceholder('Select a rank...')
+        .addOptions(rankOptions);
+
+    const embed = new EmbedBuilder()
+        .setColor('#9333ea')
+        .setDescription(`Select a new rank for **${targetUser.username}**.`);
     await interaction.update({ embeds: [embed], components: [new ActionRowBuilder().addComponents(selectMenu)] });
 }
 
@@ -298,6 +346,16 @@ async function handleSelectMenuInteraction(interaction, targetUser, author) {
 
             await interaction.update({ embeds: [embed], components: [row] });
         }
+    }
+
+    if (customId === 'rank_select') {
+        const rankName = interaction.values[0];
+        updateUser(targetUser.id, { rank: rankName });
+        await interaction.update({
+            content: `Set **${targetUser.username}**'s rank to **${rankName}**.`,
+            embeds: [],
+            components: []
+        });
     }
 }
 

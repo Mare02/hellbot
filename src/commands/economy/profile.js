@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { getUser, getUserInventory, getItemById, getUserTotalStats, getUserNetWorth, getRanks } = require('../../services/economyService');
+const { getUser, getUserInventory, getItemById, getUserTotalStats, getUserNetWorth, getRanks, getUserInvestments } = require('../../services/economyService');
 
 module.exports = {
   name: 'profile',
@@ -26,10 +26,9 @@ module.exports = {
     const userInventory = getUserInventory(targetUser.id);
     const userDamage = getUserTotalStats(targetUser.id, 'damage');
     const userDefense = getUserTotalStats(targetUser.id, 'defense');
+    const userInvestments = getUserInvestments(targetUser.id);
 
-    // --- Dynamic Net Worth Calculation ---
     const netWorth = getUserNetWorth(targetUser.id);
-    // --- End Dynamic Net Worth Calculation ---
 
     const ranks = getRanks();
     const userRankInfo = ranks.find(r => r.name === userData.rank);
@@ -42,12 +41,18 @@ module.exports = {
       .addFields(
         { name: '💰 Souls', value: `Ѫ ${userData.souls.toLocaleString()}`, inline: true },
         { name: '🏦 Bank', value: `Ѫ ${userData.bank.toLocaleString()}`, inline: true },
-        { name: '💼 Net Worth', value: `Ѫ ${netWorth.toLocaleString()}`, inline: true },
+        { name: '💼 Net Worth', value: `Ѫ ${netWorth.totalNetWorth.toLocaleString()}`, inline: true },
         { name: '⚔️ Combat Stats', value: `**Damage:** ${userDamage} 🗡️\n**Defense:** ${userDefense} 🛡️`, inline: false },
         { name: '🏆 Rank', value: rankDisplay, inline: false },
       );
 
-    // --- Inventory Showcase ---
+    if (userInvestments.length > 0) {
+      const investmentString = userInvestments
+        .map(inv => `• ${inv.name}`)
+        .join('\n');
+      embed.addFields({ name: '📈 Investments', value: investmentString, inline: false });
+    }
+
     if (userInventory.length > 0) {
         const fullInventory = userInventory
             .map(invItem => ({ ...getItemById(invItem.itemId), quantity: invItem.quantity }))
@@ -65,7 +70,6 @@ module.exports = {
             embed.addFields({ name: '💎 Prized Possessions', value: inventoryString, inline: false });
         }
     }
-    // --- End Inventory Showcase ---
 
     embed
       .setFooter({ text: 'Hellbot Economy' })
