@@ -6,8 +6,10 @@ module.exports = {
     name: "Hellbot",
     description: "The Custom General-Purpose Bot for Hell's Resting Place™",
     version: "1.5",
-    appId: process.env.CLIENT_ID,
-    inviteLink: `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&permissions=8&scope=bot`,
+    // appId: process.env.CLIENT_ID,
+    appId: process.env.DEV_CLIENT_ID,
+    // inviteLink: `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&permissions=8&scope=bot`,
+    inviteLink: `https://discord.com/api/oauth2/authorize?client_id=${process.env.DEV_CLIENT_ID}&permissions=8&scope=bot`,
   },
 
   commandsPrefix: process.env.NODE_ENV === 'development' ? "dev::" : "::",
