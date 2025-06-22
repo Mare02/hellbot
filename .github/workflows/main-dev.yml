@@ -1,0 +1,35 @@
+name: Node.js CI
+
+on:
+  push:
+    branches: [ "feature/economy" ]
+
+jobs:
+  build:
+    timeout-minutes: 10
+    runs-on: self-hosted
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Pull changes
+        run: |
+          cd ../../../../hellbot-dev
+          git reset --hard
+          git pull origin feature/economy
+      - name: Install dependencies
+        run: npm install
+      - name: Restart PM2
+        run: pm2 restart hellbot
+      - name: Get commit message
+        run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+      - name: Send bot updated message
+        run: node -e "require('./src/jobs/botUpdatedJob').execute(process.env.COMMIT_MESSAGE)"
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
+      - name: Update slash commands
+        run: node -e "require('./src/commands/slashCommands/updateslashcommands').execute(null, true)"
+        env:
+          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          CLIENT_ID: ${{ secrets.DEV_CLIENT_ID }}
+
