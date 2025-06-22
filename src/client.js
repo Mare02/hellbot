@@ -5,7 +5,8 @@ let instance;
 
 function getInstance() {
   if (!instance) {
-    const token = process.env.DISCORD_TOKEN;
+    // const token = process.env.DISCORD_TOKEN;
+    const token = process.env.DEV_DISCORD_TOKEN;
 
     instance = new Client({
       intents: [
