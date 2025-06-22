@@ -24,4 +24,26 @@ const loadCommands = (dir) => {
   return commands;
 };
 
-module.exports = loadCommands(__dirname);
+const loadEconomyCommands = (dir) => {
+  const economyDir = path.join(dir, 'economy');
+  if (!fs.existsSync(economyDir)) {
+    return {};
+  }
+
+  const commandFiles = fs.readdirSync(economyDir, { withFileTypes: true });
+
+  const commands = commandFiles.reduce((cmds, file) => {
+    if (file.isFile() && file.name.endsWith('.js') && file.name !== 'index.js') {
+      const commandName = file.name.split('.')[0];
+      const command = require(path.join(economyDir, file.name));
+      if (!command.system && command.name && typeof command.name === 'string') {
+        cmds[commandName] = command;
+      }
+    }
+    return cmds;
+  }, {});
+
+  return commands;
+};
+
+module.exports = loadEconomyCommands(__dirname);
