@@ -25,11 +25,11 @@ jobs:
       - name: Send bot updated message
         run: node -e "require('./src/jobs/botUpdatedJob').execute(process.env.COMMIT_MESSAGE)"
         env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_TOKEN: ${{ secrets.DEV_DISCORD_TOKEN }}
           COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
       - name: Update slash commands
         run: node -e "require('./src/commands/slashCommands/updateslashcommands').execute(null, true)"
         env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
+          DISCORD_TOKEN: ${{ secrets.DEV_DISCORD_TOKEN }}
           CLIENT_ID: ${{ secrets.DEV_CLIENT_ID }}
 
