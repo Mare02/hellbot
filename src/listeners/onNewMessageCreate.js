@@ -24,7 +24,7 @@ module.exports = () => {
       command = updateslashcommands;
     }
 
-    if (message.mentions.has(client.user.id) && commandName !== askai.name) {
+    if (message.mentions.has(client.user.id) && commandName !== askai.name && message.length) {
       try {
         await askai.execute(message, fullArgs, {useBrainRotPrompt: true});
       } catch (error) {
