@@ -16,11 +16,11 @@ jobs:
           cd ../../../../hellbot-dev
           git reset --hard origin/feature/economy
           git pull origin feature/economy
+      - name: Install dependencies
+        run: npm install
       - name: Run migrations
         run: |
           node scripts/run-migrations.js
-      - name: Install dependencies
-        run: npm install
       - name: Restart PM2
         run: pm2 restart hellbot-dev
       - name: Get commit message
