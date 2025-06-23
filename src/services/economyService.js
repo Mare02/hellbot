@@ -295,7 +295,7 @@ function deleteAllContracts() {
             totalChanges: (userContractsResult.changes || 0) + (contractsResult.changes || 0)
         };
     });
-    
+
     return deleteAll();
 }
 

@@ -13,7 +13,7 @@ module.exports = {
             await message.channel.send('Deleting all contracts... ⏳');
             const result = deleteAllContracts();
             const deletedCount = result.changes || 0;
-            
+
             if (deletedCount === 0) {
                 await message.channel.send('✅ No contracts were found to delete. The system is already clean.');
             } else {
@@ -24,4 +24,4 @@ module.exports = {
             await message.channel.send("❌ An error occurred while deleting contracts. Please check the logs.");
         }
     },
-}; 
+};
