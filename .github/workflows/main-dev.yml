@@ -38,4 +38,3 @@ jobs:
         env:
           DISCORD_TOKEN: ${{ secrets.DEV_DISCORD_TOKEN }}
           CLIENT_ID: ${{ secrets.DEV_CLIENT_ID }}
-
