@@ -283,6 +283,22 @@ function deleteExpiredContracts() {
     return db.prepare('DELETE FROM contracts WHERE expires_at <= ?').run(now);
 }
 
+function deleteAllContracts() {
+    // Use a transaction to delete from both tables
+    const deleteAll = db.transaction(() => {
+        const userContractsResult = db.prepare('DELETE FROM user_contracts').run();
+        const contractsResult = db.prepare('DELETE FROM contracts').run();
+
+        return {
+            userContractsDeleted: userContractsResult.changes || 0,
+            contractsDeleted: contractsResult.changes || 0,
+            totalChanges: (userContractsResult.changes || 0) + (contractsResult.changes || 0)
+        };
+    });
+    
+    return deleteAll();
+}
+
 function updateUserContractStatus(userId, contractId, status) {
     const stmt = db.prepare('UPDATE user_contracts SET status = ? WHERE user_id = ? AND contract_id = ?');
     stmt.run(status, userId, contractId);
@@ -412,6 +428,7 @@ module.exports = {
     acceptContract,
     createContract,
     deleteExpiredContracts,
+    deleteAllContracts,
     updateUserContractStatus,
     getUserTotalStats,
     getUserNetWorth,

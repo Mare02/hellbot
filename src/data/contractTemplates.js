@@ -35,7 +35,7 @@ const contractTemplates = [
         description: "An infamous crime lord wants you to infiltrate a corrupt noble's fortress and 'liberate' a priceless artifact. High risk, high reward.",
         rewardRange: [1000, 2500],
         requirements: {
-            min_rank: "Mastermind", // Example of a very high rank
+            min_rank: "Thug", // Example of a very high rank
             min_damage: 100,
             min_armor_defense: 80,
         },

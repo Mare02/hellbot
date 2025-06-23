@@ -4,6 +4,7 @@ const { getInstance } = require('./client');
 const dailyFactJob = require('./jobs/dailyFactJob');
 const onThisDayCommand = require('./commands/onthisday');
 const { dailyContractsJob } = require('./jobs/dailyContractsJob');
+const config = require('./utils/config');
 
 const client = getInstance();
 
