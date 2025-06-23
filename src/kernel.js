@@ -7,11 +7,11 @@ const { dailyContractsJob } = require('./jobs/dailyContractsJob');
 
 const client = getInstance();
 
-if (client.user.id !== config.bot.appId) {
-  return;
-}
-
 client.on('ready', () => {
+  if (client.user.id !== config.bot.appId) {
+    return;
+  }
+
   cron.schedule('0 18 * * *', () => {
     dailyFactJob.execute();
   });
