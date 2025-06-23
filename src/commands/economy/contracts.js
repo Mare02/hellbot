@@ -282,7 +282,7 @@ async function attemptContract(responder, author, contractId, channel) {
     }
 
     const requirements = contract.requirements ? JSON.parse(contract.requirements) : {};
-    const { success, message, reward } = executeCombat(author.id, requirements);
+    const { success, message, reward } = executeCombat(author.id, requirements, contract);
 
     if (success) {
         economyService.updateUserContractStatus(author.id, contract.id, 'completed');
@@ -328,9 +328,10 @@ async function showUserContractLog(responder, author) {
  * Executes the combat simulation for a contract attempt.
  * @param {string} userId - The ID of the user attempting the contract.
  * @param {object} requirements - The parsed requirements object from the contract.
- * @returns {object} An object containing the full combat results.
+ * @param {object} contract - The contract object containing reward information.
+ * @returns {object} An object containing success, message, and reward.
  */
-function executeCombat(userId, requirements) {
+function executeCombat(userId, requirements, contract) {
     const userDamage = economyService.getUserTotalStats(userId, 'damage');
     const userDefense = economyService.getUserTotalStats(userId, 'defense');
     const user = economyService.getUser(userId);
@@ -341,14 +342,18 @@ function executeCombat(userId, requirements) {
     // Success chance is based on the user's damage relative to the target's defense.
     // The formula gives a base 50% chance, adjusted up or down.
     const successChance = Math.max(0.1, Math.min(0.95, 0.5 + (userDamage - targetDefense / 2) / 100));
-    const isSuccess = Math.random() < successChance;
+    const success = Math.random() < successChance;
+
+    let message;
+    if (success) {
+        message = `You defeated the target with your ${userDamage} damage against their ${targetDefense} defense!`;
+    } else {
+        message = `You were defeated! Your ${userDamage} damage wasn't enough against the target's ${targetDefense} defense.`;
+    }
 
     return {
-        isSuccess,
-        userDamage,
-        userDefense,
-        userSouls: user.souls,
-        targetDamage,
-        targetDefense,
+        success,
+        message,
+        reward: contract.reward,
     };
 }
