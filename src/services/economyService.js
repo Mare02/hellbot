@@ -383,6 +383,7 @@ async function updateUserRank(userId, channel) {
 }
 
 module.exports = {
+    db,
     runMigrations,
     getUser,
     updateUser,

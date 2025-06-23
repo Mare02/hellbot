@@ -1,9 +1,7 @@
 const { usePrompt } = require('../services/AIservice');
-const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
 const { MODERATOR } = require('../utils/roles');
 const { brainRotPrompt } = require('../utils/aiPrompts');
-const config = require('../utils/config');
 
 const MAX_MESSAGES_HISTORY = 15;
 const REPLY_PROBABILITY = 0.6;

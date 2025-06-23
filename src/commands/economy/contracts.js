@@ -1,5 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
-const economyService = require('../services/economyService');
+const economyService = require('../../services/economyService');
 
 const ITEMS_PER_PAGE = 5;
 
@@ -171,14 +171,14 @@ async function showContractInfo(responder, contractId) {
     // Parse requirements JSON
     const requirements = contract.requirements ? JSON.parse(contract.requirements) : {};
     let reqString = '';
-    if (requirements.min_rank) reqString += `**Minimum Rank:** ${requirements.min_rank}\\n`;
-    if (requirements.min_damage) reqString += `**Required Damage:** ${requirements.min_damage}+\\n`;
-    if (requirements.min_armor_defense) reqString += `**Required Defense:** ${requirements.min_armor_defense}+\\n`;
+    if (requirements.min_rank) reqString += `**Minimum Rank:** ${requirements.min_rank}\n`;
+    if (requirements.min_damage) reqString += `**Required Damage:** ${requirements.min_damage}\n`;
+    if (requirements.min_armor_defense) reqString += `**Required Defense:** ${requirements.min_armor_defense}\n`;
     if (reqString === '') reqString = 'None';
 
     let targetStatsString = '';
-    if (requirements.target_damage) targetStatsString += `**Target Damage:** ${requirements.target_damage} 🗡️\\n`;
-    if (requirements.target_defense) targetStatsString += `**Target Defense:** ${requirements.target_defense} 🛡️\\n`;
+    if (requirements.target_damage) targetStatsString += `**Target Damage:** ${requirements.target_damage} 🗡️\n`;
+    if (requirements.target_defense) targetStatsString += `**Target Defense:** ${requirements.target_defense} 🛡️\n`;
     if (targetStatsString === '') targetStatsString = 'Unknown';
 
 

@@ -42,6 +42,7 @@ module.exports = () => {
       && message.channel.name.startsWith('general')
       && !message.mentions.has(client.user.id)
       && message.guild.id === config.homeServerId
+      && client.user.id === config.bot.appId
     ) {
       try {
         await freewill.execute(message, []);

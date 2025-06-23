@@ -36,7 +36,7 @@ module.exports = {
             const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
             const userName = user ? user.username : 'Unknown User';
             const userData = top10[i];
-            description += `${medal} **${userName}** - Ѫ ${userData.netWorth.toLocaleString()}\n`;
+            description += `${medal} **${userName}** - Ѫ ${userData.netWorth.totalNetWorth.toLocaleString()}\n`;
         }
 
         if (description === '') {

@@ -2,9 +2,8 @@ const { EmbedBuilder, SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBui
 const { getInvestments, getUser, getUserInvestments, buyInvestment } = require('../../services/economyService');
 
 module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('investments')
-        .setDescription('View and purchase available investments.'),
+    name: 'investments',
+    description: 'View and purchase available investments.',
     slash: true,
     cooldown: 10,
     async execute(ctx) {
