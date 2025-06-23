@@ -79,8 +79,8 @@ module.exports = {
     },
 };
 
-async function listContracts(responder, author) {
-    const { reply, isSlash } = responder;
+async function listContracts(responder) {
+    const { reply, author, isSlash } = responder;
     const contracts = economyService.getAvailableContracts();
 
     if (!contracts || contracts.length === 0) {
@@ -134,7 +134,7 @@ async function listContracts(responder, author) {
     });
 
     const collector = embedMessage.createMessageComponentCollector({
-        filter: i => i.user.id === author.id,
+        filter: i => i.user && author && i.user.id === author.id,
         time: 60000, // 1 minute
     });
 
