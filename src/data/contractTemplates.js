@@ -6,6 +6,8 @@ const contractTemplates = [
         requirements: {
             min_rank: "Thug",
             min_damage: 10,
+            target_damage: 15,
+            target_defense: 8,
         },
     },
     {
@@ -22,6 +24,8 @@ const contractTemplates = [
             min_rank: "Executioner",
             min_damage: 30,
             min_armor_defense: 20,
+            target_damage: 40,
+            target_defense: 25,
         },
     },
     {
@@ -32,6 +36,8 @@ const contractTemplates = [
             min_rank: "Thug",
             min_damage: 100,
             min_armor_defense: 80,
+            target_damage: 120,
+            target_defense: 90,
         },
     },
     {
@@ -41,6 +47,8 @@ const contractTemplates = [
         requirements: {
             min_rank: "Goblin",
             min_damage: 20,
+            target_damage: 25,
+            target_defense: 15,
         },
     },
     {
@@ -49,6 +57,8 @@ const contractTemplates = [
         rewardRange: [50, 100],
         requirements: {
             min_rank: "Imp",
+            target_damage: 8,
+            target_defense: 5,
         },
     },
     {
@@ -59,6 +69,8 @@ const contractTemplates = [
             min_rank: "Overlord",
             min_damage: 150,
             min_armor_defense: 100,
+            target_damage: 180,
+            target_defense: 120,
         },
     },
     {
@@ -69,6 +81,8 @@ const contractTemplates = [
             min_rank: "Demon Lord",
             min_damage: 200,
             min_armor_defense: 150,
+            target_damage: 250,
+            target_defense: 180,
         },
     },
     {
@@ -79,6 +93,8 @@ const contractTemplates = [
             min_rank: "Executioner",
             min_damage: 50,
             min_armor_defense: 40,
+            target_damage: 60,
+            target_defense: 45,
         },
     },
     {
@@ -87,6 +103,8 @@ const contractTemplates = [
         rewardRange: [80, 150],
         requirements: {
             min_rank: "Imp",
+            target_damage: 12,
+            target_defense: 8,
         },
     },
     {
@@ -96,6 +114,8 @@ const contractTemplates = [
         requirements: {
             min_rank: "Goblin",
             min_damage: 25,
+            target_damage: 30,
+            target_defense: 18,
         },
     },
     {
@@ -105,6 +125,8 @@ const contractTemplates = [
         requirements: {
             min_rank: "Thug",
             min_damage: 40,
+            target_damage: 50,
+            target_defense: 30,
         },
     },
     {
@@ -115,6 +137,8 @@ const contractTemplates = [
             min_rank: "Executioner",
             min_damage: 60,
             min_armor_defense: 50,
+            target_damage: 75,
+            target_defense: 60,
         },
     },
     {
@@ -125,6 +149,8 @@ const contractTemplates = [
             min_rank: "Overlord",
             min_damage: 180,
             min_armor_defense: 120,
+            target_damage: 220,
+            target_defense: 150,
         },
     },
     {
@@ -135,6 +161,8 @@ const contractTemplates = [
             min_rank: "Demon Lord",
             min_damage: 250,
             min_armor_defense: 200,
+            target_damage: 300,
+            target_defense: 240,
         },
     },
 ];

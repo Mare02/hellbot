@@ -93,6 +93,6 @@ module.exports = {
       embed.addFields({ name: 'Bonus From', value: bonusItems.join(', ') });
     }
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply({ embeds: [embed], ephemeral: true });
   },
 };

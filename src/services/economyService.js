@@ -233,7 +233,7 @@ function getContract(contractId) {
 
 function getUserContracts(userId) {
     const stmt = db.prepare(`
-        SELECT c.*, uc.status
+        SELECT c.*, uc.status, uc.id as user_contract_id
         FROM user_contracts uc
         JOIN contracts c ON uc.contract_id = c.id
         WHERE uc.user_id = ?
@@ -242,8 +242,11 @@ function getUserContracts(userId) {
 }
 
 function getUserContract(userId, contractId) {
-    const stmt = db.prepare('SELECT * FROM user_contracts WHERE user_id = ? AND contract_id = ?');
-    return stmt.get(userId, contractId);
+    return db.prepare('SELECT * FROM user_contracts WHERE user_id = ? AND contract_id = ?').get(userId, contractId);
+}
+
+function getUserContractById(userContractId) {
+    return db.prepare('SELECT * FROM user_contracts WHERE id = ?').get(userContractId);
 }
 
 function acceptContract(userId, contractId) {
@@ -425,6 +428,7 @@ module.exports = {
     getContract,
     getUserContracts,
     getUserContract,
+    getUserContractById,
     acceptContract,
     createContract,
     deleteExpiredContracts,

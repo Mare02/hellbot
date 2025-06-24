@@ -75,6 +75,6 @@ module.exports = {
       .setFooter({ text: 'Hellbot Economy' })
       .setTimestamp();
 
-    return isSlash ? ctx.reply({ embeds: [embed] }) : ctx.reply({ embeds: [embed] });
+    return isSlash ? ctx.reply({ embeds: [embed], ephemeral: true }) : ctx.reply({ embeds: [embed] });
   },
 };

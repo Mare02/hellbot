@@ -79,7 +79,7 @@ module.exports = {
     const replyMessage = `You have successfully given **Ѫ ${amount.toLocaleString()}** to ${targetUser.username}.`;
 
     return isSlash
-        ? ctx.reply(replyMessage)
+        ? ctx.reply({ content: replyMessage, ephemeral: true })
         : ctx.channel.send(replyMessage);
   },
 };

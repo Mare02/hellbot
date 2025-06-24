@@ -38,7 +38,7 @@ module.exports = {
       .setTimestamp();
 
     if (isSlash) {
-      await ctx.reply({ embeds: [embed] });
+      await ctx.reply({ embeds: [embed], ephemeral: true });
     } else {
       await ctx.reply({ embeds: [embed] });
     }

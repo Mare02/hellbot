@@ -23,7 +23,7 @@ module.exports = {
 
         const isSlash = !ctx.author;
         return isSlash
-            ? ctx.reply({ embeds: [embed] })
+            ? ctx.reply({ embeds: [embed], ephemeral: true })
             : ctx.channel.send({ embeds: [embed] });
     }
 };

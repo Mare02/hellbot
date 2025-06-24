@@ -71,7 +71,7 @@ module.exports = {
                 const result = buyInvestment(author.id, investment.id, investment.cost);
 
                 if (result.success) {
-                    await i.followUp({ content: `Congratulations! You have successfully purchased a **${investment.name}**. Use \`/collect\` to claim your earnings.` });
+                    await i.followUp({ content: `Congratulations! You have successfully purchased a **${investment.name}**. Use \`/collect\` to claim your earnings.`, ephemeral: true });
                 } else {
                     await i.followUp({ content: `The transaction failed. Reason: ${result.message}`, ephemeral: true });
                 }

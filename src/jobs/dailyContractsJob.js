@@ -32,20 +32,6 @@ async function generateDailyContracts() {
                 // --- Generate Target Stats ---
                 const requirements = { ...template.requirements };
 
-                // Only generate target stats if the contract has actual requirements
-                const hasRequirements = requirements.min_damage || requirements.min_armor_defense;
-
-                if (hasRequirements) {
-                    // Base difficulty is calculated from the minimum damage and defense required for the contract.
-                    const baseDifficulty = (requirements.min_damage || 5) + (requirements.min_armor_defense || 0);
-
-                    // Target defense is primarily based on the damage required.
-                    requirements.target_defense = Math.floor(baseDifficulty * (getRandomInt(10, 15) / 10)); // 1.0x to 1.5x
-
-                    // Target damage is primarily based on the armor required, but with a base value.
-                    requirements.target_damage = Math.floor((requirements.min_armor_defense || 5) * (getRandomInt(5, 10) / 10)); // 0.5x to 1.0x
-                }
-
                 const newContract = {
                     name: template.name,
                     description: template.description,
