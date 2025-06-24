@@ -37,7 +37,7 @@ module.exports = {
                         .setRequired(true)))
         .addSubcommand(subcommand =>
             subcommand
-                .setName('log')
+                .setName('me')
                 .setDescription('Shows your personal log of accepted contracts.')),
     slash: true,
     name: 'contracts',
@@ -85,7 +85,7 @@ module.exports = {
             case 'attempt':
                 await attemptContract({ reply, author }, contractId, responder.channel);
                 break;
-            case 'log':
+            case 'me':
                 await showUserContractLog(responder);
                 break;
             default:
@@ -245,10 +245,10 @@ function buildContractInfoEmbed(contract) {
     if (requirements.min_armor_defense) reqString += `**Required Defense:** ${requirements.min_armor_defense}\n`;
     if (reqString === '') reqString = 'None';
 
-    let targetStatsString = '';
+    let targetStatsString = null;
     if (requirements.target_damage) targetStatsString += `**Target Damage:** ${requirements.target_damage} 🗡️\n`;
     if (requirements.target_defense) targetStatsString += `**Target Defense:** ${requirements.target_defense} 🛡️\n`;
-    if (targetStatsString === '') targetStatsString = 'Unknown';
+    if (targetStatsString === '') targetStatsString = 'None';
 
 
     const embed = new EmbedBuilder()
