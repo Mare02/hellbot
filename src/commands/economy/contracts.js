@@ -97,10 +97,16 @@ module.exports = {
 
 async function listContracts(responder) {
     const { reply, author, interaction } = responder;
-    const contracts = economyService.getAvailableContracts();
+    // Fetch all available contracts and the user's contracts separately.
+    const allAvailableContracts = economyService.getAvailableContracts(author.id);
+    const userContracts = economyService.getUserContracts(author.id);
+    const userContractIds = userContracts.map(uc => uc.id);
+
+    // Filter out contracts the user has already interacted with.
+    const contracts = allAvailableContracts.filter(c => !userContractIds.includes(c.id));
 
     if (!contracts || contracts.length === 0) {
-        return reply({ content: "There are no contracts available at the moment. Please check back later.", ephemeral: true });
+        return reply({ content: "There are no new contracts available for you.", ephemeral: true });
     }
 
     let page = 0;
@@ -245,7 +251,7 @@ function buildContractInfoEmbed(contract) {
     if (requirements.min_armor_defense) reqString += `**Required Defense:** ${requirements.min_armor_defense}\n`;
     if (reqString === '') reqString = 'None';
 
-    let targetStatsString = null;
+    let targetStatsString = '';
     if (requirements.target_damage) targetStatsString += `**Target Damage:** ${requirements.target_damage} 🗡️\n`;
     if (requirements.target_defense) targetStatsString += `**Target Defense:** ${requirements.target_defense} 🛡️\n`;
     if (targetStatsString === '') targetStatsString = 'None';
@@ -316,31 +322,45 @@ async function acceptContract(responder, contractId) {
         }
     }
 
-    // 2. Check Damage
+    // Get user stats for all checks
+    const userDamage = economyService.getUserTotalStats(userId, 'damage');
+    const userDefense = economyService.getUserTotalStats(userId, 'defense');
+
+    // 2. Check Minimum Damage
     if (requirements.min_damage) {
-        const userDamage = economyService.getUserTotalStats(userId, 'damage');
         if (userDamage < requirements.min_damage) {
             return reply({ content: `You do not meet the damage requirement. You need **${requirements.min_damage}** damage, but you only have **${userDamage}**.`, ephemeral: true });
         }
     }
 
-    // 3. Check Armor Defense
+    // 3. Check Minimum Armor Defense
     if (requirements.min_armor_defense) {
-        const userDefense = economyService.getUserTotalStats(userId, 'defense');
         if (userDefense < requirements.min_armor_defense) {
             return reply({ content: `You do not meet the armor defense requirement. You need **${requirements.min_armor_defense}** defense, but you only have **${userDefense}**.`, ephemeral: true });
         }
     }
 
+    // 4. Check if user damage is greater than target defense
+    if (requirements.target_defense && userDamage < requirements.target_defense) {
+        return reply({
+            content: `You are not fit for this contract. Your damage must be equal or greater than the target's defense.`,
+            ephemeral: true
+        });
+    }
+
     // --- End Requirement Checks ---
 
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours from now
-    economyService.acceptContractForUser(author.id, contract.id, expiresAt);
+    const result = economyService.acceptContract(author.id, contract.id);
 
-    const expiryTimestamp = Math.floor(new Date(expiresAt).getTime() / 1000);
+    if (!result.success) {
+        return reply({
+            content: result.message,
+            ephemeral: true,
+        });
+    }
 
     return reply({
-        content: `You have accepted contract **#${contract.id}: ${contract.name}**. You have until <t:${expiryTimestamp}:F> to complete it. Good luck.`,
+        content: `You have accepted contract **#${contract.id}: ${contract.name}**. You can attempt it at any time via \`/contracts me\` or \`/contracts attempt ${contract.id}\`. Good luck.`,
         ephemeral: true
     }).then(() => ({ success: true }));
 }
@@ -359,7 +379,7 @@ async function attemptContract(responder, contractId, channel) {
     }
 
     if (userContract.status === 'completed' || userContract.status === 'failed') {
-        return reply({ content: `You have already attempted this contract. Your result was: **${userContract.status}**.`, ephemeral: true });
+        return reply({ content: `You have already attempted this contract. Your result was: **${formatStatus(userContract.status)}**.`, ephemeral: true });
     }
 
     const contract = economyService.getContract(contractId);
@@ -380,8 +400,7 @@ async function attemptContract(responder, contractId, channel) {
             .setTitle('Contract Attempt Result')
             .setDescription(message)
             .setColor('#57F287')
-            .addFields({ name: 'Contract', value: `${contract.name} (\`#${contract.id}\`)` })
-            .setFooter({ text: 'You can attempt this contract again if you did not succeed.' });
+            .addFields({ name: 'Contract', value: `${contract.name} (\`#${contract.id}\`)` });
 
         if (success) {
             resultEmbed.addFields({ name: 'Reward', value: `Ѫ ${contract.reward.toLocaleString()}` });
@@ -411,10 +430,18 @@ async function showUserContractLog(responder) {
         const end = start + ITEMS_PER_PAGE;
         const currentContracts = userContracts.slice(start, end);
 
+        const contractListString = currentContracts.map(uc => {
+            let statusEmoji = '📝'; // in_progress
+            if (uc.status === 'completed') statusEmoji = '✅';
+            else if (uc.status === 'failed') statusEmoji = '❌';
+            return `${statusEmoji} **${uc.name}** (\`#${uc.id}\`) - Status: ${formatStatus(uc.status)}`;
+        }).join('\n');
+
+
         const embed = new EmbedBuilder()
             .setTitle(`${author.username}'s Contract Log`)
-            .setDescription("Select a contract from the dropdown to view its details and attempt it.")
             .setColor('#3498DB')
+            .setDescription(contractListString.length > 0 ? contractListString : "You have no contracts on this page.")
             .setFooter({ text: `Page ${currentPage + 1} of ${totalPages()}` });
 
         const components = [];
@@ -424,23 +451,20 @@ async function showUserContractLog(responder) {
         );
         components.push(navRow);
 
-        if (currentContracts.length > 0) {
+        const attemptableContracts = currentContracts.filter(uc => uc.status === 'in_progress');
+
+        if (attemptableContracts.length > 0) {
             const selectMenu = new StringSelectMenuBuilder()
                 .setCustomId('select_user_contract')
-                .setPlaceholder('Select a contract to attempt...')
-                .addOptions(currentContracts.map(uc => {
-                    let statusEmoji = '📝'; // Default: accepted
-                    if (uc.status === 'completed') statusEmoji = '✅';
-                    if (uc.status === 'failed') statusEmoji = '❌';
+                .setPlaceholder('Select a contract to view or attempt...')
+                .addOptions(attemptableContracts.map(uc => {
                     return {
-                        label: `${statusEmoji} ${uc.name}`,
-                        description: `Status: ${uc.status} | ID: ${uc.id}`,
+                        label: uc.name,
+                        description: `ID: ${uc.id} - Status: ${formatStatus(uc.status)}`,
                         value: `${uc.id}:${uc.user_contract_id}`
                     };
                 }));
             components.push(new ActionRowBuilder().addComponents(selectMenu));
-        } else {
-            embed.setDescription("You have no more contracts on this page.");
         }
 
         return { embeds: [embed], components };
@@ -526,6 +550,13 @@ async function showUserContractLog(responder) {
     });
 }
 
+function formatStatus(status) {
+    if (!status) return 'Unknown';
+    return status
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+}
+
 /**
  * Executes the combat simulation for a contract attempt.
  * @param {string} userId - The ID of the user attempting the contract.
@@ -536,21 +567,37 @@ async function showUserContractLog(responder) {
 function executeCombat(userId, requirements, contract) {
     const userDamage = economyService.getUserTotalStats(userId, 'damage');
     const userDefense = economyService.getUserTotalStats(userId, 'defense');
-    const user = economyService.getUser(userId);
 
     const targetDamage = requirements.target_damage || 0;
-    const targetDefense = requirements.target_defense || 1; // Avoid division by zero
+    const targetDefense = requirements.target_defense || 0;
+
+    // Handle non-combat or trivial contracts where no target stats are defined.
+    if (targetDamage === 0 && targetDefense === 0) {
+        return {
+            success: true,
+            message: `You successfully completed the contract "${contract.name}" without any confrontation.`,
+            reward: contract.reward,
+        };
+    }
 
     // Success chance is based on the user's damage relative to the target's defense.
-    // The formula gives a base 50% chance, adjusted up or down.
     const successChance = Math.max(0.1, Math.min(0.95, 0.5 + (userDamage - targetDefense / 2) / 100));
     const success = Math.random() < successChance;
 
     let message;
     if (success) {
-        message = `You defeated the target with your ${userDamage} damage against their ${targetDefense} defense!`;
+        if (userDamage > 0) {
+            message = `You defeated the target with your ${userDamage} damage against their ${targetDefense} defense!`;
+        } else {
+            // Successful, but with 0 damage. This implies luck or other factors.
+            message = `By a stroke of luck, you managed to overcome the target despite having no weapons!`;
+        }
     } else {
-        message = `You were defeated! Your ${userDamage} damage wasn't enough against the target's ${targetDefense} defense.`;
+        if (userDamage > 0) {
+            message = `You were defeated! Your ${userDamage} damage wasn't enough against the target's ${targetDefense} defense.`;
+        } else {
+            message = `You were defeated! You stood no chance without any weapons.`;
+        }
     }
 
     return {

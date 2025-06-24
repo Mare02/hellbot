@@ -221,10 +221,17 @@ function updateUserInvestments(userId, totalPayout, collectedInvestmentIds) {
 
 // --- Contract Functions ---
 
-function getAvailableContracts() {
-    // Fetches contracts that have not expired yet
+function getAvailableContracts(userId) {
+    // Fetches contracts that have not expired yet and that the user has not interacted with.
     const now = new Date().toISOString();
-    return db.prepare('SELECT * FROM contracts WHERE expires_at > ?').all(now);
+    const sql = `
+        SELECT * FROM contracts
+        WHERE expires_at > ?
+        AND id NOT IN (
+            SELECT contract_id FROM user_contracts WHERE user_id = ?
+        )
+    `;
+    return db.prepare(sql).all(now, userId);
 }
 
 function getContract(contractId) {

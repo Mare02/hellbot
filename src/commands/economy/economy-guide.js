@@ -51,7 +51,7 @@ const GUIDE_PAGES = [
             { name: '/contracts info <ID>', value: 'Get all the details about a specific contract, including its requirements.' },
             { name: '/contracts accept <ID>', value: 'Formally accept a mission. Make sure you meet the requirements first!' },
             { name: '/contracts attempt <ID>', value: 'Try to complete an accepted contract. Success depends on your gear and a bit of luck.' },
-            { name: '/contracts log', value: 'Check your personal log to see the status of all contracts you have accepted.' }
+            { name: '/contracts me', value: 'Check your personal log to see the status of all contracts you have accepted.' }
         ),
     // Page 6: Player vs. Player
     new EmbedBuilder()
