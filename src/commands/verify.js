@@ -46,7 +46,7 @@ module.exports = {
         return await reply(interaction, args, 'Please provide age and invite source.');
       }
 
-      if (typeof Number(age) !== 'number' || typeof inviteSource !== 'string') {
+      if (isNaN(Number(age)) || !isNaN(Number(inviteSource))) {
         return await reply(interaction, args, 'Invalid age or invite source.');
       }
 
