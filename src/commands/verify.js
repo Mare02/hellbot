@@ -46,6 +46,10 @@ module.exports = {
         return await reply(interaction, args, 'Please provide age and invite source.');
       }
 
+      if (typeof age !== 'number' || typeof inviteSource !== 'string') {
+        return await reply(interaction, args, 'Invalid age or invite source.');
+      }
+
       const member = interaction.member;
       if (member.roles.cache.has(verifiedRole.id)) {
         return await reply(interaction, args, 'You are already verified!');
