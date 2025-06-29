@@ -248,12 +248,28 @@ function getUserContracts(userId) {
     return stmt.all(userId);
 }
 
+function getCompletedContractsCount(userId) {
+    const stmt = db.prepare(`
+        SELECT COUNT(*) as count
+        FROM user_contracts
+        WHERE user_id = ? AND status = 'completed'
+    `);
+    const result = stmt.get(userId);
+    return result ? result.count : 0;
+}
+
 function getUserContract(userId, contractId) {
     return db.prepare('SELECT * FROM user_contracts WHERE user_id = ? AND contract_id = ?').get(userId, contractId);
 }
 
 function getUserContractById(userContractId) {
-    return db.prepare('SELECT * FROM user_contracts WHERE id = ?').get(userContractId);
+    const stmt = db.prepare(`
+        SELECT c.*, uc.status, uc.start_time, uc.id as user_contract_id
+        FROM user_contracts uc
+        JOIN contracts c ON uc.contract_id = c.id
+        WHERE uc.id = ?
+    `);
+    return stmt.get(userContractId);
 }
 
 function acceptContract(userId, contractId) {
@@ -445,5 +461,6 @@ module.exports = {
     getUserNetWorth,
     updateUserNetWorth,
     updateUserRank,
-    getRanks
+    getRanks,
+    getCompletedContractsCount
 };

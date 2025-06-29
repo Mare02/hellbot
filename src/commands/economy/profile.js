@@ -1,5 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
-const { getUser, getUserInventory, getItemById, getUserTotalStats, getUserNetWorth, getRanks, getUserInvestments } = require('../../services/economyService');
+const { getUser, getUserInventory, getItemById, getUserTotalStats, getUserNetWorth, getRanks, getUserInvestments, getCompletedContractsCount } = require('../../services/economyService');
 
 module.exports = {
   name: 'profile',
@@ -27,6 +27,7 @@ module.exports = {
     const userDamage = getUserTotalStats(targetUser.id, 'damage');
     const userDefense = getUserTotalStats(targetUser.id, 'defense');
     const userInvestments = getUserInvestments(targetUser.id);
+    const completedContracts = getCompletedContractsCount(targetUser.id);
 
     const netWorth = getUserNetWorth(targetUser.id);
 
@@ -42,7 +43,7 @@ module.exports = {
         { name: '💰 Souls', value: `Ѫ ${userData.souls.toLocaleString()}`, inline: true },
         { name: '🏦 Bank', value: `Ѫ ${userData.bank.toLocaleString()}`, inline: true },
         { name: '💼 Net Worth', value: `Ѫ ${netWorth.totalNetWorth.toLocaleString()}`, inline: true },
-        { name: '⚔️ Combat Stats', value: `**Damage:** ${userDamage} 🗡️\n**Defense:** ${userDefense} 🛡️`, inline: false },
+        { name: '⚔️ Combat Stats', value: `🗡️ Damage: ${userDamage}\n🛡️ Defense: ${userDefense}\n📋 Completed Contracts: ${completedContracts}`, inline: false },
         { name: '🏆 Rank', value: rankDisplay, inline: false },
       );
 
