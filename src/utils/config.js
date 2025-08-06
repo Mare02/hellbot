@@ -27,6 +27,7 @@ module.exports = {
   masterCreationsChannelId: "858872397935018024",
   uniqueCreationsChannelId: "1331702240964116551",
   masterPhotosChannelId: "1275913045981397105",
+  minecraftCategoryId: "1402414837669040140",
 
   staffRoleIds: {
     unlocked: '730563949279445164',
