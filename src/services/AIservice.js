@@ -35,6 +35,9 @@ module.exports = {
     const data = await groq.chat.completions.create({
       messages: requestMessages,
       model: aiModel,
+      stream: false,
+      reasoning_effort: "low",
+      stop: null
     });
 
     if (data.error) {
