@@ -3,6 +3,19 @@
 ## Project Overview
 This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The bot includes AI integration (Groq SDK, EdenAI), moderation features, and various entertainment commands.
 
+## Professional Programming Standards
+
+- Write clear, minimal, and efficient code
+- Use descriptive names and small, focused functions
+- Avoid deep nesting and complex logic
+- Separate concerns and keep modules single-purpose
+- Handle errors and edge cases gracefully
+- Follow the DRY (Don't Repeat Yourself) principle
+- Follow the Single Responsibility Principle for all modules
+- Use dependency injection where appropriate
+- Maintain clear separation between different layers of the application
+- Write code that reads like well-written prose
+
 ## Code Style & Conventions
 
 ### JavaScript Style
@@ -20,8 +33,7 @@ This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The
 - Use interaction.deferReply() for operations that take longer than 3 seconds
 - Check permissions before executing moderation commands
 - Always handle errors gracefully with try/catch blocks
-- Use embeds for rich message formatting with embedColor: '#fc9803'
-- Follow Discord's rate limits and best practices
+- Use embeds for rich message formatting with embedColor from config.js
 
 ### File Organization
 - Commands go in `src/commands/` directory
@@ -30,7 +42,6 @@ This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The
 - Services (like AI) go in `src/services/` directory
 - Event listeners go in `src/listeners/` directory
 - Configuration in `src/utils/config.js`
-- Constants and data in `src/data/` directory
 
 ### Environment Variables
 - Always use process.env for sensitive data
@@ -144,7 +155,7 @@ await interaction.reply({ content: 'Private message', ephemeral: true });
 ### Role Checking
 ```javascript
 const hasRole = interaction.member.roles.cache.has(roleId);
-const isStaff = Object.values(config.staffRoleIds).some(roleId => 
+const isStaff = Object.values(config.staffRoleIds).some(roleId =>
   interaction.member.roles.cache.has(roleId)
 );
 ```
