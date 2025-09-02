@@ -11,16 +11,18 @@ module.exports = {
   async execute(message) {
     if (message.channel.guild.id !== config.homeServerId) return;
 
+    const serverWelcomeMessage = `Welcome to the server! Use /verify command for automatic verification. In case the slash command is not working, use the :verify command (ex. ${config.commandsPrefix}verify [age] [invite source]).`;
+
     try {
       const embed = new EmbedBuilder()
         .setColor(config.embedColor)
-        .setTitle(messages.welcome.serverWelcome)
+        .setTitle(serverWelcomeMessage)
         .setImage(gifs.serverWelcomeGif);
 
       await message.channel.send({ embeds: [embed] });
     } catch (error) {
       console.log(error);
-      message.channel.send(messages.welcome.serverWelcome);
+      message.channel.send(serverWelcomeMessage);
     }
   },
 };

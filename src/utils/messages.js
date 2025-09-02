@@ -1,8 +1,4 @@
 module.exports = {
-  welcome: {
-    serverWelcome: 'Welcome to the server! Use /verify command for automatic verification. In case the slash command is not working, use the :verify command (ex. :verify [age] [invite source]).',
-  },
-
   inputError: {
     noPrompt: 'Please provide a prompt.',
   },
