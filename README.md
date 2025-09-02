@@ -9,6 +9,6 @@ This project is a Discord bot built using Node.js and the Discord.js library. It
 - **Scheduled Jobs**: Implements cron jobs for things like daily facts.new members.
 
 ### How to run:
-- npm install
-- npm install nodemon
-- npm run dev
+- pnpm install
+- pnpm install nodemon
+- pnpm run dev

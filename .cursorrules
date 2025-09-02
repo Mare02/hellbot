@@ -42,6 +42,7 @@ This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The
 - Services (like AI) go in `src/services/` directory
 - Event listeners go in `src/listeners/` directory
 - Configuration in `src/utils/config.js`
+- Constants and data in `src/data/` directory
 
 ### Environment Variables
 - Always use process.env for sensitive data
