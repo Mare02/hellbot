@@ -4,6 +4,8 @@ const config = require('../utils/config');
 const messages = require('../utils/messages');
 const Groq = require('groq-sdk');
 
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+
 module.exports = {
   usePrompt: async (userPrompt, systemPrompt, imageUrl) => {
     if (!userPrompt || !userPrompt.length) {
@@ -29,8 +31,6 @@ module.exports = {
     if (systemPrompt) {
       requestMessages.push({ "role": "system", "content": `Context: ${systemPrompt}` });
     }
-
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     const data = await groq.chat.completions.create({
       messages: requestMessages,
