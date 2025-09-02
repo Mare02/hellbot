@@ -1,6 +1,6 @@
 module.exports = {
   welcome: {
-    serverWelcome: 'Welcome to the server! Use /verify command for automatic verification.',
+    serverWelcome: 'Welcome to the server! Use /verify command for automatic verification. In case the slash command is not working, use the :verify command (ex. :verify [age] [invite source]).',
   },
 
   inputError: {
@@ -21,9 +21,7 @@ module.exports = {
 
   system: {
     logout: "Ight I'm logging off chat, skibidi fanum tax.",
-    unauthorized: "Unauthorized!",
     noPermission: "You do not have permission to use this command.",
-    blacklisted: "Target server is blacklisted.",
     ownerServerOnly: "This command can only be used in the owner's server.",
   },
 }
