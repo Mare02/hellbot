@@ -24,8 +24,6 @@ module.exports = {
       const quote = data[0].quote;
       const author = data[0].author;
 
-      console.log(quote);
-
       const embed = new EmbedBuilder()
         .setColor(embedColor)
         .setTitle('Daily Quote!')
@@ -48,7 +46,7 @@ module.exports = {
           channel.type === 0 && channel.name.startsWith('general')
         );
 
-        try {
+        try {o
           if (generalChannel) {
             await generalChannel.send({ embeds: [embed] });
           }
