@@ -4,7 +4,14 @@ const config = require('../utils/config');
 const messages = require('../utils/messages');
 const Groq = require('groq-sdk');
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+let groq = null;
+
+function getGroqClient() {
+  if (!groq) {
+    groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+  }
+  return groq;
+}
 
 module.exports = {
   usePrompt: async (userPrompt, systemPrompt, imageUrl) => {
@@ -32,7 +39,7 @@ module.exports = {
       requestMessages.push({ "role": "system", "content": `Context: ${systemPrompt}` });
     }
 
-    const data = await groq.chat.completions.create({
+    const data = await getGroqClient().chat.completions.create({
       messages: requestMessages,
       model: aiModel,
       stream: false,
