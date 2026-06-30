@@ -14,7 +14,7 @@ function getGroqClient() {
 }
 
 module.exports = {
-  usePrompt: async (userPrompt, systemPrompt, imageUrl) => {
+  usePrompt: async (userPrompt, systemPrompt, imageUrl, responseFormat) => {
     if (!userPrompt || !userPrompt.length) {
       throw new Error(messages.inputError.noPrompt);
     }
@@ -39,13 +39,19 @@ module.exports = {
       requestMessages.push({ "role": "system", "content": `Context: ${systemPrompt}` });
     }
 
-    const data = await getGroqClient().chat.completions.create({
+    const request = {
       messages: requestMessages,
       model: aiModel,
       stream: false,
       reasoning_effort: "low",
       stop: null
-    });
+    };
+
+    if (responseFormat) {
+      request.response_format = responseFormat;
+    }
+
+    const data = await getGroqClient().chat.completions.create(request);
 
     if (data.error) {
       throw new Error(data.error.message);
