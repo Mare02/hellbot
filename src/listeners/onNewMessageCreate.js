@@ -6,10 +6,46 @@ const commands = require('../commands');
 const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
 const freewill = require('../commands/freewill');
 const askai = require('../commands/askai');
+const { usePrompt } = require('../services/AIservice');
+const { brainRotPrompt } = require('../utils/aiPrompts');
+const { discordMsgLengthLimit } = require('../utils/config');
 
 const client = getInstance();
 
 const RANDOM_FREEWILL_PROBABILITY = 0.05;
+const MAX_MESSAGES_HISTORY = 15;
+
+async function replyWithRecentContext(message) {
+  const recentMessages = await message.channel.messages.fetch({ limit: MAX_MESSAGES_HISTORY });
+  const conversation = recentMessages
+    .reverse()
+    .map(m => `${m.author.username}: ${m.content}`)
+    .join('\n');
+
+  const prompt = brainRotPrompt(conversation);
+  const aiResponse = await usePrompt(prompt);
+  const response = aiResponse || 'No response found from the AI.';
+
+  const truncatedResponse = response.length > discordMsgLengthLimit
+    ? `${response.substring(0, discordMsgLengthLimit - 3)}...`
+    : response;
+
+  await message.reply(truncatedResponse);
+}
+
+async function isReplyToBot(message) {
+  if (!message.reference?.messageId) {
+    return false;
+  }
+
+  try {
+    const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
+    return referencedMessage.author?.id === client.user.id;
+  } catch (error) {
+    console.error('Failed to fetch referenced message:', error);
+    return false;
+  }
+}
 
 module.exports = () => {
   client.on('messageCreate', async (message) => {
@@ -24,9 +60,12 @@ module.exports = () => {
       command = updateslashcommands;
     }
 
-    if (message.mentions.has(client.user.id) && commandName !== askai.name && message.length) {
+    const mentionsBot = message.mentions.has(client.user.id);
+    const repliesToBot = await isReplyToBot(message);
+
+    if ((mentionsBot || repliesToBot) && commandName !== askai.name) {
       try {
-        await askai.execute(message, fullArgs, {useBrainRotPrompt: true});
+        await replyWithRecentContext(message);
       } catch (error) {
         console.error('AI response error:', error);
       }
