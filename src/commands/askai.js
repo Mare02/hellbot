@@ -52,7 +52,9 @@ module.exports = {
         prompt = brainRotPrompt(prompt);
       }
 
-      const answer = await usePrompt(prompt, systemPrompt, imageUrl);
+      const answer = await usePrompt(prompt, systemPrompt, imageUrl, undefined, {
+        enableTools: true,
+      });
       await reply(interaction, args, answer);
     }
     catch (error) {

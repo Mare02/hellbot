@@ -96,7 +96,9 @@ async function replyWithRecentContext(message) {
     .join('\n');
 
   const prompt = brainRotPrompt(conversation);
-  const aiResponse = await usePrompt(prompt);
+  const aiResponse = await usePrompt(prompt, undefined, undefined, undefined, {
+    enableTools: true,
+  });
   const response = aiResponse || 'No response found from the AI.';
 
   const truncatedResponse = response.length > discordMsgLengthLimit

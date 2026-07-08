@@ -6,7 +6,7 @@ const { ADMIN } = require('../../utils/roles');
 const { getInstance } = require('../../client');
 require('dotenv').config();
 
-const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
+const rest = new REST({ version: '10' }).setToken(config.bot.token);
 
 module.exports = {
   perm: ADMIN,

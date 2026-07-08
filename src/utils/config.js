@@ -1,18 +1,31 @@
 const aiModels = require('../data/aiModels');
 require('dotenv').config();
 
+const isDevMode = process.env.NODE_ENV === 'development';
+const botAppId = isDevMode
+  ? process.env.DEV_CLIENT_ID || process.env.CLIENT_ID
+  : process.env.CLIENT_ID;
+const botPublicKey = isDevMode
+  ? process.env.PUBLIC_KEY_DEV || process.env.PUBLIC_KEY
+  : process.env.PUBLIC_KEY;
+const botToken = isDevMode
+  ? process.env.DEV_DISCORD_TOKEN || process.env.DISCORD_TOKEN
+  : process.env.DISCORD_TOKEN;
+
 module.exports = {
   bot: {
     name: "Hellbot",
     description: "The Custom General-Purpose Bot for Hell's Resting Place™",
-    version: "1.5",
-    appId: process.env.CLIENT_ID,
-    inviteLink: `https://discord.com/api/oauth2/authorize?client_id=${process.env.CLIENT_ID}&permissions=8&scope=bot`,
+    version: "1.6",
+    appId: botAppId,
+    publicKey: botPublicKey,
+    token: botToken,
+    inviteLink: `https://discord.com/api/oauth2/authorize?client_id=${botAppId}&permissions=8&scope=bot`,
   },
 
-  commandsPrefix: process.env.NODE_ENV === 'development' ? "dev::" : "::",
+  commandsPrefix: isDevMode ? "dev::" : "::",
 
-  isDevMode: process.env.NODE_ENV === 'development',
+  isDevMode,
 
   owner: {
     id: "652993719808557087",

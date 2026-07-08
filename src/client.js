@@ -1,12 +1,11 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv').config();
+const config = require('./utils/config');
 
 let instance;
 
 function getInstance() {
   if (!instance) {
-    const token = process.env.DISCORD_TOKEN;
-
     instance = new Client({
       intents: [
         GatewayIntentBits.Guilds,
@@ -17,7 +16,7 @@ function getInstance() {
       ],
     });
 
-    instance.login(token);
+    instance.login(config.bot.token);
   }
 
   return instance;

@@ -200,7 +200,6 @@ const helpers = {
 
   async uploadFile(attachment, targetFileName, mediaTypeFolder, mediaPath) {
     try {
-      const fetch = require('node-fetch');
       const fs = require('fs');
       const path = require('path');
 
@@ -217,7 +216,8 @@ const helpers = {
       if (!response.ok) {
         throw new Error(`Failed to download file: ${response.statusText}`);
       }
-      const buffer = await response.buffer();
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
 
       // Check if buffer is empty
       if (!buffer || buffer.length === 0) {
