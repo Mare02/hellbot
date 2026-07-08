@@ -15,11 +15,84 @@ const client = getInstance();
 const RANDOM_FREEWILL_PROBABILITY = 0.05;
 const MAX_MESSAGES_HISTORY = 15;
 
+function serializeEmbed(embed, index) {
+  const parts = [];
+
+  if (embed.author?.name) {
+    parts.push(`author: ${embed.author.name}`);
+  }
+
+  if (embed.title) {
+    parts.push(`title: ${embed.title}`);
+  }
+
+  if (embed.description) {
+    parts.push(`description: ${embed.description}`);
+  }
+
+  if (Array.isArray(embed.fields) && embed.fields.length) {
+    const fields = embed.fields
+      .map(field => `${field.name}: ${field.value}`)
+      .join(' | ');
+    parts.push(`fields: ${fields}`);
+  }
+
+  if (embed.footer?.text) {
+    parts.push(`footer: ${embed.footer.text}`);
+  }
+
+  if (embed.url) {
+    parts.push(`url: ${embed.url}`);
+  }
+
+  if (embed.image?.url) {
+    parts.push(`image: ${embed.image.url}`);
+  }
+
+  if (embed.thumbnail?.url) {
+    parts.push(`thumbnail: ${embed.thumbnail.url}`);
+  }
+
+  if (!parts.length) {
+    return null;
+  }
+
+  return `embed ${index + 1}: ${parts.join(' | ')}`;
+}
+
+function serializeMessageForContext(message) {
+  const lines = [];
+
+  if (message.content && message.content.trim()) {
+    lines.push(`text: ${message.content.trim()}`);
+  }
+
+  if (Array.isArray(message.embeds) && message.embeds.length) {
+    const embeds = message.embeds
+      .map((embed, index) => serializeEmbed(embed, index))
+      .filter(Boolean);
+
+    if (embeds.length) {
+      lines.push(...embeds);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 async function replyWithRecentContext(message) {
   const recentMessages = await message.channel.messages.fetch({ limit: MAX_MESSAGES_HISTORY });
   const conversation = recentMessages
     .reverse()
-    .map(m => `${m.author.username}: ${m.content}`)
+    .map((m) => {
+      const context = serializeMessageForContext(m);
+      if (!context) {
+        return null;
+      }
+
+      return `${m.author.username}: ${context}`;
+    })
+    .filter(Boolean)
     .join('\n');
 
   const prompt = brainRotPrompt(conversation);
