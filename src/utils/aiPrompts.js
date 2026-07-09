@@ -8,7 +8,7 @@ const chatReplyPrompt = () => {
 }
 
 const toolSupportPrompt = () => {
-    return `Tools are available. Use them only when they help answer the current request.`;
+    return `Tools are available. Use them only when they help answer the current request. Do not estimate values from memory if you have a tool available for the context.`;
 }
 
 const futureNewsPrompt = (date) => {
