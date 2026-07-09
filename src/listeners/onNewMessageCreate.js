@@ -7,97 +7,44 @@ const updateslashcommands = require('../commands/slashCommands/updateslashcomman
 const freewill = require('../commands/freewill');
 const askai = require('../commands/askai');
 const { usePrompt } = require('../services/AIservice');
-const { brainRotPrompt } = require('../utils/aiPrompts');
+const { chatReplyPrompt } = require('../utils/aiPrompts');
+const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment } = require('../services/chatContext');
 const { discordMsgLengthLimit } = require('../utils/config');
 
 const client = getInstance();
 
 const RANDOM_FREEWILL_PROBABILITY = 0.05;
-const MAX_MESSAGES_HISTORY = 15;
 
-function serializeEmbed(embed, index) {
-  const parts = [];
+async function replyWithRecentContext(message) {
+  const currentMessageContext = message.content?.trim()
+    || 'The user mentioned you or replied to you in the current Discord channel.';
+  let imageUrl = getMessageImageUrl(message);
+  const hasTooLargeImage = hasOversizedImageAttachment(message);
+  const hasUnsupportedImage = hasUnsupportedVisionAttachment(message);
+  let systemPrompt = chatReplyPrompt();
 
-  if (embed.author?.name) {
-    parts.push(`author: ${embed.author.name}`);
-  }
-
-  if (embed.title) {
-    parts.push(`title: ${embed.title}`);
-  }
-
-  if (embed.description) {
-    parts.push(`description: ${embed.description}`);
-  }
-
-  if (Array.isArray(embed.fields) && embed.fields.length) {
-    const fields = embed.fields
-      .map(field => `${field.name}: ${field.value}`)
-      .join(' | ');
-    parts.push(`fields: ${fields}`);
-  }
-
-  if (embed.footer?.text) {
-    parts.push(`footer: ${embed.footer.text}`);
-  }
-
-  if (embed.url) {
-    parts.push(`url: ${embed.url}`);
-  }
-
-  if (embed.image?.url) {
-    parts.push(`image: ${embed.image.url}`);
-  }
-
-  if (embed.thumbnail?.url) {
-    parts.push(`thumbnail: ${embed.thumbnail.url}`);
-  }
-
-  if (!parts.length) {
-    return null;
-  }
-
-  return `embed ${index + 1}: ${parts.join(' | ')}`;
-}
-
-function serializeMessageForContext(message) {
-  const lines = [];
-
-  if (message.content && message.content.trim()) {
-    lines.push(`text: ${message.content.trim()}`);
-  }
-
-  if (Array.isArray(message.embeds) && message.embeds.length) {
-    const embeds = message.embeds
-      .map((embed, index) => serializeEmbed(embed, index))
-      .filter(Boolean);
-
-    if (embeds.length) {
-      lines.push(...embeds);
+  if (!imageUrl && message.reference?.messageId) {
+    try {
+      const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
+      imageUrl = getMessageImageUrl(referencedMessage);
+      if (hasOversizedImageAttachment(referencedMessage)) {
+        systemPrompt = `${systemPrompt}\n\nReferenced image attachment was too large to inspect directly. Reply from the text context and mention that if needed.`;
+      }
+    } catch (error) {
+      console.error('Failed to fetch referenced message image context:', error);
     }
   }
 
-  return lines.join('\n');
-}
+  if (hasTooLargeImage) {
+    systemPrompt = `${systemPrompt}\n\nThe current image attachment was too large to inspect directly. Reply from the text context and mention that if needed.`;
+  }
 
-async function replyWithRecentContext(message) {
-  const recentMessages = await message.channel.messages.fetch({ limit: MAX_MESSAGES_HISTORY });
-  const conversation = recentMessages
-    .reverse()
-    .map((m) => {
-      const context = serializeMessageForContext(m);
-      if (!context) {
-        return null;
-      }
+  if (hasUnsupportedImage) {
+    systemPrompt = `${systemPrompt}\n\nThe current image attachment is an animated GIF, which you cannot inspect directly. Reply from the text context and mention that if needed.`;
+  }
 
-      return `${m.author.username}: ${context}`;
-    })
-    .filter(Boolean)
-    .join('\n');
-
-  const prompt = brainRotPrompt(conversation);
-  const aiResponse = await usePrompt(prompt, undefined, undefined, undefined, {
-    enableTools: true,
+  const aiResponse = await usePrompt(currentMessageContext, systemPrompt, imageUrl, undefined, {
+    channel: message.channel,
   });
   const response = aiResponse || 'No response found from the AI.';
 

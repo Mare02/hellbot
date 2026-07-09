@@ -1,6 +1,7 @@
 const { usePrompt } = require('../services/AIservice');
 const { emptyState } = require('../utils/messages');
 const { reply } = require('../utils/helpers');
+const { getRecentChannelContext } = require('../services/chatContext');
 
 module.exports = {
   name: 'sumchat',
@@ -23,25 +24,13 @@ module.exports = {
         return await reply(interaction, args, 'Could not access the channel');
       }
 
-      const messages = await channel.messages.fetch({ limit: 20 });
+      const conversation = await getRecentChannelContext(channel, { limit: 20 });
 
-      let username;
-      if (!args) {
-        username = interaction.user.username;
-      } else {
-        username = interaction.author.username;
-      }
-      const messagesArray = messages.map(message => ({
-        content: message.content,
-        author: username,
-      }));
-
-      if (!messagesArray.length) {
+      if (conversation === 'No recent text or embed context was found in this channel.') {
         return await reply(interaction, args, emptyState.noResponseSummarize);
       }
 
-      const messagesContentString = messagesArray.reverse().map(msg => `${msg.author}: ${msg.content}`).join('<br>');
-      const summary = await usePrompt(`Please summarize the following conversation: \n${messagesContentString}`);
+      const summary = await usePrompt(`Please summarize the following conversation:\n${conversation}`);
 
       await reply(interaction, args, summary);
     }

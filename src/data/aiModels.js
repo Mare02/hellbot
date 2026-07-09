@@ -1,4 +1,4 @@
 module.exports = {
-  llama3_11b_vision_preview: 'llama-3.2-11b-vision-preview',
+  llama4_scout_17b_16e_instruct: 'meta-llama/llama-4-scout-17b-16e-instruct',
   gpt_oss_120b: 'openai/gpt-oss-120b',
 }

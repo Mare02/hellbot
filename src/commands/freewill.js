@@ -4,7 +4,6 @@ const messages = require('../utils/messages');
 const { MODERATOR } = require('../utils/roles');
 const { brainRotPrompt } = require('../utils/aiPrompts');
 
-const MAX_MESSAGES_HISTORY = 15;
 const REPLY_PROBABILITY = 0.6;
 const SLANG_RESPONSES = [
   "cap",
@@ -48,16 +47,11 @@ module.exports = {
         return;
       }
 
-      // Get message history for context
-      const messagesHistory = await interaction.channel.messages.fetch({ limit: MAX_MESSAGES_HISTORY });
-      const conversation = messagesHistory
-        .reverse()
-        .map(m => `${m.author.username}: ${m.content}`)
-        .join('\n');
+      const prompt = 'Generate a relevant response to the current Discord conversation.';
 
-      const prompt = brainRotPrompt(conversation);
-
-      const aiResponse = await usePrompt(prompt);
+      const aiResponse = await usePrompt(prompt, brainRotPrompt(), undefined, undefined, {
+        channel: interaction.channel,
+      });
       const finalResponse = aiResponse || messages.emptyState.noResponseAI;
 
       // Handle different types of responses based on how the command was triggered

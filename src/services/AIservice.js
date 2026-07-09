@@ -3,7 +3,8 @@ const aiModels = require('../data/aiModels');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
 const Groq = require('groq-sdk');
-const { toolDefinitions, toolHandlers } = require('./ai-tools');
+const { createToolSet } = require('./ai-tools');
+const { toolSupportPrompt } = require('../utils/aiPrompts');
 
 let groq = null;
 const MAX_TOOL_ITERATIONS = 3;
@@ -37,7 +38,13 @@ function buildRequestMessages(userPrompt, systemPrompt, imageUrl) {
   return requestMessages;
 }
 
-async function executeToolCalls(request, data, toolIteration = 0) {
+async function notifyToolCall(toolName, channel) {
+  if (config.isDevMode && channel?.send) {
+    await channel.send(`-# used tool: \`${toolName}\``);
+  }
+}
+
+async function executeToolCalls(request, data, toolHandlers, traceChannel, toolIteration = 0) {
   const choice = data?.choices?.[0];
   const message = choice?.message;
 
@@ -79,11 +86,14 @@ async function executeToolCalls(request, data, toolIteration = 0) {
     }
 
     try {
+      await notifyToolCall(toolCall.function.name, traceChannel);
       const toolResult = await handler(parsedArguments);
       return {
         role: 'tool',
         tool_call_id: toolCall.id,
-        content: JSON.stringify(toolResult),
+        content: typeof toolResult === 'string'
+          ? toolResult
+          : JSON.stringify(toolResult),
       };
     } catch (error) {
       return {
@@ -102,7 +112,7 @@ async function executeToolCalls(request, data, toolIteration = 0) {
   };
 
   const followUpData = await getGroqClient().chat.completions.create(followUpRequest);
-  return executeToolCalls(followUpRequest, followUpData, toolIteration + 1);
+  return executeToolCalls(followUpRequest, followUpData, toolHandlers, traceChannel, toolIteration + 1);
 }
 
 module.exports = {
@@ -111,35 +121,58 @@ module.exports = {
       throw new Error(messages.inputError.noPrompt);
     }
 
+    let shouldEnableTools = toolOptions.enableTools ?? Boolean(toolOptions.channel);
+    if (shouldEnableTools && !toolOptions.channel) {
+      shouldEnableTools = false;
+    }
     let aiModel = config.currentAiModel;
-    const requestMessages = buildRequestMessages(userPrompt, systemPrompt, imageUrl);
+    const effectiveSystemPrompt = shouldEnableTools
+      ? [systemPrompt, toolSupportPrompt()].filter(Boolean).join('\n\n')
+      : systemPrompt;
+    const requestMessages = buildRequestMessages(userPrompt, effectiveSystemPrompt, imageUrl);
 
     if (imageUrl) {
-      aiModel = aiModels.llama3_11b_vision_preview;
+      aiModel = aiModels.llama4_scout_17b_16e_instruct;
     }
 
     const request = {
       messages: requestMessages,
       model: aiModel,
       stream: false,
-      reasoning_effort: "low",
       stop: null
     };
+
+    if (!imageUrl) {
+      request.reasoning_effort = "low";
+    }
 
     if (responseFormat) {
       request.response_format = responseFormat;
     }
 
-    if (toolOptions.enableTools) {
-      request.tools = toolDefinitions;
+    if (shouldEnableTools) {
+      const toolSet = createToolSet(toolOptions.channel);
+      request.tools = toolSet.toolDefinitions;
       request.tool_choice = 'auto';
+      const toolHandlers = toolSet.toolHandlers;
+
+      const data = await getGroqClient().chat.completions.create(request);
+
+      const answer = await executeToolCalls(request, data, toolHandlers, toolOptions.channel);
+
+      if (!answer || !answer.length) {
+        throw new Error(messages.emptyState.noResponseAI);
+      }
+
+      const truncatedAnswer = answer.length > config.discordMsgLengthLimit
+        ? `${answer.substring(0, config.discordMsgLengthLimit - 3)}...`
+        : answer;
+
+      return truncatedAnswer;
     }
 
     const data = await getGroqClient().chat.completions.create(request);
-
-    const answer = toolOptions.enableTools
-      ? await executeToolCalls(request, data)
-      : data?.choices?.[0]?.message?.content;
+    const answer = data?.choices?.[0]?.message?.content;
 
     if (!answer || !answer.length) {
       throw new Error(messages.emptyState.noResponseAI);
