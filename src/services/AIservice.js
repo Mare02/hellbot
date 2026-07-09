@@ -164,11 +164,7 @@ module.exports = {
         throw new Error(messages.emptyState.noResponseAI);
       }
 
-      const truncatedAnswer = answer.length > config.discordMsgLengthLimit
-        ? `${answer.substring(0, config.discordMsgLengthLimit - 3)}...`
-        : answer;
-
-      return truncatedAnswer;
+      return answer;
     }
 
     const data = await getGroqClient().chat.completions.create(request);
@@ -178,11 +174,7 @@ module.exports = {
       throw new Error(messages.emptyState.noResponseAI);
     }
 
-    const truncatedAnswer = answer.length > config.discordMsgLengthLimit
-      ? `${answer.substring(0, config.discordMsgLengthLimit - 3)}...`
-      : answer;
-
-    return truncatedAnswer;
+    return answer;
   },
 
   useImageGen: async (userPrompt) => {

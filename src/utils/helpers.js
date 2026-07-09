@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const messages = require('../utils/messages');
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { buildDiscordPayload } = require('./discordMessages');
 
 require('dotenv').config();
 
@@ -37,10 +38,12 @@ const helpers = {
   },
 
   reply: async (interaction, args, content) => {
+    const payload = buildDiscordPayload(content);
+
     if (interaction.deferred) {
-      await interaction.editReply(content);
+      await interaction.editReply(payload);
     } else {
-      await interaction.reply(content);
+      await interaction.reply(payload);
     }
   },
 

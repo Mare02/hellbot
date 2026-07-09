@@ -9,7 +9,7 @@ const askai = require('../commands/askai');
 const { usePrompt } = require('../services/AIservice');
 const { chatReplyPrompt } = require('../utils/aiPrompts');
 const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment } = require('../services/chatContext');
-const { discordMsgLengthLimit } = require('../utils/config');
+const { sendDiscordContent } = require('../utils/discordMessages');
 
 const client = getInstance();
 
@@ -48,11 +48,7 @@ async function replyWithRecentContext(message) {
   });
   const response = aiResponse || 'No response found from the AI.';
 
-  const truncatedResponse = response.length > discordMsgLengthLimit
-    ? `${response.substring(0, discordMsgLengthLimit - 3)}...`
-    : response;
-
-  await message.reply(truncatedResponse);
+  await sendDiscordContent(message, response);
 }
 
 async function isReplyToBot(message) {
