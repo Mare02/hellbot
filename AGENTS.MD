@@ -1,7 +1,8 @@
-# Hellbot Discord Bot - Cursor AI Rules
+# Hellbot Discord Bot - AI Agent Rules
 
 ## Project Overview
 This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The bot includes AI integration (Groq SDK, EdenAI), moderation features, and various entertainment commands.
+
 
 ## Professional Programming Standards
 
@@ -16,7 +17,11 @@ This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The
 - Maintain clear separation between different layers of the application
 - Write code that reads like well-written prose
 
+
 ## Code Style & Conventions
+
+### General
+- Do not create any tests for new features, commands, or bug fixes.
 
 ### JavaScript Style
 - Use ES6+ features but maintain CommonJS require/module.exports structure
@@ -50,6 +55,7 @@ This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The
 - Use NODE_ENV for environment detection (development/production)
 - Reference config.js for accessing environment-dependent settings
 
+
 ## Architecture Patterns
 
 ### Command Structure
@@ -81,6 +87,7 @@ module.exports = {
 - Provide user-friendly error messages
 - Never expose sensitive information in error messages
 
+
 ## Discord Bot Best Practices
 
 ### Permissions
@@ -99,6 +106,7 @@ module.exports = {
 - Sanitize data before database operations or file system access
 - Use environment-specific configurations
 
+
 ## AI Integration Guidelines
 
 ### Groq AI (Text Generation)
@@ -112,6 +120,7 @@ module.exports = {
 - Use AIservice.useImageGen() for image creation
 - Handle API failures gracefully
 - Validate image URLs before sending to Discord
+
 
 ## Development Workflow
 
@@ -132,33 +141,6 @@ module.exports = {
 - Implement proper error boundaries
 - Test slash commands in Discord before deployment
 - Verify permissions and roles in test server
-
-## Common Patterns
-
-### Message Responses
-```javascript
-// Simple reply
-await interaction.reply('Message');
-
-// Embed reply
-await interaction.reply({
-  embeds: [{
-    color: config.embedColor,
-    title: 'Title',
-    description: 'Description'
-  }]
-});
-
-// Ephemeral reply (only user sees)
-await interaction.reply({ content: 'Private message', ephemeral: true });
-```
-
-### Role Checking
-```javascript
-const hasRole = interaction.member.roles.cache.has(roleId);
-const isStaff = Object.values(config.staffRoleIds).some(roleId =>
-  interaction.member.roles.cache.has(roleId)
-);
 ```
 
 ## Dependencies Management
@@ -166,12 +148,3 @@ const isStaff = Object.values(config.staffRoleIds).some(roleId =>
 - Pin API SDK versions for consistency
 - Use exact versions for critical dependencies
 - Regularly update security-related packages
-
-## Testing Guidelines
-- Test all commands in development server first
-- Verify permissions work correctly
-- Test error scenarios and edge cases
-- Ensure AI responses are appropriate and safe
-- Test rate limiting and cooldowns
-
-Remember: This bot serves a gaming community, so maintain a friendly but moderated environment. Always prioritize user safety and follow Discord's Terms of Service.
