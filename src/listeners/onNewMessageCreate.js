@@ -122,6 +122,11 @@ module.exports = () => {
         return;
       }
 
+      if (commandName === 'updateslashcommands') {
+        await command.execute(message, false);
+        return;
+      }
+
       await command.execute(message, args);
     }
   });

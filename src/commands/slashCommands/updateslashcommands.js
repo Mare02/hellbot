@@ -11,17 +11,27 @@ const rest = new REST({ version: '10' }).setToken(config.bot.token);
 module.exports = {
   perm: ADMIN,
   name: 'updateslashcommands',
-  async execute(message, isCalledAsJob) {
+  async execute(message, isCalledAsJob = false) {
     const client = getInstance();
 
-    let generalChannel;
-    if (isCalledAsJob) {
-      const homeServer = await client.guilds.fetch(config.homeServerId);
-      generalChannel = await homeServer.channels.fetch(config.generalChannelId);
-    }
-
     try {
-      await rest.put(Routes.applicationCommands(config.bot.appId), {
+      const applicationId = client.application?.id
+        || (await client.application?.fetch())?.id;
+
+      if (!applicationId) {
+        throw new Error('Unable to resolve the bot application ID.');
+      }
+
+      let generalChannel;
+      if (isCalledAsJob === true) {
+        const targetServerId = config.isDevMode
+          ? config.testingServerId
+          : config.homeServerId;
+        const homeServer = await client.guilds.fetch(targetServerId);
+        generalChannel = await homeServer.channels.fetch(config.generalChannelId);
+      }
+
+      await rest.put(Routes.applicationCommands(applicationId), {
         body: slashCommands,
       });
 
@@ -43,7 +53,7 @@ module.exports = {
         generalChannel.send(errorText);
       }
     } finally {
-      if (!message && isCalledAsJob) {
+      if (!message && isCalledAsJob === true) {
         process.exit();
       }
     }
