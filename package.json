@@ -4,6 +4,7 @@
   "description": "",
   "main": "src/index.js",
   "scripts": {
+    "start": "node src/main.js",
     "test": "node .",
     "dev": "nodemon src/main.js",
     "pmdev": "pm2 start src/main.js"
