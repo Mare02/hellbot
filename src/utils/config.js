@@ -43,12 +43,8 @@ module.exports = {
   minecraftCategoryId: "1402414837669040140",
 
   roleRequests: {
-    requestChannelId: isDevMode
-      ? process.env.DEV_ROLE_REQUESTS_CHANNEL_ID || null
-      : process.env.ROLE_REQUESTS_CHANNEL_ID || null,
-    reviewChannelId: isDevMode
-      ? process.env.DEV_ROLE_REQUESTS_REVIEW_CHANNEL_ID || null
-      : process.env.ROLE_REQUESTS_REVIEW_CHANNEL_ID || null,
+    requestChannelId: isDevMode ? '1553890262902644786' : '795486828190105622',
+    reviewChannelId: isDevMode ? '1553890264337219646' : '1553912040849154189',
     anchorRoleName: isDevMode ? null : 'God Modder',
   },
 
