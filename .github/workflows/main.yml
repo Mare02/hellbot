@@ -51,7 +51,7 @@ jobs:
 
       - name: Deploy to VPS
         run: |
-          ssh -o BatchMode=yes hellbot@93.127.160.57 'bash -se' <<'REMOTE'
+          ssh -o BatchMode=yes hellbot@93.127.160.57 'bash -l -se' <<'REMOTE'
             set -euo pipefail
             cd /home/hellbot/projects/hellbot
             git pull --ff-only origin main
