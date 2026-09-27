@@ -44,7 +44,7 @@ module.exports = {
 
   roleRequests: {
     requestChannelName: isDevMode ? 'role-requests' : 'role-request🙏',
-    reviewChannelName: isDevMode ? 'role-requests-review' : 'role-requests-view',
+    reviewChannelName: 'role-requests-review',
     requestChannelId: isDevMode ? '1553890262902644786' : '795486828190105622',
     reviewChannelId: isDevMode ? '1553890264337219646' : '1553912040849154189',
     anchorRoleName: isDevMode ? null : 'God Modder',
