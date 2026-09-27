@@ -15,8 +15,7 @@ module.exports = {
     const client = getInstance();
 
     try {
-      const applicationId = client.application?.id
-        || (await client.application?.fetch())?.id;
+      const applicationId = client.application?.id || config.bot.appId;
 
       if (!applicationId) {
         throw new Error('Unable to resolve the bot application ID.');
