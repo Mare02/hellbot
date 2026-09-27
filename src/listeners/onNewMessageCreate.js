@@ -67,6 +67,10 @@ async function isReplyToBot(message) {
 
 module.exports = () => {
   client.on('messageCreate', async (message) => {
+    if (message.system || message.author.bot) {
+      return;
+    }
+
     // get command name + arguments
     const fullArgs = message.content.split(' ');
     const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
@@ -89,10 +93,6 @@ module.exports = () => {
       }
       return;
     }
-
-    if (message.author.bot) {
-      return;
-    };
 
     if (
       Math.random() < RANDOM_FREEWILL_PROBABILITY
