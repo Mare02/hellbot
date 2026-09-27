@@ -1,36 +1,28 @@
 ---
 name: server-auditor
-description: Inspect Hellbot's Discord server or carry out explicitly requested server changes using this project's Discord.js bot.
+description: Use for any Hellbot Discord server task: inspect server state, answer server questions, or carry out requested changes through this project's Discord.js bot.
 ---
 
 # Server Auditor
 
-Use this skill for Discord server lookups and explicitly requested management tasks in the Hellbot project, such as checking roles, auditing channel activity, creating roles, or changing role settings.
+Use this as the general workflow for Discord-server requests in the Hellbot project. Apply it to the specific server, data, or change the user asks about; do not limit it to predefined task types.
 
-## Connect to the intended server
+## Connect to Discord
 
-- Use the project's Discord.js v14 dependency and `src/utils/config.js`. The default production guild is `config.homeServerId`.
-- For the real server, start every one-off Node process with `NODE_ENV=production` inline, for example `NODE_ENV=production node -e '...'`. This makes the project config select `DISCORD_TOKEN` even when the surrounding shell is in development mode. For an explicitly requested test-server task, use the development configuration instead.
-- Load configuration through the project module; it loads dotenv. Never print, copy, or log `.env` values, the bot token, or API keys. Do not edit `.env` or leave a production environment override in the shell.
-- Verify the logged-in bot identity and the fetched guild name and ID before reporting results or making changes. If the configured guild returns `Unknown Guild`, report that and inspect only the accessible guild names and IDs to diagnose which bot identity is active. Do not guess another target server.
-- Use the minimum Gateway intents needed. Run one-off clients, not `src/main.js` or the persistent bot process, and always destroy the client in a `finally` block.
+- Use the project's Discord.js v14 dependency and `src/utils/config.js`. When the user means the main Hellbot server, use `config.homeServerId`.
+- For the real server, start each one-off Node process with `NODE_ENV=production` inline, for example `NODE_ENV=production node -e '...'`. This makes the project config select `DISCORD_TOKEN` even when the surrounding shell is in development mode. Use the development configuration only when the user targets the test server or asks for a development check.
+- Load credentials through the project config and dotenv. Never print, copy, or log `.env` values, the bot token, or API keys. Do not edit `.env` or leave a production environment override in the shell.
+- Verify the logged-in bot identity and target guild before acting or reporting. If the requested guild is unavailable, report that and use accessible guild names and IDs only to diagnose the issue; do not silently switch servers.
+- Use a one-off client with the minimum required Gateway intents, not `src/main.js` or the persistent bot process. Always close it in a `finally` block.
 
-## Audit server data
+## Handle the request
 
-- Resolve channels and roles by their live IDs or exact names. Channel names may include emoji or other Unicode characters; if a requested name has several plausible matches, show the matches and ask which one to use.
-- Fetch only the data needed for the request. Do not print message contents when metadata such as author, timestamp, or count answers the question.
-- For contributor rankings, use message count as the activity measure unless the user requests another measure. State the time window, exclude bot messages by default, and distinguish message activity from a broader judgment of prominence.
-- For all-time channel counts, paginate backward through message history with batches of up to 100 until no older messages remain. Aggregate author and timestamp metadata; do not log or include message text in results. Report the oldest and newest messages reached, total messages counted, and any deleted or unresolvable accounts.
-- Do not treat `role.members.size` as a complete membership count unless the required member intent was enabled and the guild member list was successfully fetched. Otherwise report the count as unavailable.
+- Use the user's stated target and scope. If the intended server or target is genuinely ambiguous, identify the likely matches and ask which one they mean.
+- Gather only the Discord data needed to answer the request. Keep sensitive information and message content out of logs and results unless the user specifically asks for that content and it is necessary to the task.
+- Carry out only changes the user has requested. Advice or inspection requests do not by themselves authorize changes. When the requested change and target are clear, proceed without asking for redundant confirmation.
+- Verify fetched information and completed changes against Discord's returned state. If permissions, access, or available data prevent completion, report the specific limitation rather than guessing.
 
-## Manage server state
+## Report back
 
-- Make Discord changes only when the user has clearly requested the specific change. A question asking for advice or a lookup is not authorization to mutate the server. Do not ask for confirmation again when the requested target and change are already clear.
-- Before role changes, verify `ManageRoles`, the bot's highest-role position, and the exact target roles. Create roles with no permissions unless the user specifies otherwise; never copy permissions from a related role by assumption. Do not assign a role to members unless asked.
-- For a requested role order, re-fetch roles as positions change, then verify the final ordering. For requested colors, apply the exact chosen hex value and re-fetch to verify it.
-- Do not send messages, delete content, ban or kick users, or change other server state unless that specific action was requested.
-
-## Report results
-
-- State which bot identity and guild were used, the exact scope or time window, and the observed result. Distinguish verified data from unavailable or incomplete data.
-- For mutations, report the exact objects changed and verify their resulting state. Never claim success from a command that did not return a successful result.
+- State which bot identity and server were used, what scope was inspected or changed, and what the live result confirmed.
+- Distinguish verified results from estimates, unavailable data, or incomplete history. Never claim a change succeeded unless Discord returned success and the resulting state was checked.
