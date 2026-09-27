@@ -16,14 +16,11 @@ const HEX_COLOR_PATTERN = /^#?([\da-f]{6})$/i;
 const INSTRUCTIONS_TITLE = 'Request a role';
 const targetServerId = config.isDevMode ? config.testingServerId : config.homeServerId;
 
-const findChannel = (guild, channelId, name) => {
-  if (!guild) return null;
-  const configuredChannel = channelId && guild.channels.cache.get(channelId);
-  if (configuredChannel?.isTextBased()) return configuredChannel;
+const fetchTextChannel = async (guild, channelId) => {
+  if (!guild || !channelId) return null;
 
-  return guild.channels.cache.find(
-    channel => channel.name === name && channel.isTextBased()
-  );
+  const channel = await guild.channels.fetch(channelId).catch(() => null);
+  return channel?.isTextBased() ? channel : null;
 };
 
 const getRequestFields = message => {
@@ -136,11 +133,7 @@ const restoreRequestForRetry = async message => {
 };
 
 const sendOutcome = async (guild, request, content, shouldMention = false) => {
-  const requestChannel = findChannel(
-    guild,
-    config.roleRequests.requestChannelId,
-    config.roleRequests.requestChannelName
-  );
+  const requestChannel = await fetchTextChannel(guild, config.roleRequests.requestChannelId);
   if (!requestChannel) throw new Error('The role-request channel is unavailable.');
 
   await requestChannel.send({
@@ -170,6 +163,8 @@ const requestRole = async (context, args = []) => {
   let submittingRequesterId = null;
 
   try {
+    if (isSlashCommand) await context.deferReply({ ephemeral: true });
+
     const guild = context.guild;
     const guildId = isSlashCommand ? context.guildId : guild?.id;
     if (!guild || guildId !== targetServerId) {
@@ -177,17 +172,17 @@ const requestRole = async (context, args = []) => {
       return;
     }
 
-    const requestChannel = findChannel(
-      guild,
-      config.roleRequests.requestChannelId,
-      config.roleRequests.requestChannelName
-    );
+    const requestChannel = await fetchTextChannel(guild, config.roleRequests.requestChannelId);
     const channelId = isSlashCommand ? context.channelId : context.channel?.id;
-    if (!requestChannel || channelId !== requestChannel.id) {
+    if (!requestChannel) {
+      await replyToRequestContext(context, isSlashCommand, 'Role requests are temporarily unavailable. Please contact the staff team.');
+      return;
+    }
+    if (channelId !== requestChannel.id) {
       await replyToRequestContext(
         context,
         isSlashCommand,
-        `Please use /request-role or ${prefixCommand} in #${config.roleRequests.requestChannelName}.`
+        `Please use /request-role or ${prefixCommand} in <#${requestChannel.id}>.`
       );
       return;
     }
@@ -224,11 +219,7 @@ const requestRole = async (context, args = []) => {
     const anchorRole = config.isDevMode ? null : guild.roles.cache.find(
       role => role.name === config.roleRequests.anchorRoleName
     );
-    const reviewChannel = findChannel(
-      guild,
-      config.roleRequests.reviewChannelId,
-      config.roleRequests.reviewChannelName
-    );
+    const reviewChannel = await fetchTextChannel(guild, config.roleRequests.reviewChannelId);
     const botMember = guild.members.me;
 
     if ((!config.isDevMode && !anchorRole) || !reviewChannel || !botMember ||
@@ -240,7 +231,6 @@ const requestRole = async (context, args = []) => {
 
     const color = `#${colorMatch[1].toUpperCase()}`;
     const requester = isSlashCommand ? context.user : context.author;
-    if (isSlashCommand) await context.deferReply({ ephemeral: true });
 
     if (SUBMITTING_REQUESTS.has(requester.id)) {
       await replyToRequestContext(context, isSlashCommand, 'Your role request is being submitted. Please wait a moment.');
@@ -331,11 +321,7 @@ const approveRequest = async interaction => {
   try {
     await interaction.deferReply({ ephemeral: true });
     const guild = interaction.guild;
-    const reviewChannel = findChannel(
-      guild,
-      config.roleRequests.reviewChannelId,
-      config.roleRequests.reviewChannelName
-    );
+    const reviewChannel = await fetchTextChannel(guild, config.roleRequests.reviewChannelId);
     message = await reviewChannel?.messages.fetch({ message: lockKey, force: true }).catch(() => null);
     const request = message && getRequestFields(message);
     if (!request || message.author.id !== interaction.client.user.id || isResolved(message)) {
@@ -437,11 +423,7 @@ const approveRequest = async interaction => {
 const denyRequest = async interaction => {
   await interaction.deferReply({ ephemeral: true });
   const messageId = interaction.customId.split(':')[2];
-  const reviewChannel = findChannel(
-    interaction.guild,
-    config.roleRequests.reviewChannelId,
-    config.roleRequests.reviewChannelName
-  );
+  const reviewChannel = await fetchTextChannel(interaction.guild, config.roleRequests.reviewChannelId);
   const message = await reviewChannel?.messages.fetch({ message: messageId, force: true }).catch(() => null);
   const request = message && getRequestFields(message);
 
@@ -503,12 +485,8 @@ const handleInteraction = async interaction => {
         await interaction.reply({ content: 'Role requests can only be reviewed in the configured server.', ephemeral: true });
         return;
       }
-      const reviewChannel = findChannel(
-        interaction.guild,
-        config.roleRequests.reviewChannelId,
-        config.roleRequests.reviewChannelName
-      );
-      if (!reviewChannel || interaction.channelId !== reviewChannel.id) {
+      if (!config.roleRequests.reviewChannelId ||
+        interaction.channelId !== config.roleRequests.reviewChannelId) {
         await interaction.reply({ content: 'This button only works in the configured review channel.', ephemeral: true });
         return;
       }
@@ -531,12 +509,8 @@ const handleInteraction = async interaction => {
         await interaction.reply({ content: 'Role requests can only be reviewed in the configured server.', ephemeral: true });
         return;
       }
-      const reviewChannel = findChannel(
-        interaction.guild,
-        config.roleRequests.reviewChannelId,
-        config.roleRequests.reviewChannelName
-      );
-      if (!reviewChannel || interaction.channelId !== reviewChannel.id) {
+      if (!config.roleRequests.reviewChannelId ||
+        interaction.channelId !== config.roleRequests.reviewChannelId) {
         await interaction.reply({ content: 'This denial form is no longer valid.', ephemeral: true });
         return;
       }
@@ -551,11 +525,7 @@ const handleInteraction = async interaction => {
 };
 
 const ensureInstructions = async guild => {
-  const channel = findChannel(
-    guild,
-    config.roleRequests.requestChannelId,
-    config.roleRequests.requestChannelName
-  );
+  const channel = await fetchTextChannel(guild, config.roleRequests.requestChannelId);
   if (!channel) return;
 
   const instructions = new EmbedBuilder()
