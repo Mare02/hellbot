@@ -1,35 +1,64 @@
-name: Node.js CI
+name: Hellbot CI and deploy
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hellbot-production
+  cancel-in-progress: false
 
 jobs:
-  build:
-    timeout-minutes: 10
-    runs-on: self-hosted
+  deploy:
+    name: Validate and deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v2
-      - name: Pull changes
-        run: |
-          cd ../../../../hellbot
-          git reset --hard
-          git pull origin main
-      - name: Install dependencies
-        run: npm install
-      - name: Restart PM2
-        run: pm2 restart hellbot
-      - name: Get commit message
-        run: echo "COMMIT_MESSAGE=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
-      - name: Send bot updated message
-        run: node -e "require('./src/jobs/botUpdatedJob').execute(process.env.COMMIT_MESSAGE)"
-        env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          COMMIT_MESSAGE: ${{ env.COMMIT_MESSAGE }}
-      - name: Update slash commands
-        run: node -e "require('./src/commands/slashCommands/updateslashcommands').execute(null, true)"
-        env:
-          DISCORD_TOKEN: ${{ secrets.DISCORD_TOKEN }}
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+      - name: Check out repository
+        uses: actions/checkout@v4
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 12.6.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check JavaScript syntax
+        run: find src -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
+
+      - name: Configure VPS SSH
+        env:
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy to VPS
+        run: |
+          ssh -o BatchMode=yes hellbot@93.127.160.57 'bash -se' <<'REMOTE'
+            set -euo pipefail
+            cd /home/hellbot/projects/hellbot
+            git pull --ff-only origin main
+            pnpm install --frozen-lockfile
+            pm2 restart hellbot
+
+            commit_message="$(git log -1 --format=%s)"
+            COMMIT_MESSAGE="$commit_message" node -e 'require("./src/jobs/botUpdatedJob").execute(process.env.COMMIT_MESSAGE)'
+            node -e 'require("./src/commands/slashCommands/updateslashcommands").execute(null, true)'
+          REMOTE
