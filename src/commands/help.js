@@ -101,7 +101,10 @@ module.exports = {
 
       embed.setFooter({ text: `${availableCommands.length} commands available` });
 
-      await context.reply({ embeds: [embed] });
+      await context.reply({
+        embeds: [embed],
+        ...(context.isChatInputCommand?.() ? { ephemeral: true } : {}),
+      });
     } catch (error) {
       console.error('Failed to build help menu:', error);
       await context.reply('Unable to load the help menu right now.');
