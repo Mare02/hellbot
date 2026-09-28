@@ -251,7 +251,7 @@ const requestRole = async (context, args = []) => {
     const content = [
       '**Role request**',
       `*Requester:* <@${requester.id}>`,
-      `*Role name:* ${roleName}`,
+      `*Role name:* "${roleName}"`,
       `*Color:* ${color}`,
     ].join('\n');
     const buttons = new ActionRowBuilder().addComponents(
@@ -381,7 +381,7 @@ const approveRequest = async interaction => {
       await sendOutcome(
         guild,
         request,
-        `Your role request for **${request.roleName}** was approved, and the role has been assigned to you.`,
+        `Your role request for **"${request.roleName}"** was approved, and the role has been assigned to you.`,
         true
       );
     } catch (error) {
@@ -389,8 +389,8 @@ const approveRequest = async interaction => {
       notificationFailed = true;
     }
     await interaction.editReply(notificationFailed
-      ? `Created and assigned **${request.roleName}**, but could not notify the requester. Please notify them manually.`
-      : `Created **${request.roleName}**, assigned it to the requester, and notified them.`
+      ? `Created and assigned **"${request.roleName}"**, but could not notify the requester. Please notify them manually.`
+      : `Created **"${request.roleName}"**, assigned it to the requester, and notified them.`
     );
   } catch (error) {
     console.error('Failed to approve role request:', error);
@@ -452,7 +452,7 @@ const denyRequest = async interaction => {
     await updateRequestStatus(message, `Processing denial by <@${interaction.user.id}>`, statusMentions);
     requestClaimed = true;
     await sendOutcome(interaction.guild, request,
-      `Your role request for **${request.roleName}** was denied. Reason: ${reason}`,
+      `Your role request for **"${request.roleName}"** was denied. Reason: ${reason}`,
       true
     );
     requesterNotified = true;
