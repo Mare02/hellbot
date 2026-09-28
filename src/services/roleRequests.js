@@ -25,7 +25,7 @@ const fetchTextChannel = async (guild, channelId) => {
 
 const getRequestFields = message => {
   const lines = message.content?.split('\n') || [];
-  const [title] = lines;
+  const title = lines.find(value => value === 'Role request' || value === '**Role request**');
   const getField = name => {
     const plainPrefix = `${name}: `;
     const boldPrefix = `**${name}:** `;
