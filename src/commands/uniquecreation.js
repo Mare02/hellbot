@@ -3,7 +3,7 @@ const { MODERATOR } = require('../utils/roles');
 const { forwardAttachmentsToChannel } = require('../utils/helpers');
 
 module.exports = {
-  name: 'mastercreation',
+  name: 'uniquecreation',
   description: 'Displays an SFS design in the Unique Creations channel.',
   perm: MODERATOR,
   async execute(message, args) {

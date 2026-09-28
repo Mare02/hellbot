@@ -7,7 +7,7 @@ const { OWNER } = require('../utils/roles');
 
 module.exports = {
   name: 'deletefiles',
-  description: `Deletes files from the media folders. Usage: ${commandsPrefix}deletefile <filename> | --all | --category <categoryName> | --subfolder <subfolderName>`,
+  description: 'Deletes files from media folders by name, category, subfolder, or all at once.',
   perm: OWNER,
   async execute(message, args) {
     try {

@@ -7,27 +7,6 @@ const { buildDiscordPayload } = require('./discordMessages');
 require('dotenv').config();
 
 const helpers = {
-  getCommandsList(filter) {
-    const commandsPath = path.join(__dirname, '..', 'commands');
-    const commands = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'))
-      .map(file => require(path.join(commandsPath, file)));
-    let commandEntries = Object.entries(commands).filter(([_, value]) =>
-      typeof value?.name === 'string'
-      && typeof value?.description === 'string'
-      && !value?.name.startsWith('test')
-    );
-
-    if (filter && filter.show === 'base') {
-      commandEntries = commandEntries.filter(([_, value]) => !value.perm);
-    }
-
-    const commandsList = commandEntries.map(([_, value]) =>
-      `**::${value.name}** - ${value.description} ${value.perm ? `(${value.perm})` : ''}`
-    ).join('\n');
-
-    return commandsList;
-  },
-
   validateUserPromptInput: (promptInput, channel) => {
     const prompt = promptInput.trim();
     if (prompt === '' || /^\s+$/.test(prompt)) {

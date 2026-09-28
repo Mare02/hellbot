@@ -2,7 +2,7 @@ const gifs = require('../data/gifs');
 
 module.exports = {
   name: 'donthurtme',
-  description: "Displays a radom Mike O'Hearn gif.",
+  description: "Displays a random Mike O'Hearn GIF.",
   slash: true,
   async execute(interaction, args) {
     try {
