@@ -1,26 +1,22 @@
 const { EmbedBuilder } = require('discord.js');
 const config = require('../utils/config');
+const { hasPermission } = require('../utils/roles');
 
 const PREFIX_USAGE = {
-  deletefiles: ' <filename|--all|--category <name>|--subfolder <name>>',
   deletemsg: ' <count>',
   dm: ' <user-id> <message>',
-  listfiles: ' [--category <folder>] [--subfolder <folder>]',
-  mastercreation: ' [caption] (reply to a message with an attachment)',
   masterphoto: ' [caption] (reply to a message with an attachment)',
   savechat: ' [days]',
-  showfile: ' <filename>',
   syslog: ' <message>',
   uniquecreation: ' [caption] (reply to a message with an attachment)',
-  uploadfiles: ' (attach the files to your command message)',
 };
 
 const ACCESS_GROUPS = [
-  { key: 'public', title: 'Everyone', permission: null },
-  { key: 'moderator', title: 'Moderator and above', permission: 'moderator' },
-  { key: 'admin', title: 'Admin, unlocked staff, and owner', permission: 'admin' },
-  { key: 'unlocked', title: 'Unlocked staff and owner', permission: 'unlocked' },
-  { key: 'owner', title: 'Owner only', permission: 'owner' },
+  { title: 'Everyone', permission: null },
+  { title: 'Moderator and above', permission: 'moderator' },
+  { title: 'Admin and above', permission: 'admin' },
+  { title: 'Unlocked staff and owner', permission: 'unlocked' },
+  { title: 'Owner only', permission: 'owner' },
 ];
 
 const getSlashUsage = command => {
@@ -68,10 +64,11 @@ const addCommandFields = (embed, title, lines) => {
 
 module.exports = {
   name: 'help',
-  description: 'Show all commands, usage, and required staff access.',
+  description: 'Show commands available to you and how to use them.',
   slash: true,
   async execute(context) {
     try {
+      const userId = context.user?.id || context.author?.id;
       const commands = require('../commands');
       const commandEntries = Object.entries(commands)
         .filter(([key, command]) => key !== 'help' && command?.description)
@@ -82,21 +79,27 @@ module.exports = {
         description: 'Refresh the registered slash commands.',
       }]);
 
+      const availableCommands = commandEntries.filter(([, command]) =>
+        !command.perm || hasPermission(command.perm, userId)
+      );
+
       const embed = new EmbedBuilder()
         .setColor(config.embedColor)
-        .setTitle(`${config.bot.name} Help`)
+        .setTitle(`${config.bot.name} Commands`)
         .setDescription([
           `Use slash commands from Discord's \`/\` menu. Prefix commands start with \`${config.commandsPrefix}\`.`,
           `You can open this menu with \`/help\` or \`${config.commandsPrefix}help\`.`,
-          'Staff-only commands are included below with their required access.',
+          'Only commands available to you are shown.',
         ].join('\n'));
 
       for (const group of ACCESS_GROUPS) {
-        const lines = commandEntries
+        const lines = availableCommands
           .filter(([, command]) => (command.perm || null) === group.permission)
           .map(([key, command]) => getCommandLine(key, command));
         if (lines.length) addCommandFields(embed, group.title, lines);
       }
+
+      embed.setFooter({ text: `${availableCommands.length} commands available` });
 
       await context.reply({ embeds: [embed] });
     } catch (error) {
