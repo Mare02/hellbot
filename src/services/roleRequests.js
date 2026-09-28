@@ -249,6 +249,7 @@ const requestRole = async (context, args = []) => {
     }
 
     const content = [
+      `<@&${config.staffRoleIds.staffMember}>`,
       '**Role request**',
       `*Requester:* <@${requester.id}>`,
       `*Role name:* "${roleName}"`,
@@ -268,7 +269,7 @@ const requestRole = async (context, args = []) => {
     await reviewChannel.send({
       content,
       components: [buttons],
-      allowedMentions: { parse: [] },
+      allowedMentions: { roles: [config.staffRoleIds.staffMember], parse: [] },
     });
     requestPosted = true;
     await replyToRequestContext(context, isSlashCommand, 'Your role request was sent to the staff team.');

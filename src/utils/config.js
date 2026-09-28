@@ -49,6 +49,7 @@ module.exports = {
   },
 
   staffRoleIds: {
+    staffMember: '943531442368041010',
     unlocked: '730563949279445164',
     headAdmin: '728767822557085786',
     admin: '720021731846127666',
