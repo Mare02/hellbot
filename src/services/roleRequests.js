@@ -252,7 +252,7 @@ const requestRole = async (context, args = []) => {
       `<@&${config.staffRoleIds.staffMember}>`,
       '**Role request**',
       `*Requester:* <@${requester.id}>`,
-      `*Role name:* "${roleName}"`,
+      `*Role name:* ${roleName}`,
       `*Color:* ${color}`,
     ].join('\n');
     const buttons = new ActionRowBuilder().addComponents(
