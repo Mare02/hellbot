@@ -19,6 +19,7 @@ const SLANG_RESPONSES = [
   "im dead 💀",
   "💀💀💀",
   "💀",
+  ':wilted_rose:',
 ];
 const RANDOM_SLANG_PROBABILITY = 0.3;
 
@@ -29,6 +30,8 @@ module.exports = {
   perm: MODERATOR,
   async execute(interaction, args) {
     try {
+      const originalMessage = interaction.originalMessage || (interaction.author ? interaction : null);
+
       if (!args) {
         await interaction.deferReply();
       }
@@ -38,7 +41,9 @@ module.exports = {
         const randomIndex = Math.floor(Math.random() * SLANG_RESPONSES.length);
         const slangResponse = SLANG_RESPONSES[randomIndex];
 
-        if (Math.random() < REPLY_PROBABILITY && interaction.originalMessage) {
+        if (slangResponse === ':wilted_rose:' && originalMessage) {
+          await originalMessage.reply(slangResponse);
+        } else if (Math.random() < REPLY_PROBABILITY && interaction.originalMessage) {
           await interaction.originalMessage.reply(slangResponse);
         } else {
           await interaction.channel.send(slangResponse);
