@@ -38,6 +38,7 @@ module.exports = {
   verifyChannelId: "830224625350344724",
   generalChannelId: "720011765672444007",
   masterCreationsChannelId: "858872397935018024",
+  gemsChannelId: '1554637085653344276',
   uniqueCreationsChannelId: "1331702240964116551",
   masterPhotosChannelId: "1275913045981397105",
   minecraftCategoryId: "1402414837669040140",

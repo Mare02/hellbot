@@ -51,6 +51,35 @@ const helpers = {
     }
   },
 
+  forwardMessageToChannel: async (message, channelId) => {
+    try {
+      if (!message.reference) {
+        await message.channel.send('Reply to a message with the text or attachment you want to post.');
+        return;
+      }
+
+      const selectedMessage = await message.channel.messages.fetch(message.reference.messageId);
+      const attachments = [...selectedMessage.attachments.values()];
+
+      if (!selectedMessage.content && !attachments.length) {
+        await message.channel.send('The selected message has no text or attachments to post.');
+        return;
+      }
+
+      const channel = await message.guild.channels.fetch(channelId);
+      await channel.send({
+        ...(selectedMessage.content ? { content: selectedMessage.content } : {}),
+        ...(attachments.length ? { files: attachments.map(attachment => attachment.url) } : {}),
+        allowedMentions: { parse: [] },
+      });
+
+      await message.channel.send(`Selected message posted in <#${channelId}>.`);
+    } catch (error) {
+      console.error('Failed to forward selected message:', error);
+      await message.channel.send('Unable to post the selected message to the Gems channel.');
+    }
+  },
+
   saveToEnv: async (name, value) => {
     const envFile = fs.readFileSync('.env', 'utf8');
     const envLines = envFile.split('\n');

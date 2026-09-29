@@ -5,6 +5,7 @@ const { hasPermission } = require('../utils/roles');
 const PREFIX_USAGE = {
   deletemsg: ' <count>',
   dm: ' <user-id> <message>',
+  gems: ' (reply to a message with text and/or attachments)',
   masterphoto: ' [caption] (reply to a message with an attachment)',
   savechat: ' [days]',
   syslog: ' <message>',
