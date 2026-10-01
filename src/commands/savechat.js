@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { OWNER } = require('../utils/roles');
+const { getMessageContent } = require('../utils/messageContent');
 
 module.exports = {
   name: 'savechat',
@@ -49,12 +50,13 @@ module.exports = {
           }
 
           // Handle message content
-          const content = msg.content.trim() || '[embed]';
+          const messageContent = getMessageContent(msg);
+          const content = messageContent.content.trim() || '[embed]';
           messages.push(`${msg.author.tag}: ${content}`);
 
           // Handle attachments
-          if (msg.attachments.size > 0) {
-            msg.attachments.forEach(attachment => {
+          if (messageContent.attachments.length > 0) {
+            messageContent.attachments.forEach(attachment => {
               messages.push(`${msg.author.tag}: [Attachment: ${attachment.url}]`);
             });
           }

@@ -4,7 +4,7 @@ const { validateUserPromptInput } = require('../utils/helpers');
 const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
 const { brainRotPrompt, chatReplyPrompt } = require('../utils/aiPrompts');
-const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment } = require('../services/chatContext');
+const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment, serializeMessageContent } = require('../services/chatContext');
 
 module.exports = {
   name: 'askai',
@@ -41,7 +41,7 @@ module.exports = {
       if (interaction.reference) {
         const referencedMessage = await interaction.channel.messages.fetch(interaction.reference.messageId);
         imageUrl = getMessageImageUrl(referencedMessage);
-        const referencedContent = referencedMessage.content?.trim();
+        const referencedContent = serializeMessageContent(referencedMessage);
         systemPrompt = [chatReplyPrompt(), referencedContent ? `Referenced message:\n${referencedContent}` : null]
           .filter(Boolean)
           .join('\n\n');

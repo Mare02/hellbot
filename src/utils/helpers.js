@@ -1,6 +1,7 @@
 const fs = require('fs');
 const messages = require('../utils/messages');
 const { buildDiscordPayload } = require('./discordMessages');
+const { getMessageContent } = require('./messageContent');
 
 require('dotenv').config();
 
@@ -32,9 +33,9 @@ const helpers = {
       }
 
       const repliedMessage = await message.channel.messages.fetch(message.reference.messageId);
-      const attachments = repliedMessage.attachments;
+      const { attachments } = getMessageContent(repliedMessage);
 
-      if (!attachments.size) {
+      if (!attachments.length) {
         message.channel.send(messages.emptyState.noAttachmentInReply, { reply: { messageReference: null } });
         return;
       }
