@@ -132,7 +132,7 @@ module.exports = {
     const requestMessages = buildRequestMessages(userPrompt, effectiveSystemPrompt, imageUrl);
 
     if (imageUrl) {
-      aiModel = aiModels.llama4_scout_17b_16e_instruct;
+      aiModel = aiModels.qwen3_8_27b;
     }
 
     const request = {
