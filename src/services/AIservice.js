@@ -120,9 +120,9 @@ module.exports = {
       throw new Error('GROQ_API_KEY is not configured.');
     }
     const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
-    const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel) : null;
+    const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel, toolOptions) : null;
     const effectiveSystemPrompt = shouldEnableTools
-      ? [systemPrompt, toolSupportPrompt()].filter(Boolean).join('\n\n')
+      ? [systemPrompt, toolSupportPrompt(), toolSet.memoryPrompt].filter(Boolean).join('\n\n')
       : systemPrompt;
     const request = {
       messages: buildRequestMessages(prompt, effectiveSystemPrompt, imageUrl),
@@ -138,6 +138,7 @@ module.exports = {
     if (toolSet) {
       request.tools = toolSet.toolDefinitions;
       request.tool_choice = 'auto';
+      request.parallel_tool_calls = false;
     }
 
     const data = await createCompletion(request);

@@ -4,11 +4,11 @@ const brainRotPrompt = () => {
 
 const chatReplyPrompt = () => {
     const stylePrompt = brainRotPrompt();
-    return `${stylePrompt}\n\nYou are replying to a Discord mention or reply. If the surrounding chat matters, first call get_chat_context for the current channel so you can see the recent conversation. Use that context to answer naturally and stay in the same casual style.`;
+    return `${stylePrompt}\n\nYou are replying to a Discord mention or reply. Use the available tools according to their descriptions. When recent channel history is needed, use get_chat_context. Use chat context to answer naturally and stay in the same casual style.`;
 }
 
 const toolSupportPrompt = () => {
-    return `Tools are available. Use them only when they help answer the current request. Do not estimate values from memory if you have a tool available for the context.`;
+    return `Tools are available. Use tools that help answer the current request and follow their descriptions. Do not guess when an available tool can provide the requested information.`;
 }
 
 const futureNewsPrompt = (date) => {
