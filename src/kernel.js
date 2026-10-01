@@ -6,7 +6,7 @@ const dailyFutureNewsJob = require('./jobs/dailyFutureNewsJob');
 
 const client = getInstance();
 
-client.on('ready', () => {
+client.on('clientReady', () => {
   cron.schedule('0 8 * * *', () => {
     dailyQuoteJob.execute();
   });

@@ -6,7 +6,7 @@ const Bugsnag = require('@bugsnag/js');
 
 const client = getInstance();
 
-client.on('ready', () => {
+client.on('clientReady', () => {
   console.log(`Logged in as ${client.user.tag}!`);
 });
 
