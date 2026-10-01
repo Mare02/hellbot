@@ -540,9 +540,18 @@ const ensureInstructions = async guild => {
       'Staff will review your request and assign the role if approved.',
     ].join('\n'));
 
-  const pinnedMessages = await channel.messages.fetchPinned();
+  const pinnedMessages = [];
+  let before;
+
+  while (true) {
+    const pins = await channel.messages.fetchPins({ limit: 50, ...(before ? { before } : {}) });
+    pinnedMessages.push(...pins.items.map(pin => pin.message));
+    if (!pins.hasMore || !pins.items.length) break;
+    before = pins.items.at(-1).pinnedAt;
+  }
+
   const existingInstructions = await channel.messages.fetch({ limit: 50 });
-  const instructionMessage = [...pinnedMessages.values(), ...existingInstructions.values()].find(message =>
+  const instructionMessage = [...pinnedMessages, ...existingInstructions.values()].find(message =>
     message.author.id === guild.client.user.id &&
     message.embeds[0]?.title === INSTRUCTIONS_TITLE
   );

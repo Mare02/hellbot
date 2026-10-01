@@ -1,3 +1,5 @@
+const { getMessageContent } = require('../utils/messageContent');
+
 const DEFAULT_CHAT_CONTEXT_LIMIT = 15;
 const { currentAiProvider } = require('../utils/config');
 const GROQ_IMAGE_URL_SIZE_LIMIT_BYTES = 20 * 1024 * 1024;
@@ -96,13 +98,14 @@ function formatEmbed(embed, index) {
 
 function serializeMessageContent(message) {
   const lines = [];
+  const messageContent = getMessageContent(message);
 
-  if (message.content && message.content.trim()) {
-    lines.push(`text: ${message.content.trim()}`);
+  if (messageContent.content.trim()) {
+    lines.push(`text: ${messageContent.content.trim()}`);
   }
 
-  if (Array.isArray(message.embeds) && message.embeds.length) {
-    const embeds = message.embeds
+  if (messageContent.embeds.length) {
+    const embeds = messageContent.embeds
       .map((embed, index) => formatEmbed(embed, index))
       .filter(Boolean);
 
@@ -130,7 +133,8 @@ function getMessageImageUrl(message) {
     return null;
   }
 
-  for (const attachment of message.attachments?.values?.() || []) {
+  const { attachments, embeds } = getMessageContent(message);
+  for (const attachment of attachments) {
     const isImage = isLikelyImageAttachment(attachment);
     const isWithinSizeLimit = typeof attachment.size === 'number'
       ? attachment.size <= GROQ_IMAGE_URL_SIZE_LIMIT_BYTES
@@ -142,7 +146,7 @@ function getMessageImageUrl(message) {
     }
   }
 
-  for (const embed of message.embeds || []) {
+  for (const embed of embeds) {
     const embedImageUrl = embed?.image?.url;
     if (embedImageUrl && !isUnsupportedVisionMedia({ url: embedImageUrl })) {
       return embedImageUrl;
@@ -158,22 +162,16 @@ function getMessageImageUrl(message) {
 }
 
 function hasOversizedImageAttachment(message) {
-  if (!message?.attachments?.size) {
-    return false;
-  }
-
-  return Array.from(message.attachments.values()).some((attachment) => {
+  const { attachments } = getMessageContent(message);
+  return attachments.some((attachment) => {
     const isImage = isLikelyImageAttachment(attachment);
     return isImage && typeof attachment.size === 'number' && attachment.size > GROQ_IMAGE_URL_SIZE_LIMIT_BYTES;
   });
 }
 
 function hasUnsupportedVisionAttachment(message) {
-  if (!message?.attachments?.size) {
-    return false;
-  }
-
-  return Array.from(message.attachments.values()).some((attachment) => {
+  const { attachments } = getMessageContent(message);
+  return attachments.some((attachment) => {
     const isImage = isLikelyImageAttachment(attachment);
     return isImage && isUnsupportedVisionMedia(attachment);
   });

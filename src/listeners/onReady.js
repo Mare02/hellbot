@@ -5,7 +5,7 @@ const funnyPresenceJob = require('../jobs/funnyPresenceJob');
 const client = getInstance();
 
 module.exports = () => {
-  client.on('ready', async () => {
+  client.on('clientReady', async () => {
     funnyPresenceJob.start(client);
 
     const guild = await client.guilds.fetch(roleRequests.targetServerId).catch(() => null);

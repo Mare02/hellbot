@@ -1,3 +1,4 @@
+const { MessageReferenceType } = require('discord.js');
 const { getInstance } = require('../client');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
@@ -8,7 +9,7 @@ const freewill = require('../commands/freewill');
 const askai = require('../commands/askai');
 const { usePrompt } = require('../services/AIservice');
 const { chatReplyPrompt } = require('../utils/aiPrompts');
-const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment } = require('../services/chatContext');
+const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment, serializeMessageContent } = require('../services/chatContext');
 const { sendDiscordContent } = require('../utils/discordMessages');
 
 const client = getInstance();
@@ -16,17 +17,21 @@ const client = getInstance();
 const RANDOM_FREEWILL_PROBABILITY = 0.05;
 
 async function replyWithRecentContext(message) {
-  const currentMessageContext = message.content?.trim()
+  const currentMessageContext = serializeMessageContent(message)
     || 'The user mentioned you or replied to you in the current Discord channel.';
   let imageUrl = getMessageImageUrl(message);
   const hasTooLargeImage = hasOversizedImageAttachment(message);
   const hasUnsupportedImage = hasUnsupportedVisionAttachment(message);
   let systemPrompt = chatReplyPrompt();
 
-  if (!imageUrl && message.reference?.messageId) {
+  if (message.reference?.messageId && message.reference.type !== MessageReferenceType.Forward) {
     try {
       const referencedMessage = await message.channel.messages.fetch(message.reference.messageId);
-      imageUrl = getMessageImageUrl(referencedMessage);
+      const referencedContent = serializeMessageContent(referencedMessage);
+      if (referencedContent) {
+        systemPrompt = `${systemPrompt}\n\nReferenced message:\n${referencedContent}`;
+      }
+      imageUrl = imageUrl || getMessageImageUrl(referencedMessage);
       if (hasOversizedImageAttachment(referencedMessage)) {
         systemPrompt = `${systemPrompt}\n\nReferenced image attachment was too large to inspect directly. Reply from the text context and mention that if needed.`;
       }
@@ -34,7 +39,7 @@ async function replyWithRecentContext(message) {
         systemPrompt = `${systemPrompt}\n\nReferenced image attachment uses a format you cannot inspect directly. Reply from the text context and mention that if needed.`;
       }
     } catch (error) {
-      console.error('Failed to fetch referenced message image context:', error);
+      console.error('Failed to fetch referenced message context:', error);
     }
   }
 
@@ -55,7 +60,7 @@ async function replyWithRecentContext(message) {
 }
 
 async function isReplyToBot(message) {
-  if (!message.reference?.messageId) {
+  if (!message.reference?.messageId || message.reference.type === MessageReferenceType.Forward) {
     return false;
   }
 
