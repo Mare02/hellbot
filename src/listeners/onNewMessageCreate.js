@@ -45,6 +45,8 @@ async function replyWithRecentContext(message) {
 
   const aiResponse = await usePrompt(currentMessageContext, systemPrompt, imageUrl, undefined, {
     channel: message.channel,
+    user: message.author,
+    messageId: message.id,
   });
   const response = aiResponse || 'No response found from the AI.';
 

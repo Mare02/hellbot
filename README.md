@@ -12,3 +12,7 @@ This project is a Discord bot built using Node.js and the Discord.js library. It
 - pnpm install
 - pnpm install nodemon
 - pnpm run dev
+
+### AI memory (optional)
+
+Set `MEM0_API_KEY` to enable persistent memory through Mem0 MCP for AI commands and direct bot replies. See [configuration and Discord behavior](docs/ai-memory-mcp.md).

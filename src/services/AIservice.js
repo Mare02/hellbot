@@ -109,10 +109,37 @@ async function executeToolCalls(request, data, toolHandlers, traceChannel, toolI
   const followUpRequest = {
     ...request,
     messages: [...request.messages, message, ...toolMessages],
+    tool_choice: toolIteration + 1 >= MAX_TOOL_ITERATIONS ? 'none' : 'auto',
   };
 
   const followUpData = await getGroqClient().chat.completions.create(followUpRequest);
   return executeToolCalls(followUpRequest, followUpData, toolHandlers, traceChannel, toolIteration + 1);
+}
+
+function getExplicitMemoryTool(userPrompt, toolDefinitions) {
+  const availableTools = new Set(toolDefinitions.map((tool) => tool.function.name));
+  const prompt = String(userPrompt).toLowerCase();
+  const mentionsMemories = /\b(?:memories|memory|mems|saved preferences|saved facts|saved notes)\b/;
+  const asksToSearch = /\b(?:search|look up|find|check|again)\b/;
+
+  if (
+    availableTools.has('search_memories')
+    && ((asksToSearch.test(prompt) && mentionsMemories.test(prompt))
+      || (/\b(?:search|look up|find|check)\b/.test(prompt)
+        && /\b(?:my|your|the|these|those)\s+(?:memories|memory|mems)\b/.test(prompt)))
+  ) {
+    return 'search_memories';
+  }
+
+  const explicitlyAsksToRemember = /\bremember\s+(?:that|this|my)\b/.test(prompt)
+    || /\b(?:save|store)\s+(?:that|this|my|a memory|a note)\b/.test(prompt)
+    || /\bmake\s+(?:a note|a memory)\b/.test(prompt);
+
+  if (explicitlyAsksToRemember && availableTools.has('add_memory')) {
+    return 'add_memory';
+  }
+
+  return null;
 }
 
 module.exports = {
@@ -126,8 +153,9 @@ module.exports = {
       shouldEnableTools = false;
     }
     let aiModel = config.currentAiModel;
+    const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel, toolOptions) : null;
     const effectiveSystemPrompt = shouldEnableTools
-      ? [systemPrompt, toolSupportPrompt()].filter(Boolean).join('\n\n')
+      ? [systemPrompt, toolSupportPrompt(), toolSet.memoryPrompt].filter(Boolean).join('\n\n')
       : systemPrompt;
     const requestMessages = buildRequestMessages(userPrompt, effectiveSystemPrompt, imageUrl);
 
@@ -151,9 +179,12 @@ module.exports = {
     }
 
     if (shouldEnableTools) {
-      const toolSet = createToolSet(toolOptions.channel);
       request.tools = toolSet.toolDefinitions;
-      request.tool_choice = 'auto';
+      const explicitMemoryTool = getExplicitMemoryTool(userPrompt, toolSet.toolDefinitions);
+      request.tool_choice = explicitMemoryTool
+        ? { type: 'function', function: { name: explicitMemoryTool } }
+        : 'auto';
+      request.parallel_tool_calls = false;
       const toolHandlers = toolSet.toolHandlers;
 
       const data = await getGroqClient().chat.completions.create(request);

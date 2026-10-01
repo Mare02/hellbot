@@ -61,5 +61,11 @@ module.exports = {
   discordMsgLengthLimit: 2000,
   embedColor: '#fc9803',
 
+  mem0: {
+    enabled: process.env.MEM0_ENABLED !== 'false',
+    apiKey: process.env.MEM0_API_KEY,
+    url: 'https://mcp.mem0.ai/mcp',
+  },
+
   currentAiModel: aiModels.gpt_oss_120b,
 }
