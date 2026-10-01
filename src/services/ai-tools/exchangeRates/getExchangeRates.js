@@ -46,15 +46,22 @@ module.exports = {
   },
 
   handler: async ({ baseCurrency, targetCurrencies }) => {
+    const apiKey = process.env.EXCHANGE_RATE_API_KEY;
+    if (!apiKey) {
+      throw new Error('The exchange-rate API key is not configured.');
+    }
     const normalizedBaseCurrency = normalizeCurrencyCode(baseCurrency);
     const requestedCurrencies = parseRequestedCurrencies(targetCurrencies);
 
-    if (!normalizedBaseCurrency) {
-      throw new Error('Base currency is required.');
+    if (!/^[A-Z]{3}$/.test(normalizedBaseCurrency)) {
+      throw new Error('A three-letter base currency code is required.');
     }
 
     if (!requestedCurrencies.length) {
       throw new Error('At least one target currency is required.');
+    }
+    if (requestedCurrencies.some(currency => !/^[A-Z]{3}$/.test(currency))) {
+      throw new Error('Target currencies must use three-letter currency codes.');
     }
 
     const url = new URL(`https://v6.exchangerate-api.com/v6/${apiKey}/latest/${normalizedBaseCurrency}`);
@@ -66,7 +73,7 @@ module.exports = {
 
     const data = await response.json();
 
-    if (data?.result !== 'success') {
+    if (data?.result !== 'success' || !data.conversion_rates) {
       throw new Error(data?.['error-type'] || messages.errorState.apiError);
     }
 

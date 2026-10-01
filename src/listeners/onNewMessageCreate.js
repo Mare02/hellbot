@@ -30,6 +30,9 @@ async function replyWithRecentContext(message) {
       if (hasOversizedImageAttachment(referencedMessage)) {
         systemPrompt = `${systemPrompt}\n\nReferenced image attachment was too large to inspect directly. Reply from the text context and mention that if needed.`;
       }
+      if (hasUnsupportedVisionAttachment(referencedMessage)) {
+        systemPrompt = `${systemPrompt}\n\nReferenced image attachment uses a format you cannot inspect directly. Reply from the text context and mention that if needed.`;
+      }
     } catch (error) {
       console.error('Failed to fetch referenced message image context:', error);
     }
@@ -40,7 +43,7 @@ async function replyWithRecentContext(message) {
   }
 
   if (hasUnsupportedImage) {
-    systemPrompt = `${systemPrompt}\n\nThe current image attachment is an animated GIF, which you cannot inspect directly. Reply from the text context and mention that if needed.`;
+    systemPrompt = `${systemPrompt}\n\nThe current image attachment uses a format you cannot inspect directly. Reply from the text context and mention that if needed.`;
   }
 
   const aiResponse = await usePrompt(currentMessageContext, systemPrompt, imageUrl, undefined, {

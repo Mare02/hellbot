@@ -2,6 +2,8 @@ const aiModels = require('../data/aiModels');
 require('dotenv').config();
 
 const isDevMode = process.env.NODE_ENV === 'development';
+const currentAiProvider = (process.env.AI_PROVIDER || 'groq').trim().toLowerCase();
+const currentGeminiModel = aiModels.gemini_3_5_flash_lite;
 const botAppId = isDevMode
   ? process.env.DEV_CLIENT_ID || process.env.CLIENT_ID
   : process.env.CLIENT_ID;
@@ -61,5 +63,7 @@ module.exports = {
   discordMsgLengthLimit: 2000,
   embedColor: '#fc9803',
 
-  currentAiModel: aiModels.gpt_oss_120b,
-}
+  currentAiProvider,
+  currentAiModel: currentAiProvider === 'google' ? currentGeminiModel : aiModels.gpt_oss_120b,
+  currentGeminiModel,
+};

@@ -3,6 +3,7 @@ const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
 const { MODERATOR } = require('../utils/roles');
 const { brainRotPrompt } = require('../utils/aiPrompts');
+const { sendDiscordContent } = require('../utils/discordMessages');
 
 const REPLY_PROBABILITY = 0.6;
 const SLANG_RESPONSES = [
@@ -61,9 +62,9 @@ module.exports = {
 
       // Handle different types of responses based on how the command was triggered
       if (Math.random() < REPLY_PROBABILITY && interaction.originalMessage) {
-        await interaction.originalMessage.reply(finalResponse);
+        await sendDiscordContent(interaction.originalMessage, finalResponse);
       } else {
-        await interaction.channel.send(finalResponse);
+        await sendDiscordContent(interaction.channel, finalResponse);
       }
     }
     catch (error) {

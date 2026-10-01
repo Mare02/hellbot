@@ -49,12 +49,10 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setColor(embedColor)
         .setTitle(`News from the future: ${formattedDate}`)
-        .addFields(
-          { name: 'Society', value: news.society.trim() },
-          { name: 'Tech', value: news.tech.trim() },
-          { name: 'Finance', value: news.finance.trim() },
-          { name: 'Science', value: news.science.trim() }
-        );
+        .addFields(categories.map(category => ({
+          name: `${category[0].toUpperCase()}${category.slice(1)}`,
+          value: news[category].trim().slice(0, 1024),
+        })));
 
       const guilds = await client.guilds.fetch();
       if (!guilds.size) {

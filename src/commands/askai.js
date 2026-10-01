@@ -51,7 +51,7 @@ module.exports = {
         }
 
         if (hasUnsupportedVisionAttachment(referencedMessage)) {
-          systemPrompt = `${systemPrompt}\n\nReferenced image attachment is an animated GIF, which you cannot inspect directly. Reply from the text context and mention that if needed.`;
+          systemPrompt = `${systemPrompt}\n\nReferenced image attachment uses a format you cannot inspect directly. Reply from the text context and mention that if needed.`;
         }
       }
       else if (options && options.useBrainRotPrompt) {

@@ -3,201 +3,171 @@ const aiModels = require('../data/aiModels');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
 const Groq = require('groq-sdk');
+const { createGeminiCompletion } = require('./geminiCompletion');
 const { createToolSet } = require('./ai-tools');
 const { toolSupportPrompt } = require('../utils/aiPrompts');
 
 let groq = null;
 const MAX_TOOL_ITERATIONS = 3;
 
-function getGroqClient() {
-  if (!groq) {
-    groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+async function createCompletion(request) {
+  try {
+    if (config.currentAiProvider === 'google') {
+      return await createGeminiCompletion(request);
+    }
+    if (!groq) {
+      groq = new Groq({ apiKey: process.env.GROQ_API_KEY, timeout: 60000 });
+    }
+    return await groq.chat.completions.create(request);
+  } catch (error) {
+    const status = error.status;
+    console.error('AI request failed:', { provider: config.currentAiProvider, status, type: error.name });
+    // Keep provider response bodies and credentials out of Discord error replies.
+    const safeError = new Error(status === 429
+      ? 'AI usage limit reached. Please try again later.'
+      : 'The AI service is unavailable. Please try again later.');
+    safeError.status = status;
+    throw safeError;
   }
-  return groq;
 }
 
 function buildRequestMessages(userPrompt, systemPrompt, imageUrl) {
   const requestMessages = [];
-
   if (systemPrompt) {
-    requestMessages.push({ role: "system", content: `Context: ${systemPrompt}` });
+    requestMessages.push({ role: 'system', content: `Context: ${systemPrompt}` });
   }
-
-  if (imageUrl) {
-    requestMessages.push({
-      role: "user",
-      content: [
-        { type: "text", text: userPrompt },
-        { type: "image_url", image_url: { url: imageUrl } },
-      ],
-    });
-    return requestMessages;
-  }
-
-  requestMessages.push({ role: "user", content: userPrompt });
+  const content = imageUrl
+    ? [{ type: 'text', text: userPrompt }, { type: 'image_url', image_url: { url: imageUrl } }]
+    : userPrompt;
+  requestMessages.push({ role: 'user', content });
   return requestMessages;
 }
 
-async function notifyToolCall(toolName, channel) {
-  if (config.isDevMode && channel?.send) {
-    await channel.send(`-# used tool: \`${toolName}\``);
+async function executeToolCall(toolCall, toolHandlers, traceChannel) {
+  let result;
+  const name = toolCall.function?.name;
+  try {
+    if (!Object.prototype.hasOwnProperty.call(toolHandlers, name)) {
+      throw new Error(`No tool handler found for ${name}`);
+    }
+    let args;
+    try {
+      args = toolCall.function.arguments ? JSON.parse(toolCall.function.arguments) : {};
+      if (!args || typeof args !== 'object' || Array.isArray(args)) {
+        throw new Error('Expected an arguments object');
+      }
+    } catch (error) {
+      throw new Error(`Invalid tool arguments for ${name}`);
+    }
+    if (config.isDevMode && traceChannel?.send) {
+      try {
+        await traceChannel.send(`-# used tool: \`${name}\``);
+      } catch (error) {
+        console.error('Failed to send AI tool trace:', { tool: name });
+      }
+    }
+    const toolResult = await toolHandlers[name](args);
+    result = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? null);
+  } catch (error) {
+    result = JSON.stringify({ error: error.message || messages.errorState.apiError });
   }
+  return { role: 'tool', tool_call_id: toolCall.id, content: result };
 }
 
 async function executeToolCalls(request, data, toolHandlers, traceChannel, toolIteration = 0) {
-  const choice = data?.choices?.[0];
-  const message = choice?.message;
-
+  const message = data?.choices?.[0]?.message;
   if (!message) {
     throw new Error(messages.emptyState.noResponseAI);
   }
-
-  if (!message.tool_calls || !message.tool_calls.length || toolIteration >= MAX_TOOL_ITERATIONS) {
+  if (!message.tool_calls?.length) {
     return message.content;
   }
+  if (toolIteration >= MAX_TOOL_ITERATIONS) {
+    throw new Error('The AI could not finish its response after using tools. Please try again.');
+  }
 
-  const toolMessages = await Promise.all(message.tool_calls.map(async (toolCall) => {
-    const handler = toolHandlers[toolCall.function.name];
-
-    if (!handler) {
-      return {
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: JSON.stringify({
-          error: `No tool handler found for ${toolCall.function.name}`,
-        }),
-      };
-    }
-
-    let parsedArguments = {};
-
-    try {
-      parsedArguments = toolCall.function.arguments
-        ? JSON.parse(toolCall.function.arguments)
-        : {};
-    } catch (error) {
-      return {
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: JSON.stringify({
-          error: `Invalid tool arguments for ${toolCall.function.name}`,
-        }),
-      };
-    }
-
-    try {
-      await notifyToolCall(toolCall.function.name, traceChannel);
-      const toolResult = await handler(parsedArguments);
-      return {
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: typeof toolResult === 'string'
-          ? toolResult
-          : JSON.stringify(toolResult),
-      };
-    } catch (error) {
-      return {
-        role: 'tool',
-        tool_call_id: toolCall.id,
-        content: JSON.stringify({
-          error: error.message || messages.errorState.apiError,
-        }),
-      };
-    }
-  }));
-
+  const toolMessages = await Promise.all(message.tool_calls.map(
+    (toolCall) => executeToolCall(toolCall, toolHandlers, traceChannel),
+  ));
   const followUpRequest = {
     ...request,
+    // Preserve the full message, including Gemini thought-signature metadata.
     messages: [...request.messages, message, ...toolMessages],
+    ...(toolIteration + 1 >= MAX_TOOL_ITERATIONS ? { tool_choice: 'none' } : {}),
   };
-
-  const followUpData = await getGroqClient().chat.completions.create(followUpRequest);
+  const followUpData = await createCompletion(followUpRequest);
   return executeToolCalls(followUpRequest, followUpData, toolHandlers, traceChannel, toolIteration + 1);
+}
+
+function validatePrompt(userPrompt) {
+  if (typeof userPrompt !== 'string' || !userPrompt.trim()) {
+    throw new Error(messages.inputError.noPrompt);
+  }
+  return userPrompt.trim();
 }
 
 module.exports = {
   usePrompt: async (userPrompt, systemPrompt, imageUrl, responseFormat, toolOptions = {}) => {
-    if (!userPrompt || !userPrompt.length) {
-      throw new Error(messages.inputError.noPrompt);
+    const prompt = validatePrompt(userPrompt);
+    const provider = config.currentAiProvider;
+    if (!['google', 'groq'].includes(provider)) {
+      throw new Error(`Unsupported AI provider: ${provider}`);
     }
-
-    let shouldEnableTools = toolOptions.enableTools ?? Boolean(toolOptions.channel);
-    if (shouldEnableTools && !toolOptions.channel) {
-      shouldEnableTools = false;
+    const apiKeyName = provider === 'google' ? 'GEMINI_API_KEY' : 'GROQ_API_KEY';
+    if (!process.env[apiKeyName]) {
+      throw new Error(`${apiKeyName} is not configured.`);
     }
-    let aiModel = config.currentAiModel;
+    const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
+    const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel) : null;
     const effectiveSystemPrompt = shouldEnableTools
       ? [systemPrompt, toolSupportPrompt()].filter(Boolean).join('\n\n')
       : systemPrompt;
-    const requestMessages = buildRequestMessages(userPrompt, effectiveSystemPrompt, imageUrl);
-
-    if (imageUrl) {
-      aiModel = aiModels.qwen3_8_27b;
-    }
-
     const request = {
-      messages: requestMessages,
-      model: aiModel,
+      messages: buildRequestMessages(prompt, effectiveSystemPrompt, imageUrl),
+      model: provider === 'groq' && imageUrl ? aiModels.qwen3_8_27b : config.currentAiModel,
       stream: false,
-      stop: null
     };
-
-    if (!imageUrl) {
-      request.reasoning_effort = "low";
+    if (provider === 'groq' && !imageUrl) {
+      request.reasoning_effort = 'low';
     }
-
     if (responseFormat) {
       request.response_format = responseFormat;
     }
-
-    if (shouldEnableTools) {
-      const toolSet = createToolSet(toolOptions.channel);
+    if (toolSet) {
       request.tools = toolSet.toolDefinitions;
       request.tool_choice = 'auto';
-      const toolHandlers = toolSet.toolHandlers;
-
-      const data = await getGroqClient().chat.completions.create(request);
-
-      const answer = await executeToolCalls(request, data, toolHandlers, toolOptions.channel);
-
-      if (!answer || !answer.length) {
-        throw new Error(messages.emptyState.noResponseAI);
-      }
-
-      return answer;
     }
 
-    const data = await getGroqClient().chat.completions.create(request);
-    const answer = data?.choices?.[0]?.message?.content;
-
-    if (!answer || !answer.length) {
+    const data = await createCompletion(request);
+    const answer = toolSet
+      ? await executeToolCalls(request, data, toolSet.toolHandlers, toolOptions.channel)
+      : data?.choices?.[0]?.message?.content;
+    if (typeof answer !== 'string' || !answer.trim()) {
       throw new Error(messages.emptyState.noResponseAI);
     }
-
     return answer;
   },
 
   useImageGen: async (userPrompt) => {
+    const prompt = validatePrompt(userPrompt);
     const provider = 'amazon/titan-image-generator-v1_standard';
     const response = await fetch('https://api.edenai.run/v2/image/generation', {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "Authorization": `Bearer ${process.env.EDENAI_API_KEY}`,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.EDENAI_API_KEY}`,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        providers: provider,
-        text: String(userPrompt).trim(),
-        resolution: "512x512",
-      })
+      body: JSON.stringify({ providers: provider, text: prompt, resolution: '512x512' }),
+      signal: AbortSignal.timeout(60000),
     });
-
+    if (!response.ok) {
+      throw new Error(messages.errorState.apiError);
+    }
     const data = await response.json();
-
-    if (data[provider] && data[provider].items && data[provider].items[0].image_resource_url) {
-      return data[provider].items[0].image_resource_url;
-    } else {
+    const imageUrl = data[provider]?.items?.[0]?.image_resource_url;
+    if (!imageUrl) {
       throw new Error(messages.emptyState.noResponseAI);
     }
+    return imageUrl;
   },
-}
+};

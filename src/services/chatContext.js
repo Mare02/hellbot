@@ -1,6 +1,8 @@
 const DEFAULT_CHAT_CONTEXT_LIMIT = 15;
+const { currentAiProvider } = require('../utils/config');
 const GROQ_IMAGE_URL_SIZE_LIMIT_BYTES = 20 * 1024 * 1024;
 const STATIC_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.bmp', '.tiff'];
+const GEMINI_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'];
 
 function isGifUrl(url) {
   if (!url || typeof url !== 'string') {
@@ -23,7 +25,18 @@ function isUnsupportedVisionMedia(attachment) {
     return true;
   }
 
-  return isGifUrl(url) || isGifUrl(name);
+  if (isGifUrl(url) || isGifUrl(name)) {
+    return true;
+  }
+
+  if (currentAiProvider === 'google') {
+    if (contentType.startsWith('image/') && !GEMINI_IMAGE_MIME_TYPES.includes(contentType.split(';')[0])) {
+      return true;
+    }
+    return [url, name].some(value => /\.(bmp|tiff?|svg)(?:[?#]|$)/i.test(value));
+  }
+
+  return false;
 }
 
 function isLikelyImageAttachment(attachment) {
@@ -131,12 +144,12 @@ function getMessageImageUrl(message) {
 
   for (const embed of message.embeds || []) {
     const embedImageUrl = embed?.image?.url;
-    if (embedImageUrl && !isGifUrl(embedImageUrl)) {
+    if (embedImageUrl && !isUnsupportedVisionMedia({ url: embedImageUrl })) {
       return embedImageUrl;
     }
 
     const embedThumbnailUrl = embed?.thumbnail?.url;
-    if (embedThumbnailUrl && !isGifUrl(embedThumbnailUrl)) {
+    if (embedThumbnailUrl && !isUnsupportedVisionMedia({ url: embedThumbnailUrl })) {
       return embedThumbnailUrl;
     }
   }
