@@ -8,7 +8,7 @@ const { createToolSet } = require('./ai-tools');
 const { toolSupportPrompt } = require('../utils/aiPrompts');
 
 let groq = null;
-const MAX_TOOL_ITERATIONS = 3;
+const MAX_TOOL_ITERATIONS = 5;
 
 async function createCompletion(request) {
   try {
