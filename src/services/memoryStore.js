@@ -29,10 +29,11 @@ function validateContent(content) {
   if (typeof content !== 'string' || !content.trim() || content.length > 2000) {
     throw new Error('Memory content must contain 1 to 2000 characters.');
   }
-  if (/^##\s/m.test(content) || /<!--\s*metadata\s*:/i.test(content)) {
+  const trimmedContent = content.trim();
+  if (/^##\s/m.test(trimmedContent) || /<!--\s*metadata\s*:/i.test(trimmedContent)) {
     throw new Error('Memory content contains a reserved Markdown delimiter.');
   }
-  return content.trim();
+  return trimmedContent;
 }
 
 function getMemoryFilePath(guildId) {
@@ -219,14 +220,6 @@ async function searchMemories(guildId, { query = '', limit = 5, kind, status, al
     return { entry, score: terms.filter((term) => words.has(term)).length };
   });
   const newestFirst = (a, b) => Date.parse(b.entry.updatedAt) - Date.parse(a.entry.updatedAt);
-
-  if (kind === 'task') {
-    const tasks = scoredEntries.filter(({ entry, score }) => entry.kind === 'task'
-      && (!terms.length || score > 0)
-      && (status === undefined || entry.status === status))
-      .sort((a, b) => b.score - a.score || newestFirst(a, b));
-    return tasks.slice(0, limit).map(({ entry }) => entry);
-  }
 
   return scoredEntries.filter(({ entry, score }) => {
     const matchesKind = kind === undefined || entry.kind === kind;

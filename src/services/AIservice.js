@@ -86,9 +86,10 @@ async function executeToolCalls(request, data, toolHandlers, traceChannel, toolI
     throw new Error('The AI could not finish its response after using tools. Please try again.');
   }
 
-  const toolMessages = await Promise.all(message.tool_calls.map(
-    (toolCall) => executeToolCall(toolCall, toolHandlers, traceChannel),
-  ));
+  const toolMessages = [];
+  for (const toolCall of message.tool_calls) {
+    toolMessages.push(await executeToolCall(toolCall, toolHandlers, traceChannel));
+  }
   const followUpRequest = {
     ...request,
     // Preserve the full message, including Gemini thought-signature metadata.

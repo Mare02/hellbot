@@ -35,17 +35,20 @@ Every entry must contain a valid `kind`; task entries must also have a valid sta
 
 The configured bot owner, members with Manage Server, and members with configured staff/admin/moderator roles can save, correct, or forget memories. The `unlocked` role alone does not grant memory edits. Other members get search only. Guild, user, channel, and event IDs are bound by the application, never chosen by the model.
 
+Search results identify the current requester and include each note's author, source channel/message, and timestamps. Notes are shared within the guild's visibility rules; the AI must use this metadata instead of attributing every note to the current user. When memory is disabled or unavailable, `get_chat_context` keeps its independent description and can fetch conversation history without a memory search.
+
 Notes saved in channels readable by `@everyone` may be recalled across that guild. Notes in restricted channels and all threads are recalled only in their source channel/thread. Both the requester and bot must be able to view and read the source history. Private threads also require membership or Manage Threads. A correction adopts the current channel's visibility, preventing private corrections from retaining a public source.
 
 When memory tools are available, the prompt tells the AI to make two separate, sequential read calls for every genuine information-seeking question: first `search_memory`, then `get_chat_context`, regardless of whether the memory search returned relevant notes. This ordering is prompt-guided, not hard-blocked by the application. For task-list questions, it searches with kind `task`, status `open`, an empty query, and limit 10. For questions asking what has been remembered or saved, it searches with an empty query to list recent accessible notes. The AI skips greetings, acknowledgements, conversational banter, statements, and obvious rhetorical questions. It saves only when the user explicitly asks to remember, save, store, track, or add information to a list for future use (or uses clearly equivalent wording). A request for help, a tutorial, advice, or planning—and a statement such as "I will do it later"—does not trigger saving or task creation. Future work is classified as a task only after an explicit save request. If explicitly requested content depends on earlier conversation, it uses `get_chat_context` to resolve the reference before saving; it asks only if the context remains ambiguous. It confirms only after a successful tool result. Relevant saved preferences and instructions can guide future replies, while system/developer rules, permissions, safety rules, and newer explicit requests take precedence. The application enforces roles and source visibility independently of the model's instructions. Both read calls are still model-triggered; the model may fail to call them, and no memory is read or sent to the model unless it makes the corresponding tool call.
 
 ## Limits
 
+- Each response allows up to five tool-call rounds. Returned tool calls execute sequentially, including when a provider returns multiple calls in one round; this limits rounds, not the total number of individual calls in a batch.
 - Search uses Unicode word matching, not embeddings or semantic similarity. A short query containing the important names/terms works best. An empty query returns the most recently updated accessible entries.
 - Task searches filter by category and task status; task listings use `kind=task`, `status=open`, and an empty query.
 - A search returns up to 10 entries (5 by default).
 - Each entry contains at most 2,000 characters; each guild file holds at most 500 entries and 1 MiB.
-- Identical notes in the same channel are deduplicated after case/whitespace normalization.
+- Identical notes of the same category in the same channel are deduplicated after case/whitespace normalization.
 - Saving an identical closed task again reopens it and records the new save event.
 - Writes use temporary files and atomic replacement. Mutations are serialized within one bot process; run only one writer process per memory directory. Direct manual edits should be made while that writer is stopped.
 - Guild memory directories are `0700`; memory files are `0600`. No additional package or database service is required.

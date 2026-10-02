@@ -6,10 +6,11 @@ const { createMemoryToolSet, memoryToolsPrompt } = require('./memory');
 
 async function createToolSet(channel, options = {}) {
   const memoryToolSet = await createMemoryToolSet({ ...options, channel });
+  const memoryEnabled = memoryToolSet.toolDefinitions.length > 0;
   const toolDefinitions = [
     currentWeatherTool.definition,
     forecastTool.definition,
-    chatContextTool.definition,
+    chatContextTool.createDefinition({ memoryEnabled }),
     exchangeRatesTool.definition,
     ...memoryToolSet.toolDefinitions,
   ];
@@ -25,7 +26,7 @@ async function createToolSet(channel, options = {}) {
   return {
     toolDefinitions,
     toolHandlers,
-    memoryPrompt: memoryToolSet.toolDefinitions.length ? memoryToolsPrompt : null,
+    memoryPrompt: memoryEnabled ? memoryToolsPrompt : null,
   };
 }
 
