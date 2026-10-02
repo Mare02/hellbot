@@ -4,7 +4,7 @@ const definition = {
   type: 'function',
   function: {
     name: 'get_chat_context',
-    description: 'Fetch recent text and embeds from the current Discord channel. If search_memory is available, call it first for a genuine question and wait for its result; use this only if recent conversation is still needed. For an explicit remember/note/save request with unclear content or a reference like "that", "it", or "this", use recent messages to resolve what the user intends to save; prefer the user\'s relevant statement over Hellbot\'s reply. For other non-question requests, use when recent conversation is relevant.',
+    description: 'Fetch recent text and embeds from the current Discord channel. For every genuine information-seeking question or request, call this as the second tool after search_memory returns, even if search_memory found relevant notes or found none. For an explicit save request with an unclear reference like "that", "it", or "this", call this to resolve what the user intends to save; prefer the user\'s relevant statement over Hellbot\'s reply. Do not call for greetings, banter, reactions, statements, or obvious rhetorical questions.',
     parameters: {
       type: 'object',
       properties: {
