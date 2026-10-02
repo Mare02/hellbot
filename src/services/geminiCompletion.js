@@ -1,7 +1,13 @@
 const { setTimeout: delay } = require('node:timers/promises');
+const { createApiKeyRotator } = require('../utils/apiKeyRotator');
 
 const GEMINI_COMPLETIONS_URL = 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
 const MAX_RETRIES = 2;
+const apiKeyRotator = createApiKeyRotator('GEMINI_API_KEY');
+
+function hasGeminiApiKeys() {
+  return apiKeyRotator.hasKeys();
+}
 
 // Gemini's OpenAI-compatible endpoint uses Hellbot's existing messages and tools.
 async function createGeminiCompletion(request) {
@@ -9,7 +15,7 @@ async function createGeminiCompletion(request) {
     const response = await fetch(GEMINI_COMPLETIONS_URL, {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.GEMINI_API_KEY}`,
+        Authorization: `Bearer ${apiKeyRotator.next()}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(request),
@@ -30,4 +36,4 @@ async function createGeminiCompletion(request) {
   }
 }
 
-module.exports = { createGeminiCompletion };
+module.exports = { createGeminiCompletion, hasGeminiApiKeys };

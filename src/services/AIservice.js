@@ -3,7 +3,7 @@ const aiModels = require('../data/aiModels');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
 const Groq = require('groq-sdk');
-const { createGeminiCompletion } = require('./geminiCompletion');
+const { createGeminiCompletion, hasGeminiApiKeys } = require('./geminiCompletion');
 const { createToolSet } = require('./ai-tools');
 const { toolSupportPrompt } = require('../utils/aiPrompts');
 
@@ -113,9 +113,11 @@ module.exports = {
     if (!['google', 'groq'].includes(provider)) {
       throw new Error(`Unsupported AI provider: ${provider}`);
     }
-    const apiKeyName = provider === 'google' ? 'GEMINI_API_KEY' : 'GROQ_API_KEY';
-    if (!process.env[apiKeyName]) {
-      throw new Error(`${apiKeyName} is not configured.`);
+    if (provider === 'google' && !hasGeminiApiKeys()) {
+      throw new Error('Configure GEMINI_API_KEY_1 or GEMINI_API_KEY.');
+    }
+    if (provider === 'groq' && !process.env.GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY is not configured.');
     }
     const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
     const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel) : null;
