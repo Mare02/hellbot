@@ -1,6 +1,6 @@
 const fs = require('fs');
 const messages = require('../utils/messages');
-const { buildDiscordPayload } = require('./discordMessages');
+const { sendDiscordContent } = require('./discordMessages');
 const { getMessageContent } = require('./messageContent');
 
 require('dotenv').config();
@@ -16,13 +16,7 @@ const helpers = {
   },
 
   reply: async (interaction, args, content) => {
-    const payload = buildDiscordPayload(content);
-
-    if (interaction.deferred) {
-      await interaction.editReply(payload);
-    } else {
-      await interaction.reply(payload);
-    }
+    await sendDiscordContent(interaction, content);
   },
 
   forwardAttachmentsToChannel: async (message, args, channelId, mediaType) => {
