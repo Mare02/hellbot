@@ -3,6 +3,7 @@ const { constants: fsConstants } = require('node:fs');
 const path = require('node:path');
 const os = require('node:os');
 const { randomUUID } = require('node:crypto');
+const { isDevMode } = require('../utils/config');
 
 const MAX_FILE_BYTES = 1024 * 1024;
 const MAX_ENTRIES = 500;
@@ -36,10 +37,17 @@ function validateContent(content) {
   return trimmedContent;
 }
 
-function getMemoryFilePath(guildId) {
+function getMemoryPaths(guildId) {
   validateDiscordId(guildId, 'guildId');
   const root = process.env.HELLBOT_MEMORY_DIR || path.join(os.homedir(), '.local/share/hellbot/memory');
-  return path.join(root, guildId, 'memory.md');
+  return {
+    root,
+    filePath: path.join(root, isDevMode ? 'dev' : 'prod', guildId, 'memory.md'),
+  };
+}
+
+function getMemoryFilePath(guildId) {
+  return getMemoryPaths(guildId).filePath;
 }
 
 async function assertNotSymlink(targetPath, label) {
@@ -123,11 +131,12 @@ function parseMemories(text) {
   });
 }
 
-async function readMemories(filePath) {
+async function readMemories(filePath, root) {
   let handle;
   try {
     const guildDirectory = path.dirname(filePath);
     const memoryRoot = path.dirname(guildDirectory);
+    await assertNotSymlink(root, 'Memory base directory');
     await assertNotSymlink(memoryRoot, 'Memory root');
     await assertNotSymlink(guildDirectory, 'Guild memory directory');
     await assertNotSymlink(filePath, 'Memory file');
@@ -153,7 +162,7 @@ async function readMemories(filePath) {
   }
 }
 
-async function writeMemories(filePath, entries) {
+async function writeMemories(filePath, entries, root) {
   if (entries.length > MAX_ENTRIES) throw new Error('Memory entry limit of 500 reached.');
   const text = HEADER + entries.map(({ id, content, kind, status, ...metadata }) => {
     if (kind !== null && kind !== undefined) metadata.kind = kind;
@@ -163,9 +172,11 @@ async function writeMemories(filePath, entries) {
   if (Buffer.byteLength(text) > MAX_FILE_BYTES) throw new Error('Memory file exceeds 1 MB.');
   const directory = path.dirname(filePath);
   const memoryRoot = path.dirname(directory);
+  await assertNotSymlink(root, 'Memory base directory');
   await assertNotSymlink(memoryRoot, 'Memory root');
   await assertNotSymlink(directory, 'Guild memory directory');
   await fs.mkdir(directory, { recursive: true, mode: 0o700 });
+  await assertDirectory(root, 'Memory base directory');
   await assertDirectory(memoryRoot, 'Memory root');
   await assertDirectory(directory, 'Guild memory directory');
   await assertNotSymlink(filePath, 'Memory file');
@@ -180,12 +191,12 @@ async function writeMemories(filePath, entries) {
 }
 
 function mutateMemories(guildId, mutation) {
-  const filePath = getMemoryFilePath(guildId);
+  const { filePath, root } = getMemoryPaths(guildId);
   const previous = mutationQueues.get(filePath) || Promise.resolve();
   const operation = previous.catch(() => {}).then(async () => {
-    const entries = await readMemories(filePath);
+    const entries = await readMemories(filePath, root);
     const { result, changed } = mutation(entries);
-    if (changed) await writeMemories(filePath, entries);
+    if (changed) await writeMemories(filePath, entries, root);
     return result;
   });
   mutationQueues.set(filePath, operation);
@@ -200,7 +211,7 @@ function normalize(content) {
 }
 
 async function searchMemories(guildId, { query = '', limit = 5, kind, status, allowedChannelIds } = {}) {
-  const filePath = getMemoryFilePath(guildId);
+  const { filePath, root } = getMemoryPaths(guildId);
   if (!Number.isInteger(limit) || limit < 1 || limit > 10) {
     throw new Error('Memory search limit must be between 1 and 10.');
   }
@@ -214,7 +225,7 @@ async function searchMemories(guildId, { query = '', limit = 5, kind, status, al
   const allowed = new Set(allowedChannelIds.map((id) => validateDiscordId(id, 'allowedChannelId')));
   if (!allowed.size) return [];
   const terms = [...new Set(normalize(query).match(/[\p{L}\p{N}]+/gu) || [])];
-  const entries = await readMemories(filePath);
+  const entries = await readMemories(filePath, root);
   const scoredEntries = entries.filter((entry) => allowed.has(entry.channelId)).map((entry) => {
     const words = new Set(normalize(entry.content).match(/[\p{L}\p{N}]+/gu) || []);
     return { entry, score: terms.filter((term) => words.has(term)).length };

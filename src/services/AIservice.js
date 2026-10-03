@@ -61,7 +61,7 @@ async function executeToolCall(toolCall, toolHandlers, traceChannel) {
     }
     if (config.isDevMode && traceChannel?.send) {
       try {
-        await traceChannel.send(`-# used tool: \`${name}\``);
+        await traceChannel.send(`-# tool call: \`${name}\``);
       } catch (error) {
         console.error('Failed to send AI tool trace:', { tool: name });
       }

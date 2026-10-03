@@ -6,12 +6,21 @@ Memory is available in mentions, replies to Hellbot, and `askai` (including its 
 
 ## Storage
 
-Each guild has a Markdown file at `<memory-root>/<guild-id>/memory.md`. The default root is `~/.local/share/hellbot/memory`, resolved from the operating system account running the bot. Set `HELLBOT_MEMORY_DIR` to override it, for example for development.
+Each guild has separate development and production Markdown files at `<memory-root>/<environment>/<guild-id>/memory.md`. The default root is `~/.local/share/hellbot/memory`, resolved from the operating system account running the bot. `HELLBOT_MEMORY_DIR` overrides this base root; the environment folder is always appended, including when both bots use the same override.
+
+The environment uses the same setting as the bot's credentials and command prefix: `NODE_ENV=development` selects `dev`, while all other values (including unset) select `prod`.
+
+```text
+~/.local/share/hellbot/memory/dev/<guild-id>/memory.md
+~/.local/share/hellbot/memory/prod/<guild-id>/memory.md
+```
+
+Only environment-specific files are read. A missing file starts with empty memory and is created on the first successful save; there is no migration or fallback to the old shared file.
 
 On the production VPS, the home server's file is:
 
 ```
-/home/hellbot/.local/share/hellbot/memory/720011764934115400/memory.md
+/home/hellbot/.local/share/hellbot/memory/prod/720011764934115400/memory.md
 ```
 
 The empty file contains `# Hellbot memories` followed by a blank line. Other guild files are created on their first successful save. Files stay outside the Git checkout so deployments do not replace them. Include this directory in the VPS backup procedure. Creating storage does not deploy the feature; the code on `feature/ai-memory` must be deployed and the bot restarted for the tools to become available.
@@ -50,5 +59,5 @@ When memory tools are available, the prompt tells the AI to make two separate, s
 - Each entry contains at most 2,000 characters; each guild file holds at most 500 entries and 1 MiB.
 - Identical notes of the same category in the same channel are deduplicated after case/whitespace normalization.
 - Saving an identical closed task again reopens it and records the new save event.
-- Writes use temporary files and atomic replacement. Mutations are serialized within one bot process; run only one writer process per memory directory. Direct manual edits should be made while that writer is stopped.
+- Writes use temporary files and atomic replacement. Mutations are serialized within one bot process; run only one writer process per environment directory. Development and production may share the base root because their environment directories are separate. Direct manual edits should be made while the corresponding writer is stopped.
 - Guild memory directories are `0700`; memory files are `0600`. No additional package or database service is required.
