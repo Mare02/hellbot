@@ -5,13 +5,48 @@ This project is a Discord bot built using Node.js and the Discord.js library. It
 
 ### Features
 - **AI**: Implements AI API for generating text and image responses.
+- **Server memory**: Saves guild notes on explicit requests, with separate development and production storage. See [AI server memory](docs/ai-memory.md).
 - **Slash Commands**: Implements DiscordJS slash commands.
 - **Scheduled Jobs**: Implements cron jobs for things like daily facts.new members.
 
-### How to run:
-- pnpm install
-- pnpm install nodemon
-- pnpm run dev
+### How to run
+
+Install dependencies and configure bot and AI provider credentials in `.env`:
+
+```sh
+pnpm install
+```
+
+Start development mode:
+
+```sh
+NODE_ENV=development pnpm run dev
+```
+
+Start production mode:
+
+```sh
+NODE_ENV=production pnpm start
+```
+
+`NODE_ENV` selects the bot credentials, command prefix, and memory environment.
+The dev script starts nodemon; it does not set `NODE_ENV` itself.
+
+### AI server memory
+
+Each guild has its own file in the selected environment:
+
+```text
+~/.local/share/hellbot/memory/dev/<guild-id>/memory.md
+~/.local/share/hellbot/memory/prod/<guild-id>/memory.md
+```
+
+Optionally set `HELLBOT_MEMORY_DIR` in `.env` to change the base directory;
+`dev/` or `prod/` is always appended. Missing files start empty and are created
+on the first successful save. Old shared files are not imported.
+
+See [AI server memory](docs/ai-memory.md) for permissions, tool behavior,
+storage limits, and backups.
 
 ### Gemini API key rotation
 

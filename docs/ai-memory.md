@@ -23,7 +23,7 @@ On the production VPS, the home server's file is:
 /home/hellbot/.local/share/hellbot/memory/prod/720011764934115400/memory.md
 ```
 
-The empty file contains `# Hellbot memories` followed by a blank line. Other guild files are created on their first successful save. Files stay outside the Git checkout so deployments do not replace them. Include this directory in the VPS backup procedure. Creating storage does not deploy the feature; the code on `feature/ai-memory` must be deployed and the bot restarted for the tools to become available.
+The empty file contains `# Hellbot memories` followed by a blank line. Other guild files are created on their first successful save. Files stay outside the Git checkout so deployments do not replace them. Include this directory in the VPS backup procedure. Deploy the updated code and restart the bot to make the tools available.
 
 Each entry has a UUID heading, structured metadata, and the original memory text. The metadata gives the AI an explicit category instead of making it infer what an unstructured paragraph represents:
 
