@@ -231,5 +231,8 @@ function toToolMemory(memory) {
 
 module.exports = {
   createMemoryToolSet,
-  memoryToolsPrompt: `${memoryToolsPrompt}\n\n${taskMemoryPrompt}`,
+  memoryToolsPrompt: [
+    `<guild-memory-instructions>\n${memoryToolsPrompt}\n</guild-memory-instructions>`,
+    `<memory-task-classification>\n${taskMemoryPrompt}\n</memory-task-classification>`,
+  ].join('\n\n'),
 };
