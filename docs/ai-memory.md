@@ -44,6 +44,8 @@ Every entry must contain a valid `kind`; task entries must also have a valid sta
 
 The configured bot owner, members with Manage Server, and members with configured staff/admin/moderator roles can save, correct, or forget memories. The `unlocked` role alone does not grant memory edits. Other members get search only. Guild, user, channel, and event IDs are bound by the application, never chosen by the model.
 
+`forget_memory` accepts either one `id` or an `ids` array containing 1–500 IDs returned by `search_memory`, never both. The current user must explicitly request deletion of those memories. Duplicate IDs are counted once, ignoring letter case. Every requested memory must exist and be accessible; otherwise, the entire batch fails without deleting anything. A successful result includes the deleted `ids` and `count`, plus `id` for a single-ID request. The batch is applied in one serialized mutation and one atomic file replacement.
+
 Search results identify the current requester and include each note's author, source channel/message, and timestamps. Notes are shared within the guild's visibility rules; the AI must use this metadata instead of attributing every note to the current user. When memory is disabled or unavailable, `get_chat_context` keeps its independent description and can fetch conversation history without a memory search.
 
 Notes saved in channels may be recalled across that guild when both the requester and bot can view and read the source history. Access does not require the source channel to be readable by `@everyone`. Thread memories are recalled only in their source thread; private threads also require membership or Manage Threads. A correction uses the current channel as its source for later access checks.

@@ -55,7 +55,10 @@ const definitions = {
   }),
   save_memory: definition('save_memory', 'Use only when the user explicitly asks to remember, save, store, track, or add information to a list for future use, or uses clearly equivalent wording. A request for help, a tutorial, advice, planning, or a statement like "I will do it later" is not permission to save or create a task. Never infer save intent from the content alone. If the user did not explicitly ask to retain it, do not call this tool. If the requested content is incomplete or depends on a reference to earlier conversation, first call get_chat_context to resolve the intended content from recent messages. Prefer the user\'s relevant statement over Hellbot\'s reply; do not save Hellbot\'s reply unless clearly requested. If context remains ambiguous, ask a concise clarification and do not guess/save yet. If the explicit save request is clear, save directly. For an explicitly requested saved item, set kind to task for planned work/action items (status starts open); otherwise choose fact, preference, instruction, or note. Preserve the requested meaning in content.', { content: contentProperty, kind: kindProperty }, ['content', 'kind']),
   update_memory: definition('update_memory', 'Change an accessible saved memory only when the current user explicitly requests a correction, reclassification, or task-status change. Preserve kind/status unless the user asks to change them. Tasks may have status open, done, or cancelled.', { id: idProperty, content: contentProperty, kind: kindProperty, status: statusProperty }, ['id']),
-  forget_memory: definition('forget_memory', 'Remove an accessible memory only when the current user explicitly asks you to forget it.', { id: idProperty }, ['id']),
+  forget_memory: definition('forget_memory', 'Remove one or more accessible memories only when the current user explicitly asks you to forget them. Use exact IDs returned by search_memory and include only memories covered by that request. Provide either ids for a batch or id for one memory, never both. If any requested memory is missing or inaccessible, nothing is deleted. Confirm deletion only after a successful result.', {
+    id: idProperty,
+    ids: { type: 'array', items: idProperty, minItems: 1, maxItems: 500, description: 'The exact memory IDs returned by search_memory for the memories the current user explicitly asked to forget.' },
+  }),
 };
 
 function validMember(member, guildId, userId) {
@@ -179,33 +182,50 @@ async function createMemoryToolSet({ channel, user, member, messageId, allowMemo
       return { success: true, memory: toToolMemory(memory) };
     });
 
-    async function changeMemory({ id, content, kind, status }, remove) {
+    toolHandlers.update_memory = safeHandler('update_memory', async ({ id, content, kind, status }) => {
       if (typeof id !== 'string' || !id.trim()
-        || (!remove && content !== undefined && (typeof content !== 'string' || !content.trim() || content.length > 2000))
-        || (!remove && kind !== undefined && !MEMORY_KINDS.has(kind))
-        || (!remove && status !== undefined && !TASK_STATUSES.has(status))
-        || (!remove && content === undefined && kind === undefined && status === undefined)) {
+        || (content !== undefined && (typeof content !== 'string' || !content.trim() || content.length > 2000))
+        || (kind !== undefined && !MEMORY_KINDS.has(kind))
+        || (status !== undefined && !TASK_STATUSES.has(status))
+        || (content === undefined && kind === undefined && status === undefined)) {
         return { success: false, error: 'Provide a memory ID and at least one valid content, kind, or task status change.' };
       }
       const { allowedChannelIds } = await writeContext();
-      const result = remove
-        ? await memoryStore.deleteMemory(guild.id, { id, allowedChannelIds })
-        : await memoryStore.updateMemory(guild.id, {
-          id,
-          ...(content !== undefined ? { content: content.trim() } : {}),
-          ...(kind !== undefined ? { kind } : {}),
-          ...(status !== undefined ? { status } : {}),
-          authorId: user.id,
-          channelId: channel.id,
-          messageId,
-          allowedChannelIds,
-        });
+      const result = await memoryStore.updateMemory(guild.id, {
+        id,
+        ...(content !== undefined ? { content: content.trim() } : {}),
+        ...(kind !== undefined ? { kind } : {}),
+        ...(status !== undefined ? { status } : {}),
+        authorId: user.id,
+        channelId: channel.id,
+        messageId,
+        allowedChannelIds,
+      });
       if (!result) return { success: false, error: 'Memory not found or unavailable.' };
-      return remove ? { success: true, id } : { success: true, memory: toToolMemory(result) };
-    }
+      return { success: true, memory: toToolMemory(result) };
+    });
 
-    toolHandlers.update_memory = safeHandler('update_memory', (args) => changeMemory(args, false));
-    toolHandlers.forget_memory = safeHandler('forget_memory', (args) => changeMemory(args, true));
+    toolHandlers.forget_memory = safeHandler('forget_memory', async ({ id, ids }) => {
+      if ((id === undefined) === (ids === undefined)) {
+        return { success: false, error: 'Provide either id or ids, never both.' };
+      }
+      const requestedIds = id === undefined ? ids : [id];
+      if (!Array.isArray(requestedIds) || !requestedIds.length || requestedIds.length > 500
+        || requestedIds.some((memoryId) => typeof memoryId !== 'string' || !memoryId.trim())) {
+        return { success: false, error: 'Provide between 1 and 500 memory IDs.' };
+      }
+      const { allowedChannelIds } = await writeContext();
+      const deleted = await memoryStore.deleteMemories(guild.id, { ids: requestedIds, allowedChannelIds });
+      if (!deleted) {
+        return { success: false, error: 'A requested memory was not found or unavailable. No memories were deleted.' };
+      }
+      return {
+        success: true,
+        ids: deleted.map((memory) => memory.id),
+        count: deleted.length,
+        ...(id !== undefined ? { id: deleted[0].id } : {}),
+      };
+    });
   }
 
   return {

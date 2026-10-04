@@ -312,19 +312,31 @@ function updateMemory(guildId, { id, content, kind, status, authorId, channelId,
   });
 }
 
-function deleteMemory(guildId, { id, allowedChannelIds }) {
-  validateMemoryId(id);
+function deleteMemories(guildId, { ids, allowedChannelIds }) {
+  if (!Array.isArray(ids) || !ids.length || ids.length > MAX_ENTRIES) {
+    throw new Error(`Provide between 1 and ${MAX_ENTRIES} memory IDs.`);
+  }
+  ids.forEach(validateMemoryId);
+  const requestedIds = new Set(ids.map((id) => id.toLowerCase()));
   if (!Array.isArray(allowedChannelIds) || !allowedChannelIds.length) {
     throw new Error('At least one readable source channel is required.');
   }
   const allowed = new Set(allowedChannelIds.map((channelId) => validateDiscordId(channelId, 'allowedChannelId')));
   return mutateMemories(guildId, (entries) => {
-    const index = entries.findIndex((entry) => entry.id.toLowerCase() === id.toLowerCase());
-    if (index === -1) throw new Error('Memory not found.');
-    if (!allowed.has(entries[index].channelId)) return { result: null, changed: false };
-    const [entry] = entries.splice(index, 1);
-    return { result: entry, changed: true };
+    const selected = entries.filter((entry) => requestedIds.has(entry.id.toLowerCase()));
+    if (selected.length !== requestedIds.size || selected.some((entry) => !allowed.has(entry.channelId))) {
+      return { result: null, changed: false };
+    }
+    for (let index = entries.length - 1; index >= 0; index--) {
+      if (requestedIds.has(entries[index].id.toLowerCase())) entries.splice(index, 1);
+    }
+    return { result: selected, changed: true };
   });
 }
 
-module.exports = { searchMemories, saveMemory, updateMemory, deleteMemory, getMemoryFilePath };
+async function deleteMemory(guildId, { id, allowedChannelIds }) {
+  const deleted = await deleteMemories(guildId, { ids: [id], allowedChannelIds });
+  return deleted ? deleted[0] : null;
+}
+
+module.exports = { searchMemories, saveMemory, updateMemory, deleteMemory, deleteMemories, getMemoryFilePath };
