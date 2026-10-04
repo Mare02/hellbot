@@ -324,9 +324,10 @@ function deleteMemories(guildId, { ids, allowedChannelIds }) {
   const allowed = new Set(allowedChannelIds.map((channelId) => validateDiscordId(channelId, 'allowedChannelId')));
   return mutateMemories(guildId, (entries) => {
     const selected = entries.filter((entry) => requestedIds.has(entry.id.toLowerCase()));
-    if (selected.length !== requestedIds.size || selected.some((entry) => !allowed.has(entry.channelId))) {
+    if (selected.some((entry) => !allowed.has(entry.channelId))) {
       return { result: null, changed: false };
     }
+    if (!selected.length) return { result: [], changed: false };
     for (let index = entries.length - 1; index >= 0; index--) {
       if (requestedIds.has(entries[index].id.toLowerCase())) entries.splice(index, 1);
     }
@@ -336,7 +337,7 @@ function deleteMemories(guildId, { ids, allowedChannelIds }) {
 
 async function deleteMemory(guildId, { id, allowedChannelIds }) {
   const deleted = await deleteMemories(guildId, { ids: [id], allowedChannelIds });
-  return deleted ? deleted[0] : null;
+  return deleted?.[0] || null;
 }
 
 module.exports = { searchMemories, saveMemory, updateMemory, deleteMemory, deleteMemories, getMemoryFilePath };

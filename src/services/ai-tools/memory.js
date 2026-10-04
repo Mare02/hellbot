@@ -55,7 +55,7 @@ const definitions = {
   }),
   save_memory: definition('save_memory', 'Use only when the user explicitly asks to remember, save, store, track, or add information to a list for future use, or uses clearly equivalent wording. A request for help, a tutorial, advice, planning, or a statement like "I will do it later" is not permission to save or create a task. Never infer save intent from the content alone. If the user did not explicitly ask to retain it, do not call this tool. If the requested content is incomplete or depends on a reference to earlier conversation, first call get_chat_context to resolve the intended content from recent messages. Prefer the user\'s relevant statement over Hellbot\'s reply; do not save Hellbot\'s reply unless clearly requested. If context remains ambiguous, ask a concise clarification and do not guess/save yet. If the explicit save request is clear, save directly. For an explicitly requested saved item, set kind to task for planned work/action items (status starts open); otherwise choose fact, preference, instruction, or note. Preserve the requested meaning in content.', { content: contentProperty, kind: kindProperty }, ['content', 'kind']),
   update_memory: definition('update_memory', 'Change an accessible saved memory only when the current user explicitly requests a correction, reclassification, or task-status change. Preserve kind/status unless the user asks to change them. Tasks may have status open, done, or cancelled.', { id: idProperty, content: contentProperty, kind: kindProperty, status: statusProperty }, ['id']),
-  forget_memory: definition('forget_memory', 'Remove one or more accessible memories only when the current user explicitly asks you to forget them. Use exact IDs returned by search_memory and include only memories covered by that request. Provide either ids for a batch or id for one memory, never both. If any requested memory is missing or inaccessible, nothing is deleted. Confirm deletion only after a successful result.', {
+  forget_memory: definition('forget_memory', 'Remove one or more accessible memories only when the current user explicitly asks you to forget them. Use exact IDs returned by search_memory and include only memories covered by that request. Provide either ids for a batch or id for one memory, never both. Missing IDs are ignored and the remaining existing memories are deleted. If any existing requested memory is inaccessible, nothing is deleted. Confirm only the IDs actually deleted in a successful result; count 0 means nothing was deleted.', {
     id: idProperty,
     ids: { type: 'array', items: idProperty, minItems: 1, maxItems: 500, description: 'The exact memory IDs returned by search_memory for the memories the current user explicitly asked to forget.' },
   }),
@@ -217,13 +217,13 @@ async function createMemoryToolSet({ channel, user, member, messageId, allowMemo
       const { allowedChannelIds } = await writeContext();
       const deleted = await memoryStore.deleteMemories(guild.id, { ids: requestedIds, allowedChannelIds });
       if (!deleted) {
-        return { success: false, error: 'A requested memory was not found or unavailable. No memories were deleted.' };
+        return { success: false, error: 'A requested memory is inaccessible. No memories were deleted.' };
       }
       return {
         success: true,
         ids: deleted.map((memory) => memory.id),
         count: deleted.length,
-        ...(id !== undefined ? { id: deleted[0].id } : {}),
+        ...(id !== undefined && deleted.length ? { id: deleted[0].id } : {}),
       };
     });
   }
