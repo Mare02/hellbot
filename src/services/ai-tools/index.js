@@ -2,13 +2,17 @@ const currentWeatherTool = require('./weather/getCurrentWeather');
 const forecastTool = require('./weather/getForecast');
 const chatContextTool = require('./getChatContext');
 const exchangeRatesTool = require('./exchangeRates/getExchangeRates');
+const { createMemoryToolSet, memoryToolsPrompt } = require('./memory');
 
-function createToolSet(channel) {
+async function createToolSet(channel, options = {}) {
+  const memoryToolSet = await createMemoryToolSet({ ...options, channel });
+  const memoryEnabled = memoryToolSet.toolDefinitions.length > 0;
   const toolDefinitions = [
     currentWeatherTool.definition,
     forecastTool.definition,
-    chatContextTool.definition,
+    chatContextTool.createDefinition({ memoryEnabled }),
     exchangeRatesTool.definition,
+    ...memoryToolSet.toolDefinitions,
   ];
 
   const toolHandlers = {
@@ -16,11 +20,13 @@ function createToolSet(channel) {
     [forecastTool.definition.function.name]: forecastTool.handler,
     [chatContextTool.definition.function.name]: chatContextTool.createHandler(channel),
     [exchangeRatesTool.definition.function.name]: exchangeRatesTool.handler,
+    ...memoryToolSet.toolHandlers,
   };
 
   return {
     toolDefinitions,
     toolHandlers,
+    memoryPrompt: memoryEnabled ? memoryToolsPrompt : null,
   };
 }
 

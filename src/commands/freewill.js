@@ -57,6 +57,9 @@ module.exports = {
 
       const aiResponse = await usePrompt(prompt, brainRotPrompt(), undefined, undefined, {
         channel: interaction.channel,
+        user: interaction.author || interaction.user,
+        member: interaction.member,
+        allowMemoryAccess: false,
       });
       const finalResponse = aiResponse || messages.emptyState.noResponseAI;
 

@@ -8,7 +8,7 @@ const { createToolSet } = require('./ai-tools');
 const { toolSupportPrompt } = require('../utils/aiPrompts');
 
 let groq = null;
-const MAX_TOOL_ITERATIONS = 3;
+const MAX_TOOL_ITERATIONS = 5;
 
 async function createCompletion(request) {
   try {
@@ -61,7 +61,7 @@ async function executeToolCall(toolCall, toolHandlers, traceChannel) {
     }
     if (config.isDevMode && traceChannel?.send) {
       try {
-        await traceChannel.send(`-# used tool: \`${name}\``);
+        await traceChannel.send(`-# tool call: \`${name}\``);
       } catch (error) {
         console.error('Failed to send AI tool trace:', { tool: name });
       }
@@ -86,9 +86,10 @@ async function executeToolCalls(request, data, toolHandlers, traceChannel, toolI
     throw new Error('The AI could not finish its response after using tools. Please try again.');
   }
 
-  const toolMessages = await Promise.all(message.tool_calls.map(
-    (toolCall) => executeToolCall(toolCall, toolHandlers, traceChannel),
-  ));
+  const toolMessages = [];
+  for (const toolCall of message.tool_calls) {
+    toolMessages.push(await executeToolCall(toolCall, toolHandlers, traceChannel));
+  }
   const followUpRequest = {
     ...request,
     // Preserve the full message, including Gemini thought-signature metadata.
@@ -120,9 +121,9 @@ module.exports = {
       throw new Error('GROQ_API_KEY is not configured.');
     }
     const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
-    const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel) : null;
+    const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel, toolOptions) : null;
     const effectiveSystemPrompt = shouldEnableTools
-      ? [systemPrompt, toolSupportPrompt()].filter(Boolean).join('\n\n')
+      ? [systemPrompt, toolSupportPrompt(), toolSet.memoryPrompt].filter(Boolean).join('\n\n')
       : systemPrompt;
     const request = {
       messages: buildRequestMessages(prompt, effectiveSystemPrompt, imageUrl),
@@ -138,6 +139,7 @@ module.exports = {
     if (toolSet) {
       request.tools = toolSet.toolDefinitions;
       request.tool_choice = 'auto';
+      request.parallel_tool_calls = false;
     }
 
     const data = await createCompletion(request);

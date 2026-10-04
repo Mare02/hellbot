@@ -60,6 +60,9 @@ module.exports = {
 
       const answer = await usePrompt(prompt, systemPrompt, imageUrl, undefined, {
         channel: interaction.channel,
+        user: interaction.author || interaction.user,
+        member: interaction.member,
+        messageId: interaction.id,
       });
       await reply(interaction, args, answer);
     }
