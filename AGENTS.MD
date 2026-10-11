@@ -51,7 +51,13 @@ This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The
 
 ### Environment Variables
 - Always use process.env for sensitive data
-- Required env vars: BOT_TOKEN, CLIENT_ID, GROQ_API_KEY, EDENAI_API_KEY, BUGSNAG_API_KEY
+- DISCORD_TOKEN is the bot token; in development, DEV_DISCORD_TOKEN overrides it when set.
+- CLIENT_ID is the Discord application ID; in development, DEV_CLIENT_ID overrides it when set.
+- PUBLIC_KEY is optional for interaction verification; in development, PUBLIC_KEY_DEV overrides it when set.
+- AI_PROVIDER selects groq (default) or google for text generation.
+- Set GROQ_API_KEY for Groq, or GEMINI_API_KEY_1 (and additional numbered keys) / GEMINI_API_KEY fallback for Google.
+- EDENAI_API_KEY is used only for image generation.
+- BUGSNAG_API_KEY is used by startup error tracking.
 - Use NODE_ENV for environment detection (development/production)
 - Reference config.js for accessing environment-dependent settings
 
