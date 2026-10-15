@@ -6,6 +6,7 @@ const { createMemoryToolSet, memoryToolsPrompt } = require('./memory');
 const { createServerChannelToolSet } = require('./serverChannels');
 const { createServerRoleToolSet } = require('./serverRoles');
 const { createServerGuildToolSet } = require('./serverGuild');
+const { createServerAuditToolSet } = require('./serverAudit');
 const { createServerMemberToolSet } = require('./serverMembers');
 const { createServerMessageToolSet } = require('./serverMessages');
 
@@ -14,6 +15,7 @@ async function createToolSet(channel, options = {}) {
   const serverChannelToolSet = createServerChannelToolSet({ ...options, channel });
   const serverRoleToolSet = createServerRoleToolSet({ ...options, channel });
   const serverGuildToolSet = createServerGuildToolSet({ ...options, channel });
+  const serverAuditToolSet = createServerAuditToolSet({ ...options, channel });
   const serverMemberToolSet = createServerMemberToolSet({ ...options, channel });
   const serverMessageToolSet = createServerMessageToolSet({ ...options, channel });
   const memoryEnabled = memoryToolSet.toolDefinitions.length > 0;
@@ -25,6 +27,7 @@ async function createToolSet(channel, options = {}) {
     ...serverChannelToolSet.toolDefinitions,
     ...serverRoleToolSet.toolDefinitions,
     ...serverGuildToolSet.toolDefinitions,
+    ...serverAuditToolSet.toolDefinitions,
     ...serverMemberToolSet.toolDefinitions,
     ...serverMessageToolSet.toolDefinitions,
     ...memoryToolSet.toolDefinitions,
@@ -38,6 +41,7 @@ async function createToolSet(channel, options = {}) {
     ...serverChannelToolSet.toolHandlers,
     ...serverRoleToolSet.toolHandlers,
     ...serverGuildToolSet.toolHandlers,
+    ...serverAuditToolSet.toolHandlers,
     ...serverMemberToolSet.toolHandlers,
     ...serverMessageToolSet.toolHandlers,
     ...memoryToolSet.toolHandlers,

@@ -1,4 +1,5 @@
 const {
+  ChannelType,
   GuildDefaultMessageNotifications,
   GuildExplicitContentFilter,
   GuildVerificationLevel,
@@ -26,11 +27,13 @@ const getGuildDefinition = {
   },
 };
 
+const imageUrlDescription = 'HTTPS image URL from cdn.discordapp.com or media.discordapp.net. Use "clear" to remove the current image.';
+
 const editGuildDefinition = {
   type: 'function',
   function: {
     name: 'edit_server_info',
-    description: 'Edit basic settings for the configured Hellbot server. Only change settings explicitly requested by the user. Supports name, description, preferred locale, verification level, default message notifications, explicit content filter, and AFK timeout. After editing, call get_server_info to verify.',
+    description: 'Edit basic settings for the configured Hellbot server. Only change settings explicitly requested by the user. Supports name, description, icon, banner, preferred locale, verification level, default message notifications, explicit content filter, AFK timeout and channel, system channel, rules channel, and public updates channel. Use an empty channel ID to clear an optional channel. After editing, call get_server_info to verify.',
     parameters: {
       type: 'object',
       properties: {
@@ -41,6 +44,12 @@ const editGuildDefinition = {
         default_message_notifications: { type: 'integer', enum: notificationLevels, description: 'Default notifications: 0 all messages, 1 only mentions.' },
         explicit_content_filter: { type: 'integer', enum: contentFilterLevels, description: 'Explicit content filter: 0 disabled, 1 members without roles, 2 all members.' },
         afk_timeout: { type: 'integer', enum: afkTimeouts, description: 'AFK timeout in seconds: 60, 300, 900, 1800, or 3600.' },
+        icon_url: { type: 'string', maxLength: 2048, description: imageUrlDescription },
+        banner_url: { type: 'string', maxLength: 2048, description: imageUrlDescription },
+        afk_channel_id: { type: 'string', maxLength: 20, description: 'Voice channel ID for AFK moves, or an empty string to clear.' },
+        system_channel_id: { type: 'string', maxLength: 20, description: 'Text or announcement channel ID for system messages, or an empty string to clear.' },
+        rules_channel_id: { type: 'string', maxLength: 20, description: 'Text or announcement channel ID for server rules, or an empty string to clear.' },
+        public_updates_channel_id: { type: 'string', maxLength: 20, description: 'Text or announcement channel ID for public updates, or an empty string to clear.' },
       },
       additionalProperties: false,
     },
@@ -51,6 +60,9 @@ function serializeGuild(guild) {
   return {
     id: guild.id,
     name: guild.name,
+    memberCount: guild.memberCount,
+    iconUrl: guild.iconURL({ size: 1024 }),
+    bannerUrl: guild.bannerURL({ size: 2048 }),
     description: guild.description || null,
     preferredLocale: guild.preferredLocale,
     verificationLevel: GuildVerificationLevel[guild.verificationLevel] || guild.verificationLevel,
@@ -65,6 +77,50 @@ function serializeGuild(guild) {
     premiumProgressBarEnabled: guild.premiumProgressBarEnabled,
     features: guild.features,
   };
+}
+
+async function downloadGuildImage(url, fieldName) {
+  if (url === 'clear') return null;
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    throw new Error(`${fieldName} must be a valid HTTPS image URL.`);
+  }
+  if (parsedUrl.protocol !== 'https:' || !['cdn.discordapp.com', 'media.discordapp.net'].includes(parsedUrl.hostname)) {
+    throw new Error(`${fieldName} must use cdn.discordapp.com or media.discordapp.net over HTTPS.`);
+  }
+
+  const response = await fetch(parsedUrl, { redirect: 'error', signal: AbortSignal.timeout(10000) });
+  if (!response.ok) throw new Error(`Discord image download failed for ${fieldName}.`);
+  const contentType = response.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase();
+  if (!['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(contentType)) {
+    throw new Error(`${fieldName} URL must return a PNG, JPEG, GIF, or WebP image.`);
+  }
+  const maxImageBytes = 8 * 1024 * 1024;
+  const contentLength = Number(response.headers.get('content-length'));
+  if (Number.isFinite(contentLength) && contentLength > maxImageBytes) {
+    throw new Error(`${fieldName} image must be 8 MB or smaller.`);
+  }
+  const reader = response.body?.getReader();
+  if (!reader) throw new Error(`${fieldName} image response was empty.`);
+  const chunks = [];
+  let totalBytes = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    totalBytes += value.length;
+    if (totalBytes > maxImageBytes) {
+      await reader.cancel();
+      throw new Error(`${fieldName} image must be 8 MB or smaller.`);
+    }
+    chunks.push(Buffer.from(value));
+  }
+  const image = Buffer.concat(chunks, totalBytes);
+  if (image.length === 0) {
+    throw new Error(`${fieldName} image must be between 1 byte and 8 MB.`);
+  }
+  return image;
 }
 
 function createServerGuildToolSet({ channel, user } = {}) {
@@ -119,6 +175,36 @@ function createServerGuildToolSet({ channel, user } = {}) {
           throw new Error('AFK timeout must be 60, 300, 900, 1800, or 3600 seconds.');
         }
         changes.afkTimeout = requestedChanges.afk_timeout;
+      }
+      const channelSettings = [
+        ['afk_channel_id', 'afkChannel', 'voice'],
+        ['system_channel_id', 'systemChannel', 'text'],
+        ['rules_channel_id', 'rulesChannel', 'text'],
+        ['public_updates_channel_id', 'publicUpdatesChannel', 'text'],
+      ];
+      for (const [inputName, optionName, expectedType] of channelSettings) {
+        if (!Object.prototype.hasOwnProperty.call(requestedChanges, inputName)) continue;
+        const channelId = requestedChanges[inputName];
+        if (channelId === '') {
+          changes[optionName] = null;
+          continue;
+        }
+        if (typeof channelId !== 'string' || !/^\d{17,20}$/.test(channelId)) {
+          throw new Error(`${inputName} must be a valid channel ID or an empty string to clear it.`);
+        }
+        const targetChannel = await guild.channels.fetch(channelId);
+        const validType = targetChannel && (expectedType === 'voice'
+          ? targetChannel.type === ChannelType.GuildVoice
+          : targetChannel.type === ChannelType.GuildText || targetChannel.type === ChannelType.GuildAnnouncement);
+        if (!validType) throw new Error(`${inputName} must reference a compatible channel in the configured server.`);
+        changes[optionName] = targetChannel;
+      }
+      for (const [inputName, optionName] of [['icon_url', 'icon'], ['banner_url', 'banner']]) {
+        if (!Object.prototype.hasOwnProperty.call(requestedChanges, inputName)) continue;
+        if (typeof requestedChanges[inputName] !== 'string' || requestedChanges[inputName].length > 2048) {
+          throw new Error(`${inputName} must be an image URL or "clear".`);
+        }
+        changes[optionName] = await downloadGuildImage(requestedChanges[inputName], inputName);
       }
       if (Object.keys(changes).length === 0) throw new Error('Provide at least one server setting to edit.');
 
