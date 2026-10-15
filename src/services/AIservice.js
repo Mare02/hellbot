@@ -45,6 +45,7 @@ function buildRequestMessages(userPrompt, systemPrompt, imageUrl) {
 
 async function executeToolCall(toolCall, toolHandlers, traceChannel) {
   let result;
+  let visionImages = [];
   const name = toolCall.function?.name;
   try {
     if (!Object.prototype.hasOwnProperty.call(toolHandlers, name)) {
@@ -67,11 +68,20 @@ async function executeToolCall(toolCall, toolHandlers, traceChannel) {
       }
     }
     const toolResult = await toolHandlers[name](args);
-    result = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? null);
+    if (toolResult && typeof toolResult === 'object' && Array.isArray(toolResult.__aiVisionImages)) {
+      const { __aiVisionImages, ...publicResult } = toolResult;
+      visionImages = __aiVisionImages;
+      result = JSON.stringify(publicResult);
+    } else {
+      result = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? null);
+    }
   } catch (error) {
     result = JSON.stringify({ error: error.message || messages.errorState.apiError });
   }
-  return { role: 'tool', tool_call_id: toolCall.id, content: result };
+  return {
+    toolMessage: { role: 'tool', tool_call_id: toolCall.id, content: result },
+    visionImages,
+  };
 }
 
 async function executeToolCalls(request, data, toolHandlers, traceChannel, toolIteration = 0) {
@@ -87,13 +97,31 @@ async function executeToolCalls(request, data, toolHandlers, traceChannel, toolI
   }
 
   const toolMessages = [];
+  const visionImages = [];
   for (const toolCall of message.tool_calls) {
-    toolMessages.push(await executeToolCall(toolCall, toolHandlers, traceChannel));
+    const result = await executeToolCall(toolCall, toolHandlers, traceChannel);
+    toolMessages.push(result.toolMessage);
+    visionImages.push(...result.visionImages);
   }
+  const imageContextMessage = visionImages.length
+    ? [{
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Images selected from Discord chat context. Each image is labeled with its source message and attachment.' },
+        ...visionImages.slice(0, 10).flatMap((image) => [
+          {
+            type: 'text',
+            text: `Source message ${image.messageId}; attachment ${image.attachmentId || 'unknown'}; filename ${image.name || 'unknown'}.`,
+          },
+          { type: 'image_url', image_url: { url: image.url } },
+        ]),
+      ],
+    }]
+    : [];
   const followUpRequest = {
     ...request,
     // Preserve the full message, including Gemini thought-signature metadata.
-    messages: [...request.messages, message, ...toolMessages],
+    messages: [...request.messages, message, ...toolMessages, ...imageContextMessage],
     ...(toolIteration + 1 >= MAX_TOOL_ITERATIONS ? { tool_choice: 'none' } : {}),
   };
   const followUpData = await createCompletion(followUpRequest);

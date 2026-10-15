@@ -6,6 +6,7 @@ const {
   Locale,
   PermissionFlagsBits,
 } = require('discord.js');
+const { getMessageContent } = require('../../utils/messageContent');
 const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
 
 const verificationLevels = [0, 1, 2, 3, 4];
@@ -33,7 +34,7 @@ const editGuildDefinition = {
   type: 'function',
   function: {
     name: 'edit_server_info',
-    description: 'Edit basic settings for the configured Hellbot server. Only change settings explicitly requested by the user. Supports name, description, icon, banner, preferred locale, verification level, default message notifications, explicit content filter, AFK timeout and channel, system channel, rules channel, and public updates channel. When the user attached the requested icon image to the prompt, set use_prompt_image_for_icon to true so the tool uses that exact image. Use an empty channel ID to clear an optional channel. After editing, call get_server_info to verify.',
+    description: 'Edit basic settings for the configured Hellbot server. Only change settings explicitly requested by the user. Supports name, description, icon, banner, preferred locale, verification level, default message notifications, explicit content filter, AFK timeout and channel, system channel, rules channel, and public updates channel. When the user attached the requested icon image to the current prompt, set use_prompt_image_for_icon to true. For an image found through get_chat_context, pass its exact messageId and attachment ID in icon_source_message_id and icon_source_attachment_id. Use an empty channel ID to clear an optional channel. After editing, call get_server_info to verify.',
     parameters: {
       type: 'object',
       properties: {
@@ -46,6 +47,8 @@ const editGuildDefinition = {
         afk_timeout: { type: 'integer', enum: afkTimeouts, description: 'AFK timeout in seconds: 60, 300, 900, 1800, or 3600.' },
         icon_url: { type: 'string', maxLength: 2048, description: imageUrlDescription },
         use_prompt_image_for_icon: { type: 'boolean', description: 'Use the image attached to the current AI prompt as the server icon instead of providing icon_url.' },
+        icon_source_message_id: { type: 'string', pattern: '^\\d{17,20}$', description: 'Message ID returned by get_chat_context that contains the selected icon attachment.' },
+        icon_source_attachment_id: { type: 'string', pattern: '^\\d{17,20}$', description: 'Attachment ID returned by get_chat_context for the selected icon image.' },
         banner_url: { type: 'string', maxLength: 2048, description: imageUrlDescription },
         afk_channel_id: { type: 'string', maxLength: 20, description: 'Voice channel ID for AFK moves, or an empty string to clear.' },
         system_channel_id: { type: 'string', maxLength: 20, description: 'Text or announcement channel ID for system messages, or an empty string to clear.' },
@@ -78,6 +81,13 @@ function serializeGuild(guild) {
     premiumProgressBarEnabled: guild.premiumProgressBarEnabled,
     features: guild.features,
   };
+}
+
+function isImageAttachment(attachment) {
+  const contentType = attachment?.contentType?.split(';', 1)[0].toLowerCase() || '';
+  if (contentType.startsWith('image/')) return true;
+  const fileName = attachment?.name || attachment?.url || '';
+  return /\.(png|jpe?g|gif|webp)$/i.test(fileName.split(/[?#]/, 1)[0]);
 }
 
 async function downloadGuildImage(url, fieldName) {
@@ -145,8 +155,15 @@ function createServerGuildToolSet({ channel, user, promptImageUrl } = {}) {
         && typeof requestedChanges.use_prompt_image_for_icon !== 'boolean') {
         throw new Error('use_prompt_image_for_icon must be true or false.');
       }
-      if (usePromptImageForIcon && Object.prototype.hasOwnProperty.call(requestedChanges, 'icon_url')) {
-        throw new Error('Choose either use_prompt_image_for_icon or icon_url, not both.');
+      const hasSourceMessageId = Object.prototype.hasOwnProperty.call(requestedChanges, 'icon_source_message_id');
+      const hasSourceAttachmentId = Object.prototype.hasOwnProperty.call(requestedChanges, 'icon_source_attachment_id');
+      if (hasSourceMessageId !== hasSourceAttachmentId) {
+        throw new Error('Provide both icon_source_message_id and icon_source_attachment_id.');
+      }
+      const hasIconUrl = Object.prototype.hasOwnProperty.call(requestedChanges, 'icon_url');
+      const hasContextImage = hasSourceMessageId && hasSourceAttachmentId;
+      if ([hasIconUrl, usePromptImageForIcon, hasContextImage].filter(Boolean).length > 1) {
+        throw new Error('Choose only one icon source: icon_url, use_prompt_image_for_icon, or the context message and attachment IDs.');
       }
 
       if (Object.prototype.hasOwnProperty.call(requestedChanges, 'name')) {
@@ -220,6 +237,24 @@ function createServerGuildToolSet({ channel, user, promptImageUrl } = {}) {
           throw new Error('No image was attached to the current AI prompt. Attach an image and try again.');
         }
         changes.icon = await downloadGuildImage(promptImageUrl, 'icon_url');
+      }
+      if (hasContextImage) {
+        const sourceMessageId = requestedChanges.icon_source_message_id;
+        const sourceAttachmentId = requestedChanges.icon_source_attachment_id;
+        if (typeof sourceMessageId !== 'string' || !/^\d{17,20}$/.test(sourceMessageId)
+          || typeof sourceAttachmentId !== 'string' || !/^\d{17,20}$/.test(sourceAttachmentId)) {
+          throw new Error('Provide valid message and attachment IDs from get_chat_context.');
+        }
+        const sourceMessage = await channel.messages.fetch({ message: sourceMessageId, force: true });
+        if (sourceMessage.guildId !== guild.id) throw new Error('The source message is not in the configured server.');
+        const sourceAttachment = getMessageContent(sourceMessage).attachments
+          .find((attachment) => attachment.id === sourceAttachmentId);
+        if (!sourceAttachment) throw new Error('The selected attachment was not found on that Discord message.');
+        if (!isImageAttachment(sourceAttachment)) throw new Error('The selected attachment is not an image.');
+        if (typeof sourceAttachment.size === 'number' && sourceAttachment.size > 8 * 1024 * 1024) {
+          throw new Error('The selected image must be 8 MB or smaller.');
+        }
+        changes.icon = await downloadGuildImage(sourceAttachment.url, 'icon_url');
       }
       if (Object.keys(changes).length === 0) throw new Error('Provide at least one server setting to edit.');
 
