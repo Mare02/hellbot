@@ -83,6 +83,22 @@ const editChannelDefinition = {
   },
 };
 
+const deleteChannelDefinition = {
+  type: 'function',
+  function: {
+    name: 'delete_server_channel',
+    description: 'Permanently delete one channel in the configured Hellbot server by its exact channel ID. This cannot be undone. Only delete a channel when the owner explicitly asks for that channel to be deleted.',
+    parameters: {
+      type: 'object',
+      properties: {
+        channel_id: { type: 'string', description: 'The exact Discord channel ID from get_server_channels.' },
+      },
+      required: ['channel_id'],
+      additionalProperties: false,
+    },
+  },
+};
+
 const editChannelPermissionsDefinition = {
   type: 'function',
   function: {
@@ -250,6 +266,33 @@ function createServerChannelToolSet({ channel, user } = {}) {
       return { success: true, channel: serializeChannel(target) };
     },
 
+    delete_server_channel: async ({ channel_id: channelId } = {}) => {
+      ensureAccess();
+      if (typeof channelId !== 'string' || !/^\d{17,20}$/.test(channelId)) {
+        throw new Error('Provide a valid Discord channel ID.');
+      }
+
+      const target = await guild.channels.fetch(channelId, { force: true });
+      if (!target) throw new Error('Channel not found in the configured Hellbot server.');
+      const botMember = guild.members.me || await guild.members.fetchMe();
+      if (!botMember.permissions.has(PermissionFlagsBits.ManageChannels)) {
+        throw new Error('The bot needs Manage Channels permission to delete a channel.');
+      }
+
+      const deletedChannel = await target.delete(
+        `Requested by Hellbot owner ${user.id} through AI server tools`
+      );
+      return {
+        success: true,
+        deleted: true,
+        channel: {
+          id: deletedChannel.id,
+          name: deletedChannel.name,
+          type: ChannelType[deletedChannel.type] || deletedChannel.type,
+        },
+      };
+    },
+
     edit_server_channel_permissions: async ({ channel_id: channelId, target_type: targetType, target_id: targetId, allow = [], deny = [], inherit = [] } = {}) => {
       ensureAccess();
       if (typeof channelId !== 'string' || !/^\d{17,20}$/.test(channelId)) throw new Error('Provide a valid Discord channel ID.');
@@ -405,6 +448,7 @@ function createServerChannelToolSet({ channel, user } = {}) {
       listChannelsDefinition,
       getChannelDefinition,
       editChannelDefinition,
+      deleteChannelDefinition,
       editChannelPermissionsDefinition,
       syncChannelPermissionsDefinition,
       removeChannelOverwriteDefinition,
