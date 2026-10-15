@@ -121,7 +121,9 @@ module.exports = {
       throw new Error('GROQ_API_KEY is not configured.');
     }
     const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
-    const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel, toolOptions) : null;
+    const toolSet = shouldEnableTools
+      ? await createToolSet(toolOptions.channel, { ...toolOptions, promptImageUrl: imageUrl })
+      : null;
     const effectiveSystemPrompt = shouldEnableTools
       ? [systemPrompt, toolSupportPrompt(), toolSet.memoryPrompt].filter(Boolean).join('\n\n')
       : systemPrompt;

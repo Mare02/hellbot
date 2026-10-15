@@ -33,7 +33,7 @@ const editGuildDefinition = {
   type: 'function',
   function: {
     name: 'edit_server_info',
-    description: 'Edit basic settings for the configured Hellbot server. Only change settings explicitly requested by the user. Supports name, description, icon, banner, preferred locale, verification level, default message notifications, explicit content filter, AFK timeout and channel, system channel, rules channel, and public updates channel. Use an empty channel ID to clear an optional channel. After editing, call get_server_info to verify.',
+    description: 'Edit basic settings for the configured Hellbot server. Only change settings explicitly requested by the user. Supports name, description, icon, banner, preferred locale, verification level, default message notifications, explicit content filter, AFK timeout and channel, system channel, rules channel, and public updates channel. When the user attached the requested icon image to the prompt, set use_prompt_image_for_icon to true so the tool uses that exact image. Use an empty channel ID to clear an optional channel. After editing, call get_server_info to verify.',
     parameters: {
       type: 'object',
       properties: {
@@ -45,6 +45,7 @@ const editGuildDefinition = {
         explicit_content_filter: { type: 'integer', enum: contentFilterLevels, description: 'Explicit content filter: 0 disabled, 1 members without roles, 2 all members.' },
         afk_timeout: { type: 'integer', enum: afkTimeouts, description: 'AFK timeout in seconds: 60, 300, 900, 1800, or 3600.' },
         icon_url: { type: 'string', maxLength: 2048, description: imageUrlDescription },
+        use_prompt_image_for_icon: { type: 'boolean', description: 'Use the image attached to the current AI prompt as the server icon instead of providing icon_url.' },
         banner_url: { type: 'string', maxLength: 2048, description: imageUrlDescription },
         afk_channel_id: { type: 'string', maxLength: 20, description: 'Voice channel ID for AFK moves, or an empty string to clear.' },
         system_channel_id: { type: 'string', maxLength: 20, description: 'Text or announcement channel ID for system messages, or an empty string to clear.' },
@@ -123,7 +124,7 @@ async function downloadGuildImage(url, fieldName) {
   return image;
 }
 
-function createServerGuildToolSet({ channel, user } = {}) {
+function createServerGuildToolSet({ channel, user, promptImageUrl } = {}) {
   if (!canUseServerTools(channel, user)) return { toolDefinitions: [], toolHandlers: {} };
 
   const guild = channel.guild;
@@ -139,6 +140,14 @@ function createServerGuildToolSet({ channel, user } = {}) {
     edit_server_info: async (requestedChanges = {}) => {
       ensureAccess();
       const changes = {};
+      const usePromptImageForIcon = requestedChanges.use_prompt_image_for_icon === true;
+      if (requestedChanges.use_prompt_image_for_icon !== undefined
+        && typeof requestedChanges.use_prompt_image_for_icon !== 'boolean') {
+        throw new Error('use_prompt_image_for_icon must be true or false.');
+      }
+      if (usePromptImageForIcon && Object.prototype.hasOwnProperty.call(requestedChanges, 'icon_url')) {
+        throw new Error('Choose either use_prompt_image_for_icon or icon_url, not both.');
+      }
 
       if (Object.prototype.hasOwnProperty.call(requestedChanges, 'name')) {
         if (typeof requestedChanges.name !== 'string' || requestedChanges.name.trim().length < 2 || requestedChanges.name.length > 100) {
@@ -205,6 +214,12 @@ function createServerGuildToolSet({ channel, user } = {}) {
           throw new Error(`${inputName} must be an image URL or "clear".`);
         }
         changes[optionName] = await downloadGuildImage(requestedChanges[inputName], inputName);
+      }
+      if (usePromptImageForIcon) {
+        if (typeof promptImageUrl !== 'string' || !promptImageUrl) {
+          throw new Error('No image was attached to the current AI prompt. Attach an image and try again.');
+        }
+        changes.icon = await downloadGuildImage(promptImageUrl, 'icon_url');
       }
       if (Object.keys(changes).length === 0) throw new Error('Provide at least one server setting to edit.');
 
