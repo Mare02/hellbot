@@ -3,15 +3,30 @@ const forecastTool = require('./weather/getForecast');
 const chatContextTool = require('./getChatContext');
 const exchangeRatesTool = require('./exchangeRates/getExchangeRates');
 const { createMemoryToolSet, memoryToolsPrompt } = require('./memory');
+const { createServerChannelToolSet } = require('./serverChannels');
+const { createServerRoleToolSet } = require('./serverRoles');
+const { createServerGuildToolSet } = require('./serverGuild');
+const { createServerMemberToolSet } = require('./serverMembers');
+const { createServerMessageToolSet } = require('./serverMessages');
 
 async function createToolSet(channel, options = {}) {
   const memoryToolSet = await createMemoryToolSet({ ...options, channel });
+  const serverChannelToolSet = createServerChannelToolSet({ ...options, channel });
+  const serverRoleToolSet = createServerRoleToolSet({ ...options, channel });
+  const serverGuildToolSet = createServerGuildToolSet({ ...options, channel });
+  const serverMemberToolSet = createServerMemberToolSet({ ...options, channel });
+  const serverMessageToolSet = createServerMessageToolSet({ ...options, channel });
   const memoryEnabled = memoryToolSet.toolDefinitions.length > 0;
   const toolDefinitions = [
     currentWeatherTool.definition,
     forecastTool.definition,
     chatContextTool.createDefinition({ memoryEnabled }),
     exchangeRatesTool.definition,
+    ...serverChannelToolSet.toolDefinitions,
+    ...serverRoleToolSet.toolDefinitions,
+    ...serverGuildToolSet.toolDefinitions,
+    ...serverMemberToolSet.toolDefinitions,
+    ...serverMessageToolSet.toolDefinitions,
     ...memoryToolSet.toolDefinitions,
   ];
 
@@ -20,6 +35,11 @@ async function createToolSet(channel, options = {}) {
     [forecastTool.definition.function.name]: forecastTool.handler,
     [chatContextTool.definition.function.name]: chatContextTool.createHandler(channel),
     [exchangeRatesTool.definition.function.name]: exchangeRatesTool.handler,
+    ...serverChannelToolSet.toolHandlers,
+    ...serverRoleToolSet.toolHandlers,
+    ...serverGuildToolSet.toolHandlers,
+    ...serverMemberToolSet.toolHandlers,
+    ...serverMessageToolSet.toolHandlers,
     ...memoryToolSet.toolHandlers,
   };
 
