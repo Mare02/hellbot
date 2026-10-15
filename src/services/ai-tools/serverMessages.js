@@ -53,6 +53,74 @@ const editMessageDefinition = {
   },
 };
 
+const pinnedMessagesDefinition = {
+  type: 'function',
+  function: {
+    name: 'get_server_channel_pins',
+    description: 'List pinned messages in a text or announcement channel in the configured Hellbot server.',
+    parameters: {
+      type: 'object',
+      properties: {
+        channel_id: { type: 'string', description: 'The exact channel ID from get_server_channels.' },
+      },
+      required: ['channel_id'],
+      additionalProperties: false,
+    },
+  },
+};
+
+const pinMessageDefinition = {
+  type: 'function',
+  function: {
+    name: 'pin_server_channel_message',
+    description: 'Pin one message in a text or announcement channel. Only pin when explicitly requested. Find the exact message ID with get_server_channel_messages first.',
+    parameters: {
+      type: 'object',
+      properties: {
+        channel_id: { type: 'string', description: 'The exact channel ID.' },
+        message_id: { type: 'string', description: 'The exact message ID to pin.' },
+      },
+      required: ['channel_id', 'message_id'],
+      additionalProperties: false,
+    },
+  },
+};
+
+const unpinMessageDefinition = {
+  type: 'function',
+  function: {
+    name: 'unpin_server_channel_message',
+    description: 'Remove one message from a channel’s pins. Find the exact message ID with get_server_channel_messages or get_server_channel_pins first.',
+    parameters: {
+      type: 'object',
+      properties: {
+        channel_id: { type: 'string', description: 'The exact channel ID.' },
+        message_id: { type: 'string', description: 'The exact message ID to unpin.' },
+      },
+      required: ['channel_id', 'message_id'],
+      additionalProperties: false,
+    },
+  },
+};
+
+const deleteMessageDefinition = {
+  type: 'function',
+  function: {
+    name: 'delete_server_channel_message',
+    description: 'Permanently delete either one specific message by message_id or the most recent count messages in a text or announcement channel, regardless of author. Deleting recent messages requires Manage Messages permission. This cannot be undone. Only delete when the owner explicitly requests it.',
+    parameters: {
+      type: 'object',
+      properties: {
+        channel_id: { type: 'string', description: 'The exact channel ID.' },
+        message_id: { type: 'string', description: 'The exact message ID to delete. Provide this or count, not both.' },
+        count: { type: 'integer', minimum: 1, maximum: 50, description: 'Delete this many most recent messages in the channel, regardless of author. If the owner does not specify a number, use 5. Provide this or message_id, not both.' },
+      },
+      required: ['channel_id'],
+      additionalProperties: false,
+    },
+  },
+};
+
 function isSnowflake(value) {
   return typeof value === 'string' && /^\d{17,20}$/.test(value);
 }
@@ -154,9 +222,129 @@ function createServerMessageToolSet({ channel, user } = {}) {
       if (!verifiedMessage) throw new Error('Message was edited, but Discord did not return it for verification.');
       return { success: true, message: serializeMessage(verifiedMessage) };
     },
+
+    get_server_channel_pins: async ({ channel_id: channelId } = {}) => {
+      ensureAccess();
+      const targetChannel = await fetchTargetChannel(channelId);
+      await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
+      const pins = await targetChannel.messages.fetchPins();
+      return {
+        success: true,
+        channelId: targetChannel.id,
+        count: pins.size,
+        messages: [...pins.values()].map(serializeMessage),
+      };
+    },
+
+    pin_server_channel_message: async ({ channel_id: channelId, message_id: messageId } = {}) => {
+      ensureAccess();
+      if (!isSnowflake(messageId)) throw new Error('Provide a valid Discord message ID.');
+      const targetChannel = await fetchTargetChannel(channelId);
+      const botMember = await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
+      const targetMessage = await targetChannel.messages.fetch(messageId);
+      if (!targetMessage) throw new Error('Message not found in the selected channel.');
+      if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageMessages)) {
+        throw new Error('The bot needs Manage Messages permission to pin messages.');
+      }
+      await targetMessage.pin(`Requested by Hellbot owner ${user.id} through AI server tools`);
+      const verifiedPins = await targetChannel.messages.fetchPins();
+      if (!verifiedPins.has(messageId)) throw new Error('Message was pinned, but Discord did not return it in the pinned messages.');
+      return { success: true, message: serializeMessage(verifiedPins.get(messageId)) };
+    },
+
+    unpin_server_channel_message: async ({ channel_id: channelId, message_id: messageId } = {}) => {
+      ensureAccess();
+      if (!isSnowflake(messageId)) throw new Error('Provide a valid Discord message ID.');
+      const targetChannel = await fetchTargetChannel(channelId);
+      const botMember = await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
+      const targetMessage = await targetChannel.messages.fetch(messageId);
+      if (!targetMessage) throw new Error('Message not found in the selected channel.');
+      if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageMessages)) {
+        throw new Error('The bot needs Manage Messages permission to unpin messages.');
+      }
+      await targetMessage.unpin(`Requested by Hellbot owner ${user.id} through AI server tools`);
+      const verifiedPins = await targetChannel.messages.fetchPins();
+      if (verifiedPins.has(messageId)) throw new Error('Message was unpinned, but Discord still returned it in the pinned messages.');
+      return { success: true, unpinned: true, messageId, channelId: targetChannel.id };
+    },
+
+    delete_server_channel_message: async ({ channel_id: channelId, message_id: messageId, count } = {}) => {
+      ensureAccess();
+      if ((messageId === undefined) === (count === undefined)) {
+        throw new Error('Provide either message_id for one message or count for the most recent messages, but not both.');
+      }
+      const targetChannel = await fetchTargetChannel(channelId);
+      const botMember = await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
+
+      if (count !== undefined) {
+        if (!Number.isInteger(count) || count < 1 || count > 50) {
+          throw new Error('Count must be from 1 to 50.');
+        }
+        if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageMessages)) {
+          throw new Error('The bot needs Manage Messages permission to delete recent messages regardless of author.');
+        }
+
+        const messagesToDelete = [];
+        let before;
+        let scannedCount = 0;
+        const scanLimit = 1000;
+
+        while (messagesToDelete.length < count && scannedCount < scanLimit) {
+          const page = await targetChannel.messages.fetch({
+            limit: Math.min(100, scanLimit - scannedCount),
+            ...(before ? { before } : {}),
+          });
+          if (page.size === 0) break;
+
+          const orderedMessages = [...page.values()].sort((left, right) => right.createdTimestamp - left.createdTimestamp);
+          messagesToDelete.push(...orderedMessages.slice(0, count - messagesToDelete.length));
+          scannedCount += page.size;
+          before = orderedMessages[orderedMessages.length - 1].id;
+        }
+
+        for (const message of messagesToDelete) {
+          await message.delete();
+        }
+
+        return {
+          success: true,
+          channelId: targetChannel.id,
+          requestedCount: count,
+          deletedCount: messagesToDelete.length,
+          deletedMessageIds: messagesToDelete.map((message) => message.id),
+          scanLimitReached: scannedCount >= scanLimit && messagesToDelete.length < count,
+        };
+      }
+
+      if (!isSnowflake(messageId)) throw new Error('Provide a valid Discord message ID.');
+      const targetMessage = await targetChannel.messages.fetch(messageId);
+      if (!targetMessage) throw new Error('Message not found in the selected channel.');
+      const canDeleteOwn = targetMessage.author.id === botMember.id;
+      if (!canDeleteOwn && !targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageMessages)) {
+        throw new Error('The bot needs Manage Messages permission to delete another user’s message.');
+      }
+      await targetMessage.delete();
+      const verifiedMessage = await targetChannel.messages.fetch(messageId).catch((error) => {
+        if (error.code === 10008) return null;
+        throw error;
+      });
+      if (verifiedMessage) throw new Error('Message deletion was requested, but Discord still returned the message.');
+      return { success: true, deleted: true, channelId: targetChannel.id, messageId };
+    },
   };
 
-  return { toolDefinitions: [getMessagesDefinition, sendMessageDefinition, editMessageDefinition], toolHandlers };
+  return {
+    toolDefinitions: [
+      getMessagesDefinition,
+      sendMessageDefinition,
+      editMessageDefinition,
+      pinnedMessagesDefinition,
+      pinMessageDefinition,
+      unpinMessageDefinition,
+      deleteMessageDefinition,
+    ],
+    toolHandlers,
+  };
 }
 
 module.exports = { createServerMessageToolSet };

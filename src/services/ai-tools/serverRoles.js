@@ -78,6 +78,22 @@ const editRoleDefinition = {
   },
 };
 
+const deleteRoleDefinition = {
+  type: 'function',
+  function: {
+    name: 'delete_server_role',
+    description: 'Permanently delete a role from the configured Hellbot server. This removes it from every member and cannot be undone. Only delete when the owner explicitly requests deletion of that role.',
+    parameters: {
+      type: 'object',
+      properties: {
+        role_id: { type: 'string', description: 'The exact role ID from get_server_roles.' },
+      },
+      required: ['role_id'],
+      additionalProperties: false,
+    },
+  },
+};
+
 function serializeRole(role) {
   return {
     id: role.id,
@@ -210,9 +226,29 @@ function createServerRoleToolSet({ channel, user } = {}) {
       if (!verifiedRole) throw new Error('Role was edited, but Discord did not return it for verification.');
       return { success: true, role: serializeRole(verifiedRole) };
     },
+
+    delete_server_role: async ({ role_id: roleId } = {}) => {
+      ensureAccess();
+      if (typeof roleId !== 'string' || !/^\d{17,20}$/.test(roleId)) throw new Error('Provide a valid Discord role ID.');
+      const target = await guild.roles.fetch(roleId);
+      if (!target) throw new Error('Role not found in the configured Hellbot server.');
+      if (target.id === guild.id || target.managed) {
+        throw new Error('The everyone role and integration-managed roles cannot be deleted with this tool.');
+      }
+      const botMember = guild.members.me || await guild.members.fetchMe();
+      if (!botMember.permissions.has(PermissionFlagsBits.ManageRoles)) {
+        throw new Error('The bot needs Manage Roles permission to delete a role.');
+      }
+      if (!target.editable) throw new Error('The bot cannot manage this role. Check Manage Roles and the bot role hierarchy.');
+      const deletedRole = { id: target.id, name: target.name };
+      await target.delete(`Requested by Hellbot owner ${user.id} through AI server tools`);
+      const verifiedRoles = await guild.roles.fetch();
+      if (verifiedRoles.has(roleId)) throw new Error('Role deletion was requested, but Discord still returned the role.');
+      return { success: true, deleted: true, role: deletedRole };
+    },
   };
 
-  return { toolDefinitions: [createRoleDefinition, listRolesDefinition, getRoleDefinition, editRoleDefinition], toolHandlers };
+  return { toolDefinitions: [createRoleDefinition, listRolesDefinition, getRoleDefinition, editRoleDefinition, deleteRoleDefinition], toolHandlers };
 }
 
 module.exports = { createServerRoleToolSet };

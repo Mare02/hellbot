@@ -6,6 +6,8 @@ const channelTypes = {
   announcement: ChannelType.GuildAnnouncement,
   voice: ChannelType.GuildVoice,
   category: ChannelType.GuildCategory,
+  forum: ChannelType.GuildForum,
+  stage: ChannelType.GuildStageVoice,
 };
 const permissionNames = Object.keys(PermissionFlagsBits).filter((name) => Number.isNaN(Number(name)));
 const permissionNameSet = new Set(permissionNames);
@@ -14,15 +16,15 @@ const createChannelDefinition = {
   type: 'function',
   function: {
     name: 'create_server_channel',
-    description: 'Create a text, announcement, voice, or category channel in the configured Hellbot server. Only create a channel explicitly requested by the user. Use get_server_channels to find a parent category ID. After creation, inspect the returned channel details.',
+    description: 'Create a text, announcement, voice, category, forum, or stage channel in the configured Hellbot server. Forum channels require a topic. Only create a channel explicitly requested by the user. Use get_server_channels to find a parent category ID. After creation, inspect the returned channel details.',
     parameters: {
       type: 'object',
       properties: {
         name: { type: 'string', minLength: 1, maxLength: 100, description: 'New channel name.' },
-        type: { type: 'string', enum: Object.keys(channelTypes), description: 'Channel type: text, announcement, voice, or category.' },
+        type: { type: 'string', enum: Object.keys(channelTypes), description: 'Channel type: text, announcement, voice, category, forum, or stage.' },
         parent_id: { type: 'string', description: 'Optional ID of a category to contain the new channel.' },
-        topic: { type: 'string', maxLength: 1024, description: 'Optional topic for text or announcement channels.' },
-        nsfw: { type: 'boolean', description: 'Whether the text or announcement channel is marked NSFW.' },
+        topic: { type: 'string', maxLength: 1024, description: 'Optional topic for text or announcement channels; required for forum channels.' },
+        nsfw: { type: 'boolean', description: 'Whether the text, announcement, or forum channel is marked NSFW.' },
         slowmode_seconds: { type: 'integer', minimum: 0, maximum: 21600, description: 'Optional slowmode in seconds for text or announcement channels.' },
       },
       required: ['name', 'type'],
@@ -67,7 +69,7 @@ const editChannelDefinition = {
   type: 'function',
   function: {
     name: 'edit_server_channel',
-    description: 'Edit a channel in the configured Hellbot server by exact ID. Only change fields the user explicitly requested. Supported fields: name, topic, slowmode_seconds (0-21600), and nsfw. After a successful edit, call get_server_channel to independently verify the result.',
+    description: 'Edit a channel in the configured Hellbot server by exact ID. Only change fields the user explicitly requested. Supported fields: name, topic, slowmode_seconds (0-21600), nsfw, position, and parent_id to move it into a category or null to remove it from its current category. Moving a channel preserves its existing permission overwrites. After a successful edit, call get_server_channel to independently verify the result.',
     parameters: {
       type: 'object',
       properties: {
@@ -76,6 +78,8 @@ const editChannelDefinition = {
         topic: { type: 'string', maxLength: 1024, description: 'New topic or description for a text channel.' },
         slowmode_seconds: { type: 'integer', minimum: 0, maximum: 21600, description: 'Text channel slowmode in seconds.' },
         nsfw: { type: 'boolean', description: 'Whether this channel is marked NSFW.' },
+        parent_id: { type: ['string', 'null'], description: 'Category ID to move this channel into, or null to remove it from its current category.' },
+        position: { type: 'integer', minimum: 0, description: 'New position in the server channel list. Lower numbers appear higher.' },
       },
       required: ['channel_id'],
       additionalProperties: false,
@@ -202,11 +206,15 @@ function createServerChannelToolSet({ channel, user } = {}) {
         throw new Error('Provide a valid parent category ID.');
       }
       const isTextChannel = type === 'text' || type === 'announcement';
-      if (topic !== undefined && (!isTextChannel || typeof topic !== 'string' || topic.length > 1024)) {
-        throw new Error('Topic can only be set on a text or announcement channel and must be at most 1024 characters.');
+      const supportsTopic = isTextChannel || type === 'forum';
+      if (type === 'forum' && (typeof topic !== 'string' || !topic.trim())) {
+        throw new Error('Forum channels require a non-empty topic.');
       }
-      if (nsfw !== undefined && (!isTextChannel || typeof nsfw !== 'boolean')) {
-        throw new Error('NSFW can only be set on a text or announcement channel.');
+      if (topic !== undefined && (!supportsTopic || typeof topic !== 'string' || topic.length > 1024)) {
+        throw new Error('Topic can only be set on a text, announcement, or forum channel and must be at most 1024 characters.');
+      }
+      if (nsfw !== undefined && (!supportsTopic || typeof nsfw !== 'boolean')) {
+        throw new Error('NSFW can only be set on a text, announcement, or forum channel.');
       }
       if (slowmodeSeconds !== undefined
         && (!isTextChannel || !Number.isInteger(slowmodeSeconds) || slowmodeSeconds < 0 || slowmodeSeconds > 21600)) {
@@ -423,19 +431,52 @@ function createServerChannelToolSet({ channel, user } = {}) {
         if (typeof requestedChanges.nsfw !== 'boolean') throw new Error('NSFW must be true or false.');
         changes.nsfw = requestedChanges.nsfw;
       }
+      if (Object.prototype.hasOwnProperty.call(requestedChanges, 'position')) {
+        if (!Number.isInteger(requestedChanges.position) || requestedChanges.position < 0) {
+          throw new Error('Channel position must be a non-negative integer.');
+        }
+        changes.position = requestedChanges.position;
+      }
+      if (Object.prototype.hasOwnProperty.call(requestedChanges, 'parent_id')) {
+        const parentId = requestedChanges.parent_id;
+        if (parentId !== null && (typeof parentId !== 'string' || !/^\d{17,20}$/.test(parentId))) {
+          throw new Error('Provide a valid category ID or null to remove the channel from its category.');
+        }
+        changes.parent = parentId;
+      }
       if (Object.keys(changes).length === 0) throw new Error('Provide at least one channel field to edit.');
 
       const target = await guild.channels.fetch(channelId);
       if (!target) throw new Error('Channel not found in the configured Hellbot server.');
-      if (Object.prototype.hasOwnProperty.call(changes, 'topic') && !target.isTextBased()) {
-        throw new Error('Only text channels support a topic.');
+      if (Object.prototype.hasOwnProperty.call(changes, 'parent')) {
+        if (target.type === ChannelType.GuildCategory) {
+          throw new Error('A category cannot be moved into another category.');
+        }
+        if (changes.parent !== null) {
+          const parent = await guild.channels.fetch(changes.parent);
+          if (!parent || parent.type !== ChannelType.GuildCategory) {
+            throw new Error('parent_id must identify a category in the configured server.');
+          }
+        }
+      }
+      if (Object.prototype.hasOwnProperty.call(changes, 'nsfw')
+        && target.type !== ChannelType.GuildText
+        && target.type !== ChannelType.GuildAnnouncement
+        && target.type !== ChannelType.GuildForum) {
+        throw new Error('NSFW can only be edited on a text, announcement, or forum channel.');
+      }
+      if (Object.prototype.hasOwnProperty.call(changes, 'topic')
+        && target.type !== ChannelType.GuildText
+        && target.type !== ChannelType.GuildAnnouncement
+        && target.type !== ChannelType.GuildForum) {
+        throw new Error('Only text, announcement, and forum channels support a topic.');
       }
       if (Object.prototype.hasOwnProperty.call(changes, 'rateLimitPerUser')
         && (target.type !== ChannelType.GuildText && target.type !== ChannelType.GuildAnnouncement)) {
         throw new Error('Slowmode can only be edited on text and announcement channels.');
       }
 
-      await target.edit(changes, `Requested by Hellbot owner ${user.id} through AI server tools`);
+      await target.edit({ ...changes, ...(Object.prototype.hasOwnProperty.call(changes, 'parent') ? { lockPermissions: false } : {}) }, `Requested by Hellbot owner ${user.id} through AI server tools`);
       const verifiedChannel = await guild.channels.fetch(channelId, { force: true });
       if (!verifiedChannel) throw new Error('Channel was edited, but Discord did not return it for verification.');
       return { success: true, channel: serializeChannel(verifiedChannel) };
