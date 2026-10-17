@@ -43,7 +43,7 @@ function buildRequestMessages(userPrompt, systemPrompt, imageUrl) {
   return requestMessages;
 }
 
-async function executeToolCall(toolCall, toolHandlers, traceChannel) {
+async function executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMessageIds) {
   let result;
   let visionImages = [];
   const name = toolCall.function?.name;
@@ -62,7 +62,8 @@ async function executeToolCall(toolCall, toolHandlers, traceChannel) {
     }
     if (config.isDevMode && traceChannel?.send) {
       try {
-        await traceChannel.send(`-# tool call: \`${name}\``);
+        const traceMessage = await traceChannel.send(`-# tool call: \`${name}\``);
+        if (traceMessage?.id) toolTraceMessageIds.add(traceMessage.id);
       } catch (error) {
         console.error('Failed to send AI tool trace:', { tool: name });
       }
@@ -84,7 +85,7 @@ async function executeToolCall(toolCall, toolHandlers, traceChannel) {
   };
 }
 
-async function executeToolCalls(request, data, toolHandlers, traceChannel, toolIteration = 0) {
+async function executeToolCalls(request, data, toolHandlers, traceChannel, toolTraceMessageIds, toolIteration = 0) {
   const message = data?.choices?.[0]?.message;
   if (!message) {
     throw new Error(messages.emptyState.noResponseAI);
@@ -99,7 +100,7 @@ async function executeToolCalls(request, data, toolHandlers, traceChannel, toolI
   const toolMessages = [];
   const visionImages = [];
   for (const toolCall of message.tool_calls) {
-    const result = await executeToolCall(toolCall, toolHandlers, traceChannel);
+    const result = await executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMessageIds);
     toolMessages.push(result.toolMessage);
     visionImages.push(...result.visionImages);
   }
@@ -124,8 +125,12 @@ async function executeToolCalls(request, data, toolHandlers, traceChannel, toolI
     messages: [...request.messages, message, ...toolMessages, ...imageContextMessage],
     ...(toolIteration + 1 >= MAX_TOOL_ITERATIONS ? { tool_choice: 'none' } : {}),
   };
+  if (config.currentAiProvider === 'groq' && visionImages.length) {
+    followUpRequest.model = aiModels.qwen3_8_27b;
+    delete followUpRequest.reasoning_effort;
+  }
   const followUpData = await createCompletion(followUpRequest);
-  return executeToolCalls(followUpRequest, followUpData, toolHandlers, traceChannel, toolIteration + 1);
+  return executeToolCalls(followUpRequest, followUpData, toolHandlers, traceChannel, toolTraceMessageIds, toolIteration + 1);
 }
 
 function validatePrompt(userPrompt) {
@@ -149,8 +154,9 @@ module.exports = {
       throw new Error('GROQ_API_KEY is not configured.');
     }
     const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
+    const toolTraceMessageIds = new Set();
     const toolSet = shouldEnableTools
-      ? await createToolSet(toolOptions.channel, { ...toolOptions, promptImageUrl: imageUrl })
+      ? await createToolSet(toolOptions.channel, { ...toolOptions, promptImageUrl: imageUrl, toolTraceMessageIds })
       : null;
     const effectiveSystemPrompt = shouldEnableTools
       ? [systemPrompt, toolSupportPrompt(), toolSet.memoryPrompt].filter(Boolean).join('\n\n')
@@ -174,7 +180,7 @@ module.exports = {
 
     const data = await createCompletion(request);
     const answer = toolSet
-      ? await executeToolCalls(request, data, toolSet.toolHandlers, toolOptions.channel)
+      ? await executeToolCalls(request, data, toolSet.toolHandlers, toolOptions.channel, toolTraceMessageIds)
       : data?.choices?.[0]?.message?.content;
     if (typeof answer !== 'string' || !answer.trim()) {
       throw new Error(messages.emptyState.noResponseAI);

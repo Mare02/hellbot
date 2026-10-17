@@ -252,6 +252,8 @@ function createServerInvitesAndEventsToolSet({ channel, user } = {}) {
       ensureAccess();
       if (typeof code !== 'string' || !/^[\w-]{2,32}$/.test(code)) throw new Error('Provide a valid invite code.');
       await requirePermission(PermissionFlagsBits.ManageGuild, 'Manage Server');
+      const invites = await guild.invites.fetch({ cache: false });
+      if (!invites.has(code)) throw new Error('Invite not found in the configured server.');
       await guild.invites.delete(code, `Requested by Hellbot owner ${user.id} through AI server tools`);
       const verifiedInvites = await guild.invites.fetch();
       if (verifiedInvites.has(code)) throw new Error('Invite deletion was requested, but Discord still returned it.');
@@ -297,13 +299,15 @@ function createServerInvitesAndEventsToolSet({ channel, user } = {}) {
       if (Object.hasOwn(requestedChanges, 'start_time')) {
         const start = parseDate(requestedChanges.start_time, 'start_time');
         if (start.getTime() <= Date.now()) throw new Error('Scheduled event start time must be in the future.');
-        const currentEnd = changes.scheduledEndTime || target.scheduledEndAt;
-        if (currentEnd && currentEnd <= start) throw new Error('The event end time must be later than start_time.');
         changes.scheduledStartTime = start;
       }
       if (Object.hasOwn(requestedChanges, 'end_time')) {
         changes.scheduledEndTime = requestedChanges.end_time === '' ? null : parseDate(requestedChanges.end_time, 'end_time');
-        if (changes.scheduledEndTime && changes.scheduledEndTime <= (changes.scheduledStartTime || target.scheduledStartAt)) throw new Error('end_time must be later than start_time.');
+      }
+      if (Object.hasOwn(changes, 'scheduledStartTime') || Object.hasOwn(changes, 'scheduledEndTime')) {
+        const start = changes.scheduledStartTime || target.scheduledStartAt;
+        const end = Object.hasOwn(changes, 'scheduledEndTime') ? changes.scheduledEndTime : target.scheduledEndAt;
+        if (end && end <= start) throw new Error('end_time must be later than start_time.');
       }
       if (Object.hasOwn(requestedChanges, 'channel_id') || Object.hasOwn(requestedChanges, 'location')) {
         const entityType = target.entityType === GuildScheduledEventEntityType.External ? 'external'

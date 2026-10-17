@@ -150,8 +150,12 @@ function createServerMemberToolSet({ channel, user } = {}) {
       }
 
       const reason = `Requested by Hellbot owner ${user.id} through AI server tools`;
-      if (rolesToAdd.length) await target.roles.add(rolesToAdd, reason);
-      if (rolesToRemove.length) await target.roles.remove(rolesToRemove, reason);
+      if (changesRoles) {
+        const finalRoleIds = new Set(target.roles.cache.keys());
+        for (const role of rolesToAdd) finalRoleIds.add(role.id);
+        for (const role of rolesToRemove) finalRoleIds.delete(role.id);
+        await target.roles.set([...finalRoleIds], reason);
+      }
       if (hasNickname) await target.edit({ nick: requestedChanges.nickname || null, reason });
 
       const verifiedMember = await guild.members.fetch({ user: userId, force: true });

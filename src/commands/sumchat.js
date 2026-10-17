@@ -24,12 +24,13 @@ module.exports = {
         return await reply(interaction, args, 'Could not access the channel');
       }
 
-      const conversation = await getRecentChannelContext(channel, { limit: 20 });
+      const { messages } = await getRecentChannelContext(channel, { limit: 20 });
 
-      if (conversation === 'No recent text or embed context was found in this channel.') {
+      if (!messages.length) {
         return await reply(interaction, args, emptyState.noResponseSummarize);
       }
 
+      const conversation = JSON.stringify(messages);
       const summary = await usePrompt(`Please summarize the following conversation:\n${conversation}`);
 
       await reply(interaction, args, summary);

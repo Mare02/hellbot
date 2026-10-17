@@ -142,7 +142,7 @@ function serializeMessage(message) {
   };
 }
 
-function createServerMessageToolSet({ channel, user } = {}) {
+function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new Set() } = {}) {
   if (!canUseServerTools(channel, user)) return { toolDefinitions: [], toolHandlers: {} };
 
   const guild = channel.guild;
@@ -172,6 +172,25 @@ function createServerMessageToolSet({ channel, user } = {}) {
     return botMember;
   }
 
+  async function fetchChannelPins(targetChannel, messageId) {
+    const messages = new Map();
+    let before;
+
+    while (true) {
+      const page = await targetChannel.messages.fetchPins({ limit: 50, ...(before ? { before } : {}) });
+      for (const pin of page.items) {
+        messages.set(pin.message.id, pin.message);
+      }
+      if ((messageId && messages.has(messageId)) || !page.hasMore) return messages;
+
+      const nextBefore = page.items[page.items.length - 1]?.pinnedTimestamp;
+      if (!Number.isFinite(nextBefore) || (before !== undefined && nextBefore >= before)) {
+        throw new Error('Discord did not return a valid cursor for the remaining pinned messages.');
+      }
+      before = nextBefore;
+    }
+  }
+
   const toolHandlers = {
     get_server_channel_messages: async ({ channel_id: channelId, limit = 20 } = {}) => {
       ensureAccess();
@@ -198,7 +217,7 @@ function createServerMessageToolSet({ channel, user } = {}) {
         content,
         allowedMentions: { parse: [], repliedUser: false },
       });
-      const verifiedMessage = await targetChannel.messages.fetch(sentMessage.id, { force: true });
+      const verifiedMessage = await targetChannel.messages.fetch({ message: sentMessage.id, force: true });
       if (!verifiedMessage) throw new Error('Message was sent, but Discord did not return it for verification.');
       return { success: true, message: serializeMessage(verifiedMessage) };
     },
@@ -218,7 +237,7 @@ function createServerMessageToolSet({ channel, user } = {}) {
         content,
         allowedMentions: { parse: [], repliedUser: false },
       });
-      const verifiedMessage = await targetChannel.messages.fetch(messageId, { force: true });
+      const verifiedMessage = await targetChannel.messages.fetch({ message: messageId, force: true });
       if (!verifiedMessage) throw new Error('Message was edited, but Discord did not return it for verification.');
       return { success: true, message: serializeMessage(verifiedMessage) };
     },
@@ -227,7 +246,7 @@ function createServerMessageToolSet({ channel, user } = {}) {
       ensureAccess();
       const targetChannel = await fetchTargetChannel(channelId);
       await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
-      const pins = await targetChannel.messages.fetchPins();
+      const pins = await fetchChannelPins(targetChannel);
       return {
         success: true,
         channelId: targetChannel.id,
@@ -243,11 +262,11 @@ function createServerMessageToolSet({ channel, user } = {}) {
       const botMember = await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
       const targetMessage = await targetChannel.messages.fetch(messageId);
       if (!targetMessage) throw new Error('Message not found in the selected channel.');
-      if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageMessages)) {
-        throw new Error('The bot needs Manage Messages permission to pin messages.');
+      if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.PinMessages)) {
+        throw new Error('The bot needs Pin Messages permission to pin messages.');
       }
       await targetMessage.pin(`Requested by Hellbot owner ${user.id} through AI server tools`);
-      const verifiedPins = await targetChannel.messages.fetchPins();
+      const verifiedPins = await fetchChannelPins(targetChannel, messageId);
       if (!verifiedPins.has(messageId)) throw new Error('Message was pinned, but Discord did not return it in the pinned messages.');
       return { success: true, message: serializeMessage(verifiedPins.get(messageId)) };
     },
@@ -259,11 +278,11 @@ function createServerMessageToolSet({ channel, user } = {}) {
       const botMember = await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
       const targetMessage = await targetChannel.messages.fetch(messageId);
       if (!targetMessage) throw new Error('Message not found in the selected channel.');
-      if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageMessages)) {
-        throw new Error('The bot needs Manage Messages permission to unpin messages.');
+      if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.PinMessages)) {
+        throw new Error('The bot needs Pin Messages permission to unpin messages.');
       }
       await targetMessage.unpin(`Requested by Hellbot owner ${user.id} through AI server tools`);
-      const verifiedPins = await targetChannel.messages.fetchPins();
+      const verifiedPins = await fetchChannelPins(targetChannel, messageId);
       if (verifiedPins.has(messageId)) throw new Error('Message was unpinned, but Discord still returned it in the pinned messages.');
       return { success: true, unpinned: true, messageId, channelId: targetChannel.id };
     },
@@ -297,7 +316,8 @@ function createServerMessageToolSet({ channel, user } = {}) {
           if (page.size === 0) break;
 
           const orderedMessages = [...page.values()].sort((left, right) => right.createdTimestamp - left.createdTimestamp);
-          messagesToDelete.push(...orderedMessages.slice(0, count - messagesToDelete.length));
+          const eligibleMessages = orderedMessages.filter((message) => !toolTraceMessageIds.has(message.id));
+          messagesToDelete.push(...eligibleMessages.slice(0, count - messagesToDelete.length));
           scannedCount += page.size;
           before = orderedMessages[orderedMessages.length - 1].id;
         }
@@ -324,7 +344,7 @@ function createServerMessageToolSet({ channel, user } = {}) {
         throw new Error('The bot needs Manage Messages permission to delete another user’s message.');
       }
       await targetMessage.delete();
-      const verifiedMessage = await targetChannel.messages.fetch(messageId).catch((error) => {
+      const verifiedMessage = await targetChannel.messages.fetch({ message: messageId, force: true }).catch((error) => {
         if (error.code === 10008) return null;
         throw error;
       });
