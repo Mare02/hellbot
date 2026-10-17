@@ -1,5 +1,5 @@
 const { AuditLogEvent, PermissionFlagsBits, SnowflakeUtil } = require('discord.js');
-const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
+const { assertAuthorizedServer, canUseServerTools } = require('./access');
 
 const auditEventTypes = Object.values(AuditLogEvent).filter((value) => typeof value === 'number');
 

@@ -1,4 +1,4 @@
-const config = require('../../utils/config');
+const config = require('../../../utils/config');
 
 const targetGuildId = config.isDevMode ? config.testingServerId : config.homeServerId;
 

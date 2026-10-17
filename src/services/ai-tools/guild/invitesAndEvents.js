@@ -5,7 +5,7 @@ const {
   ChannelType,
   PermissionFlagsBits,
 } = require('discord.js');
-const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
+const { assertAuthorizedServer, canUseServerTools } = require('./access');
 
 const eventEntityTypes = {
   stage: GuildScheduledEventEntityType.StageInstance,

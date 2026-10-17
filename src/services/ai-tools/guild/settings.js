@@ -6,8 +6,8 @@ const {
   Locale,
   PermissionFlagsBits,
 } = require('discord.js');
-const { getMessageContent } = require('../../utils/messageContent');
-const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
+const { getMessageContent } = require('../../../utils/messageContent');
+const { assertAuthorizedServer, canUseServerTools } = require('./access');
 
 const verificationLevels = [0, 1, 2, 3, 4];
 const notificationLevels = [0, 1];

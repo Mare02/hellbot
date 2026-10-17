@@ -1,5 +1,5 @@
 const { ChannelType, PermissionFlagsBits, SnowflakeUtil } = require('discord.js');
-const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
+const { assertAuthorizedServer, canUseServerTools } = require('./access');
 
 const getMessagesDefinition = {
   type: 'function',

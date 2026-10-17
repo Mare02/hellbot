@@ -1,5 +1,5 @@
 const { ChannelType, ChannelFlags, PermissionFlagsBits, Routes } = require('discord.js');
-const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
+const { assertAuthorizedServer, canUseServerTools } = require('./access');
 
 const scopes = ['active', 'archived_public', 'archived_private', 'joined_archived_private'];
 const parentTypes = new Set([

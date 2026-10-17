@@ -1,5 +1,5 @@
 const { PermissionFlagsBits, PermissionsBitField } = require('discord.js');
-const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
+const { assertAuthorizedServer, canUseServerTools } = require('./access');
 
 const permissionNames = Object.keys(PermissionFlagsBits).filter((name) => Number.isNaN(Number(name)));
 const permissionNameSet = new Set(permissionNames);
