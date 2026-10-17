@@ -51,7 +51,18 @@ async function sendInitialMessage(target, content) {
   }
 
   if (typeof target?.reply === 'function') {
-    const result = await target.reply(content);
+    let result;
+    try {
+      result = await target.reply(content);
+    } catch (error) {
+      const referenceError = error?.code === 50035 && error?.rawError?.errors?.message_reference;
+      if (!referenceError || typeof target.channel?.send !== 'function') {
+        throw error;
+      }
+
+      // The referenced prompt may have been deleted while AI tools were running.
+      return target.channel.send(content);
+    }
     if (result?.id) {
       return result;
     }

@@ -18,7 +18,7 @@ module.exports = {
   bot: {
     name: "Hellbot",
     description: "The Custom General-Purpose Bot for Hell's Resting Place™",
-    version: "1.9",
+    version: "2.0",
     appId: botAppId,
     publicKey: botPublicKey,
     token: botToken,

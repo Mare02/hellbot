@@ -8,7 +8,7 @@ const { createToolSet } = require('./ai-tools');
 const { toolSupportPrompt } = require('../utils/aiPrompts');
 
 let groq = null;
-const MAX_TOOL_ITERATIONS = 5;
+const MAX_TOOL_ITERATIONS = 50;
 
 async function createCompletion(request) {
   try {
@@ -43,8 +43,9 @@ function buildRequestMessages(userPrompt, systemPrompt, imageUrl) {
   return requestMessages;
 }
 
-async function executeToolCall(toolCall, toolHandlers, traceChannel) {
+async function executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMessageIds) {
   let result;
+  let visionImages = [];
   const name = toolCall.function?.name;
   try {
     if (!Object.prototype.hasOwnProperty.call(toolHandlers, name)) {
@@ -61,20 +62,30 @@ async function executeToolCall(toolCall, toolHandlers, traceChannel) {
     }
     if (config.isDevMode && traceChannel?.send) {
       try {
-        await traceChannel.send(`-# tool call: \`${name}\``);
+        const traceMessage = await traceChannel.send(`-# tool call: \`${name}\``);
+        if (traceMessage?.id) toolTraceMessageIds.add(traceMessage.id);
       } catch (error) {
         console.error('Failed to send AI tool trace:', { tool: name });
       }
     }
     const toolResult = await toolHandlers[name](args);
-    result = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? null);
+    if (toolResult && typeof toolResult === 'object' && Array.isArray(toolResult.__aiVisionImages)) {
+      const { __aiVisionImages, ...publicResult } = toolResult;
+      visionImages = __aiVisionImages;
+      result = JSON.stringify(publicResult);
+    } else {
+      result = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? null);
+    }
   } catch (error) {
     result = JSON.stringify({ error: error.message || messages.errorState.apiError });
   }
-  return { role: 'tool', tool_call_id: toolCall.id, content: result };
+  return {
+    toolMessage: { role: 'tool', tool_call_id: toolCall.id, content: result },
+    visionImages,
+  };
 }
 
-async function executeToolCalls(request, data, toolHandlers, traceChannel, toolIteration = 0) {
+async function executeToolCalls(request, data, toolHandlers, traceChannel, toolTraceMessageIds, toolIteration = 0) {
   const message = data?.choices?.[0]?.message;
   if (!message) {
     throw new Error(messages.emptyState.noResponseAI);
@@ -87,17 +98,39 @@ async function executeToolCalls(request, data, toolHandlers, traceChannel, toolI
   }
 
   const toolMessages = [];
+  const visionImages = [];
   for (const toolCall of message.tool_calls) {
-    toolMessages.push(await executeToolCall(toolCall, toolHandlers, traceChannel));
+    const result = await executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMessageIds);
+    toolMessages.push(result.toolMessage);
+    visionImages.push(...result.visionImages);
   }
+  const imageContextMessage = visionImages.length
+    ? [{
+      role: 'user',
+      content: [
+        { type: 'text', text: 'Images selected from Discord chat context. Each image is labeled with its source message and attachment.' },
+        ...visionImages.slice(0, 10).flatMap((image) => [
+          {
+            type: 'text',
+            text: `Source message ${image.messageId}; attachment ${image.attachmentId || 'unknown'}; filename ${image.name || 'unknown'}.`,
+          },
+          { type: 'image_url', image_url: { url: image.url } },
+        ]),
+      ],
+    }]
+    : [];
   const followUpRequest = {
     ...request,
     // Preserve the full message, including Gemini thought-signature metadata.
-    messages: [...request.messages, message, ...toolMessages],
+    messages: [...request.messages, message, ...toolMessages, ...imageContextMessage],
     ...(toolIteration + 1 >= MAX_TOOL_ITERATIONS ? { tool_choice: 'none' } : {}),
   };
+  if (config.currentAiProvider === 'groq' && visionImages.length) {
+    followUpRequest.model = aiModels.qwen3_8_27b;
+    delete followUpRequest.reasoning_effort;
+  }
   const followUpData = await createCompletion(followUpRequest);
-  return executeToolCalls(followUpRequest, followUpData, toolHandlers, traceChannel, toolIteration + 1);
+  return executeToolCalls(followUpRequest, followUpData, toolHandlers, traceChannel, toolTraceMessageIds, toolIteration + 1);
 }
 
 function validatePrompt(userPrompt) {
@@ -121,7 +154,10 @@ module.exports = {
       throw new Error('GROQ_API_KEY is not configured.');
     }
     const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
-    const toolSet = shouldEnableTools ? await createToolSet(toolOptions.channel, toolOptions) : null;
+    const toolTraceMessageIds = new Set();
+    const toolSet = shouldEnableTools
+      ? await createToolSet(toolOptions.channel, { ...toolOptions, promptImageUrl: imageUrl, toolTraceMessageIds })
+      : null;
     const effectiveSystemPrompt = shouldEnableTools
       ? [systemPrompt, toolSupportPrompt(), toolSet.memoryPrompt].filter(Boolean).join('\n\n')
       : systemPrompt;
@@ -144,7 +180,7 @@ module.exports = {
 
     const data = await createCompletion(request);
     const answer = toolSet
-      ? await executeToolCalls(request, data, toolSet.toolHandlers, toolOptions.channel)
+      ? await executeToolCalls(request, data, toolSet.toolHandlers, toolOptions.channel, toolTraceMessageIds)
       : data?.choices?.[0]?.message?.content;
     if (typeof answer !== 'string' || !answer.trim()) {
       throw new Error(messages.emptyState.noResponseAI);
