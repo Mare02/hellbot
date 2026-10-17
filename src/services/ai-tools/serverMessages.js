@@ -109,13 +109,13 @@ const deleteMessageDefinition = {
   type: 'function',
   function: {
     name: 'delete_server_channel_message',
-    description: 'Permanently delete either one specific message by message_id or the most recent count messages in a text/announcement channel, thread, or forum post, regardless of author. Deleting recent messages requires Manage Messages permission. This cannot be undone. Only delete when the owner explicitly requests it.',
+    description: 'Permanently delete either one specific message by message_id or the most recent count deletable messages in a text/announcement channel, thread, or forum post, regardless of author. Skips undeletable system messages. Deleting recent messages requires Manage Messages permission. This cannot be undone. Only delete when the owner explicitly requests it. If deletion stops with an error, use deletedMessageIds and deletedCount to report partial progress; never retry the original count blindly.',
     parameters: {
       type: 'object',
       properties: {
         channel_id: { type: 'string', description: 'Exact text/announcement channel ID or thread/forum-post ID.' },
         message_id: { type: 'string', description: 'The exact message ID to delete. Provide this or count, not both.' },
-        count: { type: 'integer', minimum: 1, maximum: 50, description: 'Delete this many most recent messages in the channel, regardless of author. If the owner does not specify a number, use 5. Provide this or message_id, not both.' },
+        count: { type: 'integer', minimum: 1, maximum: 50, description: 'Delete this many most recent deletable messages in the channel, regardless of author. If the owner does not specify a number, use 5. Provide this or message_id, not both.' },
       },
       required: ['channel_id'],
       additionalProperties: false,
@@ -181,7 +181,7 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
   }
 
   async function requireBotChannelPermissions(targetChannel, permissions) {
-    const botMember = guild.members.me || await guild.members.fetchMe();
+    const botMember = await guild.members.fetchMe({ force: true });
     const currentPermissions = targetChannel.permissionsFor(botMember);
     if (!currentPermissions?.has(PermissionFlagsBits.ViewChannel)) {
       throw new Error('The bot needs View Channel permission in this channel.');
@@ -273,9 +273,8 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
         content,
         allowedMentions: { parse: [], repliedUser: false },
       });
-      const verifiedMessage = await targetChannel.messages.fetch({ message: sentMessage.id, force: true });
-      if (!verifiedMessage) throw new Error('Message was sent, but Discord did not return it for verification.');
-      return { success: true, message: serializeMessage(verifiedMessage) };
+      // Discord returns the saved message; reading it back would unnecessarily require Read Message History.
+      return { success: true, message: serializeMessage(sentMessage) };
     },
 
     edit_server_channel_message: async ({ channel_id: channelId, message_id: messageId, content } = {}) => {
@@ -354,6 +353,11 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
       const targetChannel = await fetchTargetChannel(channelId);
       const botMember = await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
 
+      if (targetChannel.isThread() && targetChannel.archived && targetChannel.locked
+        && !targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageThreads)) {
+        throw new Error('The bot needs Manage Threads permission to delete messages in an archived, locked thread.');
+      }
+
       if (count !== undefined) {
         if (!Number.isInteger(count) || count < 1 || count > 50) {
           throw new Error('Count must be from 1 to 50.');
@@ -375,22 +379,31 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
           if (page.size === 0) break;
 
           const orderedMessages = [...page.values()].sort((left, right) => right.createdTimestamp - left.createdTimestamp);
-          const eligibleMessages = orderedMessages.filter((message) => !toolTraceMessageIds.has(message.id));
+          const eligibleMessages = orderedMessages.filter((message) => message.deletable && !toolTraceMessageIds.has(message.id));
           messagesToDelete.push(...eligibleMessages.slice(0, count - messagesToDelete.length));
           scannedCount += page.size;
           before = orderedMessages[orderedMessages.length - 1].id;
         }
 
+        const deletedMessageIds = [];
+        let failure;
         for (const message of messagesToDelete) {
-          await message.delete();
+          try {
+            await message.delete();
+            deletedMessageIds.push(message.id);
+          } catch (error) {
+            failure = { failedMessageId: message.id, error: error.message || 'Discord message deletion failed.' };
+            break;
+          }
         }
 
         return {
-          success: true,
+          success: !failure,
           channelId: targetChannel.id,
           requestedCount: count,
-          deletedCount: messagesToDelete.length,
-          deletedMessageIds: messagesToDelete.map((message) => message.id),
+          deletedCount: deletedMessageIds.length,
+          deletedMessageIds,
+          ...failure,
           scanLimitReached: scannedCount >= scanLimit && messagesToDelete.length < count,
         };
       }
@@ -402,6 +415,7 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
       if (!canDeleteOwn && !targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageMessages)) {
         throw new Error('The bot needs Manage Messages permission to delete another user’s message.');
       }
+      if (!targetMessage.deletable) throw new Error('Discord does not allow the bot to delete this message, including undeletable system messages.');
       await targetMessage.delete();
       const verifiedMessage = await targetChannel.messages.fetch({ message: messageId, force: true }).catch((error) => {
         if (error.code === 10008) return null;
