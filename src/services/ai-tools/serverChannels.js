@@ -1,4 +1,4 @@
-const { ChannelType, OverwriteType, PermissionFlagsBits } = require('discord.js');
+const { ChannelType, ChannelFlags, OverwriteType, PermissionFlagsBits } = require('discord.js');
 const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
 
 const channelTypes = {
@@ -169,6 +169,10 @@ function serializeChannel(channel) {
     ...(typeof channel.topic === 'string' ? { topic: channel.topic } : {}),
     ...(typeof channel.rateLimitPerUser === 'number' ? { slowmodeSeconds: channel.rateLimitPerUser } : {}),
     ...(typeof channel.nsfw === 'boolean' ? { nsfw: channel.nsfw } : {}),
+    ...(Array.isArray(channel.availableTags) ? {
+      availableTags: channel.availableTags.map((tag) => ({ id: tag.id, name: tag.name, moderated: tag.moderated })),
+      requiresTag: channel.flags.has(ChannelFlags.RequireTag),
+    } : {}),
     permissionOverwrites: [...permissionOverwrites.values()].map((overwrite) => {
       const isRole = overwrite.type === OverwriteType.Role;
       const target = isRole
