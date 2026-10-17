@@ -1,16 +1,18 @@
-const { ChannelType, PermissionFlagsBits } = require('discord.js');
+const { ChannelType, PermissionFlagsBits, SnowflakeUtil } = require('discord.js');
 const { assertAuthorizedServer, canUseServerTools } = require('./serverToolsAccess');
 
 const getMessagesDefinition = {
   type: 'function',
   function: {
     name: 'get_server_channel_messages',
-    description: 'Fetch recent messages from a text or announcement channel in the configured Hellbot server. Use this to find a bot-authored message before editing it.',
+    description: 'Fetch messages newest first from a text or announcement channel in the configured Hellbot server, optionally within a date range. Use this to find a bot-authored message before editing it. Check truncated before treating results as the complete range.',
     parameters: {
       type: 'object',
       properties: {
         channel_id: { type: 'string', description: 'The exact Discord channel ID from get_server_channels.' },
-        limit: { type: 'integer', minimum: 1, maximum: 50, description: 'Maximum recent messages to fetch. Defaults to 20.' },
+        limit: { type: 'integer', minimum: 1, maximum: 50, description: 'Maximum matching messages to return. Defaults to 20.' },
+        start_date: { type: 'string', description: 'Inclusive start: YYYY-MM-DD (midnight UTC) or an ISO 8601 timestamp with Z or an explicit timezone offset.' },
+        end_date: { type: 'string', description: 'Inclusive end: YYYY-MM-DD includes that entire UTC day; an ISO 8601 timestamp with Z or an explicit timezone offset includes that millisecond.' },
       },
       required: ['channel_id'],
       additionalProperties: false,
@@ -125,6 +127,23 @@ function isSnowflake(value) {
   return typeof value === 'string' && /^\d{17,20}$/.test(value);
 }
 
+function parseMessageDate(value, label, endOfRange = false) {
+  if (value === undefined) return undefined;
+  if (typeof value !== 'string'
+    || !/^\d{4}-\d{2}-\d{2}(?:T(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d(?:\.\d{1,3})?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/.test(value)) {
+    throw new Error(`${label} must be YYYY-MM-DD or an ISO 8601 timestamp with a timezone.`);
+  }
+  const datePart = value.slice(0, 10);
+  const calendarDate = new Date(`${datePart}T00:00:00.000Z`);
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp) || !Number.isFinite(calendarDate.getTime())
+    || calendarDate.toISOString().slice(0, 10) !== datePart) {
+    throw new Error(`${label} must be a valid date.`);
+  }
+  // Use an exclusive upper boundary so the requested end is fully included.
+  return timestamp + (endOfRange ? (value.length === 10 ? 86400000 : 1) : 0);
+}
+
 function isSupportedTextChannel(channel) {
   return channel?.type === ChannelType.GuildText || channel?.type === ChannelType.GuildAnnouncement;
 }
@@ -192,17 +211,35 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
   }
 
   const toolHandlers = {
-    get_server_channel_messages: async ({ channel_id: channelId, limit = 20 } = {}) => {
+    get_server_channel_messages: async ({ channel_id: channelId, limit = 20, start_date: startDate, end_date: endDate } = {}) => {
       ensureAccess();
       if (!Number.isInteger(limit) || limit < 1 || limit > 50) throw new Error('Limit must be from 1 to 50.');
+      const startTimestamp = parseMessageDate(startDate, 'start_date');
+      const endTimestamp = parseMessageDate(endDate, 'end_date', true);
+      if (startTimestamp !== undefined && endTimestamp !== undefined && startTimestamp >= endTimestamp) {
+        throw new Error('start_date must not be later than end_date.');
+      }
       const targetChannel = await fetchTargetChannel(channelId);
       await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.ReadMessageHistory]);
-      const messages = await targetChannel.messages.fetch({ limit });
+      const before = endTimestamp === undefined ? undefined : SnowflakeUtil.generate({
+        timestamp: Math.max(Date.UTC(2015, 0, 1), Math.min(endTimestamp, Date.now() + 1)),
+        increment: 0n,
+        workerId: 0n,
+        processId: 0n,
+      }).toString();
+      // Jump directly to the end date; one extra match detects a truncated range.
+      const fetchedMessages = await targetChannel.messages.fetch({ limit: limit + 1, ...(before ? { before } : {}) });
+      const matchingMessages = [...fetchedMessages.values()]
+        .filter((message) => (startTimestamp === undefined || message.createdTimestamp >= startTimestamp)
+          && (endTimestamp === undefined || message.createdTimestamp < endTimestamp))
+        .sort((left, right) => (BigInt(left.id) > BigInt(right.id) ? -1 : 1));
+      const messages = matchingMessages.slice(0, limit);
       return {
         success: true,
         channelId: targetChannel.id,
-        count: messages.size,
-        messages: [...messages.values()].map(serializeMessage),
+        count: messages.length,
+        truncated: matchingMessages.length > limit,
+        messages: messages.map(serializeMessage),
       };
     },
 

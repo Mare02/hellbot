@@ -18,6 +18,24 @@ const searchMembersDefinition = {
   },
 };
 
+const listMembersDefinition = {
+  type: 'function',
+  function: {
+    name: 'list_server_members',
+    description: 'List current members in the configured Hellbot server, optionally matching an exact role or having no assigned roles other than @everyone. Includes bots. Scans up to 5000 members per call using fresh Discord pages, not the member cache. If scanComplete is false, continue with nextAfterUserId as after_user_id and the same filters; never treat a partial page as the full membership or total match count.',
+    parameters: {
+      type: 'object',
+      properties: {
+        role_id: { type: 'string', pattern: '^[0-9]{17,20}$', description: 'Exact role ID from get_server_roles. Cannot be combined with without_roles: true.' },
+        without_roles: { type: 'boolean', description: 'Only return members with no roles other than @everyone. Defaults to false.' },
+        limit: { type: 'integer', minimum: 1, maximum: 100, description: 'Maximum matching members to return per call. Defaults to 25.' },
+        after_user_id: { type: 'string', pattern: '^[0-9]{17,20}$', description: 'Pagination cursor: nextAfterUserId from the previous call. Omit for the first call.' },
+      },
+      additionalProperties: false,
+    },
+  },
+};
+
 const getMemberDefinition = {
   type: 'function',
   function: {
@@ -79,6 +97,54 @@ function createServerMemberToolSet({ channel, user } = {}) {
   const ensureAccess = () => assertAuthorizedServer(guild, user);
 
   const toolHandlers = {
+    list_server_members: async ({ role_id: roleId, without_roles: withoutRoles = false, limit = 25, after_user_id: afterUserId } = {}) => {
+      ensureAccess();
+      if (roleId !== undefined && !isSnowflake(roleId)) throw new Error('Provide a valid Discord role ID.');
+      if (typeof withoutRoles !== 'boolean') throw new Error('without_roles must be true or false.');
+      if (roleId !== undefined && withoutRoles) throw new Error('Use role_id or without_roles: true, not both.');
+      if (!Number.isInteger(limit) || limit < 1 || limit > 100) throw new Error('Limit must be from 1 to 100.');
+      if (afterUserId !== undefined && !isSnowflake(afterUserId)) throw new Error('Provide a valid after_user_id cursor.');
+
+      const roles = await guild.roles.fetch();
+      if (roleId !== undefined && !roles.has(roleId)) throw new Error('Role not found in the configured Hellbot server.');
+
+      const scanLimit = 5000;
+      const members = [];
+      let after = afterUserId;
+      let scannedCount = 0;
+      let scanComplete = false;
+
+      while (scannedCount < scanLimit && members.length < limit) {
+        const pageSize = Math.min(1000, scanLimit - scannedCount);
+        const page = await guild.members.list({ limit: pageSize, ...(after ? { after } : {}), cache: false });
+        const orderedMembers = [...page.values()].sort((left, right) => (BigInt(left.id) < BigInt(right.id) ? -1 : 1));
+        let processedCount = 0;
+        for (const member of orderedMembers) {
+          if (after && BigInt(member.id) <= BigInt(after)) throw new Error('Discord returned a member page that did not advance the cursor.');
+          after = member.id;
+          scannedCount += 1;
+          processedCount += 1;
+          const matchesRole = roleId === undefined || member.roles.cache.has(roleId);
+          const matchesWithoutRoles = !withoutRoles || !member.roles.cache.some((role) => role.id !== guild.id);
+          if (matchesRole && matchesWithoutRoles) members.push(serializeMember(member));
+          if (members.length >= limit) break;
+        }
+        if (processedCount === page.size && page.size < pageSize) {
+          scanComplete = true;
+          break;
+        }
+      }
+
+      return {
+        success: true,
+        count: members.length,
+        scannedCount,
+        scanComplete,
+        nextAfterUserId: scanComplete ? null : after,
+        members,
+      };
+    },
+
     search_server_members: async ({ query, limit = 25 } = {}) => {
       ensureAccess();
       if (typeof query !== 'string' || !query.trim() || query.length > 100
@@ -164,7 +230,7 @@ function createServerMemberToolSet({ channel, user } = {}) {
     },
   };
 
-  return { toolDefinitions: [searchMembersDefinition, getMemberDefinition, editMemberDefinition], toolHandlers };
+  return { toolDefinitions: [searchMembersDefinition, listMembersDefinition, getMemberDefinition, editMemberDefinition], toolHandlers };
 }
 
 module.exports = { createServerMemberToolSet };
