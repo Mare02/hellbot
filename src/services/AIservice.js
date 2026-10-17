@@ -166,6 +166,9 @@ module.exports = {
       model: provider === 'groq' && imageUrl ? aiModels.qwen3_8_27b : config.currentAiModel,
       stream: false,
     };
+    if (provider === 'google') {
+      request.reasoning_effort = 'medium';
+    }
     if (provider === 'groq' && !imageUrl) {
       request.reasoning_effort = 'low';
     }
