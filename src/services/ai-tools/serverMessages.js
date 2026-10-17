@@ -5,11 +5,11 @@ const getMessagesDefinition = {
   type: 'function',
   function: {
     name: 'get_server_channel_messages',
-    description: 'Fetch messages newest first from a text or announcement channel in the configured Hellbot server, optionally within a date range. Use this to find a bot-authored message before editing it. Check truncated before treating results as the complete range.',
+    description: 'Fetch messages newest first from a text/announcement channel, thread, or forum post in the configured Hellbot server, optionally within a date range. Use this to find a bot-authored message before editing it. Check truncated before treating results as the complete range.',
     parameters: {
       type: 'object',
       properties: {
-        channel_id: { type: 'string', description: 'The exact Discord channel ID from get_server_channels.' },
+        channel_id: { type: 'string', description: 'Exact channel ID from get_server_channels, or thread/forum-post ID from get_server_threads.' },
         limit: { type: 'integer', minimum: 1, maximum: 50, description: 'Maximum matching messages to return. Defaults to 20.' },
         start_date: { type: 'string', description: 'Inclusive start: YYYY-MM-DD (midnight UTC) or an ISO 8601 timestamp with Z or an explicit timezone offset.' },
         end_date: { type: 'string', description: 'Inclusive end: YYYY-MM-DD includes that entire UTC day; an ISO 8601 timestamp with Z or an explicit timezone offset includes that millisecond.' },
@@ -24,11 +24,11 @@ const sendMessageDefinition = {
   type: 'function',
   function: {
     name: 'send_server_channel_message',
-    description: 'Send a text message to a text or announcement channel in the configured Hellbot server. Only post content explicitly requested by the user. Mentions are sent without ping notifications.',
+    description: 'Send a text message to a text/announcement channel, thread, or forum post in the configured Hellbot server. Only post content explicitly requested by the user. Sending may unarchive a thread. Mentions are sent without ping notifications.',
     parameters: {
       type: 'object',
       properties: {
-        channel_id: { type: 'string', description: 'The exact Discord channel ID from get_server_channels.' },
+        channel_id: { type: 'string', description: 'Exact channel ID from get_server_channels, or thread/forum-post ID from get_server_threads.' },
         content: { type: 'string', minLength: 1, maxLength: 2000, description: 'Message text to post.' },
       },
       required: ['channel_id', 'content'],
@@ -41,11 +41,11 @@ const editMessageDefinition = {
   type: 'function',
   function: {
     name: 'edit_server_channel_message',
-    description: 'Edit the text of one message authored by Hellbot in a text or announcement channel. Use get_server_channel_messages to find its exact message ID. Only make changes explicitly requested by the user.',
+    description: 'Edit the text of one message authored by Hellbot in a text/announcement channel, thread, or forum post. Use get_server_channel_messages to find its exact message ID. Only make changes explicitly requested by the user. Archived threads are unarchived when Discord permits it.',
     parameters: {
       type: 'object',
       properties: {
-        channel_id: { type: 'string', description: 'The exact Discord channel ID.' },
+        channel_id: { type: 'string', description: 'Exact text/announcement channel ID or thread/forum-post ID.' },
         message_id: { type: 'string', description: 'The exact ID of a message authored by this bot.' },
         content: { type: 'string', minLength: 1, maxLength: 2000, description: 'Replacement message text.' },
       },
@@ -59,11 +59,11 @@ const pinnedMessagesDefinition = {
   type: 'function',
   function: {
     name: 'get_server_channel_pins',
-    description: 'List pinned messages in a text or announcement channel in the configured Hellbot server.',
+    description: 'List pinned messages in a text/announcement channel, thread, or forum post in the configured Hellbot server.',
     parameters: {
       type: 'object',
       properties: {
-        channel_id: { type: 'string', description: 'The exact channel ID from get_server_channels.' },
+        channel_id: { type: 'string', description: 'Exact channel ID from get_server_channels, or thread/forum-post ID from get_server_threads.' },
       },
       required: ['channel_id'],
       additionalProperties: false,
@@ -75,11 +75,11 @@ const pinMessageDefinition = {
   type: 'function',
   function: {
     name: 'pin_server_channel_message',
-    description: 'Pin one message in a text or announcement channel. Only pin when explicitly requested. Find the exact message ID with get_server_channel_messages first.',
+    description: 'Pin one message in a text/announcement channel, thread, or forum post. Only pin when explicitly requested. Find the exact message ID with get_server_channel_messages first. Archived threads are unarchived when Discord permits it.',
     parameters: {
       type: 'object',
       properties: {
-        channel_id: { type: 'string', description: 'The exact channel ID.' },
+        channel_id: { type: 'string', description: 'Exact text/announcement channel ID or thread/forum-post ID.' },
         message_id: { type: 'string', description: 'The exact message ID to pin.' },
       },
       required: ['channel_id', 'message_id'],
@@ -92,11 +92,11 @@ const unpinMessageDefinition = {
   type: 'function',
   function: {
     name: 'unpin_server_channel_message',
-    description: 'Remove one message from a channel’s pins. Find the exact message ID with get_server_channel_messages or get_server_channel_pins first.',
+    description: 'Remove one message from a channel’s pins. Find the exact message ID with get_server_channel_messages or get_server_channel_pins first. Archived threads are unarchived when Discord permits it.',
     parameters: {
       type: 'object',
       properties: {
-        channel_id: { type: 'string', description: 'The exact channel ID.' },
+        channel_id: { type: 'string', description: 'Exact text/announcement channel ID or thread/forum-post ID.' },
         message_id: { type: 'string', description: 'The exact message ID to unpin.' },
       },
       required: ['channel_id', 'message_id'],
@@ -109,11 +109,11 @@ const deleteMessageDefinition = {
   type: 'function',
   function: {
     name: 'delete_server_channel_message',
-    description: 'Permanently delete either one specific message by message_id or the most recent count messages in a text or announcement channel, regardless of author. Deleting recent messages requires Manage Messages permission. This cannot be undone. Only delete when the owner explicitly requests it.',
+    description: 'Permanently delete either one specific message by message_id or the most recent count messages in a text/announcement channel, thread, or forum post, regardless of author. Deleting recent messages requires Manage Messages permission. This cannot be undone. Only delete when the owner explicitly requests it.',
     parameters: {
       type: 'object',
       properties: {
-        channel_id: { type: 'string', description: 'The exact channel ID.' },
+        channel_id: { type: 'string', description: 'Exact text/announcement channel ID or thread/forum-post ID.' },
         message_id: { type: 'string', description: 'The exact message ID to delete. Provide this or count, not both.' },
         count: { type: 'integer', minimum: 1, maximum: 50, description: 'Delete this many most recent messages in the channel, regardless of author. If the owner does not specify a number, use 5. Provide this or message_id, not both.' },
       },
@@ -144,8 +144,9 @@ function parseMessageDate(value, label, endOfRange = false) {
   return timestamp + (endOfRange ? (value.length === 10 ? 86400000 : 1) : 0);
 }
 
-function isSupportedTextChannel(channel) {
-  return channel?.type === ChannelType.GuildText || channel?.type === ChannelType.GuildAnnouncement;
+function isSupportedMessageChannel(channel) {
+  return [ChannelType.GuildText, ChannelType.GuildAnnouncement, ChannelType.PublicThread,
+    ChannelType.PrivateThread, ChannelType.AnnouncementThread].includes(channel?.type);
 }
 
 function serializeMessage(message) {
@@ -169,9 +170,12 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
 
   async function fetchTargetChannel(channelId) {
     if (!isSnowflake(channelId)) throw new Error('Provide a valid Discord channel ID.');
-    const targetChannel = await guild.channels.fetch(channelId);
-    if (!targetChannel || !isSupportedTextChannel(targetChannel)) {
-      throw new Error('Channel must be a text or announcement channel in the configured Hellbot server.');
+    const targetChannel = await guild.channels.fetch(channelId, { force: true });
+    if (!targetChannel || !isSupportedMessageChannel(targetChannel)) {
+      throw new Error('Channel must be a text/announcement channel, thread, or forum post in the configured Hellbot server.');
+    }
+    if (targetChannel.isThread()) {
+      await guild.channels.fetch(targetChannel.parentId, { force: true });
     }
     return targetChannel;
   }
@@ -184,11 +188,24 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
     }
     for (const permission of permissions) {
       if (!currentPermissions.has(permission)) {
-        const label = permission === PermissionFlagsBits.SendMessages ? 'Send Messages' : 'Read Message History';
+        const label = permission === PermissionFlagsBits.SendMessages ? 'Send Messages'
+          : permission === PermissionFlagsBits.SendMessagesInThreads ? 'Send Messages in Threads' : 'Read Message History';
         throw new Error(`The bot needs ${label} permission in this channel.`);
       }
     }
     return botMember;
+  }
+
+  async function prepareThreadForWrite(targetChannel, botMember) {
+    if (!targetChannel.isThread()) return;
+    if (targetChannel.locked && !targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.ManageThreads)) {
+      throw new Error('The bot needs Manage Threads permission to modify messages in a locked thread.');
+    }
+    if (targetChannel.archived) {
+      await targetChannel.setArchived(false, `Requested by Hellbot owner ${user.id} through AI server tools`);
+      const verifiedThread = await guild.channels.fetch(targetChannel.id, { force: true });
+      if (!verifiedThread || verifiedThread.archived) throw new Error('Discord did not confirm that the thread was unarchived.');
+    }
   }
 
   async function fetchChannelPins(targetChannel, messageId) {
@@ -249,7 +266,9 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
         throw new Error('Message content must contain 1 to 2000 characters.');
       }
       const targetChannel = await fetchTargetChannel(channelId);
-      await requireBotChannelPermissions(targetChannel, [PermissionFlagsBits.SendMessages]);
+      const sendPermission = targetChannel.isThread() ? PermissionFlagsBits.SendMessagesInThreads : PermissionFlagsBits.SendMessages;
+      const botMember = await requireBotChannelPermissions(targetChannel, [sendPermission]);
+      if (targetChannel.isThread() && targetChannel.locked) await prepareThreadForWrite(targetChannel, botMember);
       const sentMessage = await targetChannel.send({
         content,
         allowedMentions: { parse: [], repliedUser: false },
@@ -270,6 +289,7 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
       const targetMessage = await targetChannel.messages.fetch(messageId);
       if (!targetMessage) throw new Error('Message not found in the selected channel.');
       if (targetMessage.author.id !== botMember.id) throw new Error('The bot can edit only its own messages.');
+      await prepareThreadForWrite(targetChannel, botMember);
       await targetMessage.edit({
         content,
         allowedMentions: { parse: [], repliedUser: false },
@@ -302,6 +322,7 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
       if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.PinMessages)) {
         throw new Error('The bot needs Pin Messages permission to pin messages.');
       }
+      await prepareThreadForWrite(targetChannel, botMember);
       await targetMessage.pin(`Requested by Hellbot owner ${user.id} through AI server tools`);
       const verifiedPins = await fetchChannelPins(targetChannel, messageId);
       if (!verifiedPins.has(messageId)) throw new Error('Message was pinned, but Discord did not return it in the pinned messages.');
@@ -318,6 +339,7 @@ function createServerMessageToolSet({ channel, user, toolTraceMessageIds = new S
       if (!targetChannel.permissionsFor(botMember)?.has(PermissionFlagsBits.PinMessages)) {
         throw new Error('The bot needs Pin Messages permission to unpin messages.');
       }
+      await prepareThreadForWrite(targetChannel, botMember);
       await targetMessage.unpin(`Requested by Hellbot owner ${user.id} through AI server tools`);
       const verifiedPins = await fetchChannelPins(targetChannel, messageId);
       if (verifiedPins.has(messageId)) throw new Error('Message was unpinned, but Discord still returned it in the pinned messages.');

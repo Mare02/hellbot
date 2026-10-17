@@ -9,6 +9,7 @@ const { createServerGuildToolSet } = require('./serverGuild');
 const { createServerAuditToolSet } = require('./serverAudit');
 const { createServerMemberToolSet } = require('./serverMembers');
 const { createServerMessageToolSet } = require('./serverMessages');
+const { createServerThreadToolSet } = require('./serverThreads');
 const { createServerInvitesAndEventsToolSet } = require('./serverInvitesAndEvents');
 const { createServerExpressionsToolSet } = require('./serverExpressions');
 const { createServerAutoModerationToolSet } = require('./serverAutoModeration');
@@ -21,6 +22,7 @@ async function createToolSet(channel, options = {}) {
   const serverAuditToolSet = createServerAuditToolSet({ ...options, channel });
   const serverMemberToolSet = createServerMemberToolSet({ ...options, channel });
   const serverMessageToolSet = createServerMessageToolSet({ ...options, channel });
+  const serverThreadToolSet = createServerThreadToolSet({ ...options, channel });
   const serverInvitesAndEventsToolSet = createServerInvitesAndEventsToolSet({ ...options, channel });
   const serverExpressionsToolSet = createServerExpressionsToolSet({ ...options, channel });
   const serverAutoModerationToolSet = createServerAutoModerationToolSet({ ...options, channel });
@@ -36,6 +38,7 @@ async function createToolSet(channel, options = {}) {
     ...serverAuditToolSet.toolDefinitions,
     ...serverMemberToolSet.toolDefinitions,
     ...serverMessageToolSet.toolDefinitions,
+    ...serverThreadToolSet.toolDefinitions,
     ...serverInvitesAndEventsToolSet.toolDefinitions,
     ...serverExpressionsToolSet.toolDefinitions,
     ...serverAutoModerationToolSet.toolDefinitions,
@@ -53,6 +56,7 @@ async function createToolSet(channel, options = {}) {
     ...serverAuditToolSet.toolHandlers,
     ...serverMemberToolSet.toolHandlers,
     ...serverMessageToolSet.toolHandlers,
+    ...serverThreadToolSet.toolHandlers,
     ...serverInvitesAndEventsToolSet.toolHandlers,
     ...serverExpressionsToolSet.toolHandlers,
     ...serverAutoModerationToolSet.toolHandlers,
