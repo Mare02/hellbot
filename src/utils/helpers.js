@@ -39,7 +39,7 @@ const helpers = {
       const channel = await message.guild.channels.fetch(channelId);
       await channel.send({ content: authorText, files: attachments.map(a => a.url), reply: { messageReference: null } });
 
-      message.channel.send(`Selected ${mediaType} is now displayed in the <#${channelId}>`);
+      message.channel.send(`The selected ${mediaType} is now displayed in the <#${channelId}>`);
     } catch (error) {
       console.log(error);
       await message.channel.send(error.message);
