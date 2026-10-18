@@ -5,6 +5,10 @@ const GEMINI_COMPLETIONS_URL = 'https://generativelanguage.googleapis.com/v1beta
 const MAX_RETRIES = 2;
 const apiKeyRotator = createApiKeyRotator('GEMINI_API_KEY');
 
+function isRetryableNetworkError(error) {
+  return error?.name === 'TimeoutError' || error?.name === 'TypeError';
+}
+
 function hasGeminiApiKeys() {
   return apiKeyRotator.hasKeys();
 }
@@ -12,15 +16,24 @@ function hasGeminiApiKeys() {
 // Gemini's OpenAI-compatible endpoint uses Hellbot's existing messages and tools.
 async function createGeminiCompletion(request) {
   for (let attempt = 0; ; attempt++) {
-    const response = await fetch(GEMINI_COMPLETIONS_URL, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKeyRotator.next()}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(60000),
-    });
+    let response;
+    try {
+      response = await fetch(GEMINI_COMPLETIONS_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKeyRotator.next()}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(request),
+        signal: AbortSignal.timeout(60000),
+      });
+    } catch (error) {
+      if (!isRetryableNetworkError(error) || attempt >= MAX_RETRIES) {
+        throw error;
+      }
+      await delay(1000 * (2 ** attempt) + Math.random() * 250);
+      continue;
+    }
 
     if (response.ok) {
       return response.json();
