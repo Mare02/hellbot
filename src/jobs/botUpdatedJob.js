@@ -7,13 +7,13 @@ module.exports = {
     try {
       const client = getInstance();
       const server = await client.guilds.fetch(config.homeServerId);
-      const generalChannel = await server.channels.fetch(config.generalChannelId);
+      const updatesChannel = await server.channels.fetch(config.hellbotUpdatesChannelId);
 
       let messageText = `${config.bot.name} has been updated!`;
       if (commitMessage && commitMessage.length) {
         messageText += `\n-# Update note: "${commitMessage}"`;
       }
-      await generalChannel.send(messageText);
+      await updatesChannel.send(messageText);
     } catch (error) {
       console.log(error);
     } finally {

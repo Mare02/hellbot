@@ -20,7 +20,7 @@ module.exports = {
     }
 
     const client = getInstance();
-    let generalChannel;
+    let updatesChannel;
 
     try {
       const applicationId = client.application?.id || config.bot.appId;
@@ -34,7 +34,7 @@ module.exports = {
           ? config.testingServerId
           : config.homeServerId;
         const homeServer = await client.guilds.fetch(targetServerId);
-        generalChannel = await homeServer.channels.fetch(config.generalChannelId);
+        updatesChannel = await homeServer.channels.fetch(config.hellbotUpdatesChannelId);
       }
 
       await rest.put(Routes.applicationCommands(applicationId), {
@@ -45,8 +45,8 @@ module.exports = {
       if (message) {
         message.channel.send(messageText);
       }
-      else if (generalChannel) {
-        generalChannel.send(messageText);
+      else if (updatesChannel) {
+        updatesChannel.send(messageText);
       }
     }
     catch (error) {
@@ -55,8 +55,8 @@ module.exports = {
       if (message) {
         message.channel.send(errorText);
       }
-      else if (generalChannel) {
-        generalChannel.send(errorText);
+      else if (updatesChannel) {
+        updatesChannel.send(errorText);
       }
     } finally {
       if (!message && isCalledAsJob === true) {
