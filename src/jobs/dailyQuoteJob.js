@@ -2,6 +2,7 @@ const { initializeRuntimeConfig } = require('../services/config/runtime');
 const { getInstance } = require('../client');
 const config = require('../utils/config');
 const { EmbedBuilder } = require('discord.js');
+const { isGuildEnabled } = require('../utils/guildAccess');
 
 module.exports = {
   description: 'Sends a random quote to general channel in all servers.',
@@ -45,7 +46,7 @@ module.exports = {
       }
 
       for (const [guildId, guild] of guilds) {
-        if (guildId === config.testingServerId) {
+        if (guildId === config.testingServerId || !isGuildEnabled(guildId)) {
           continue;
         }
 

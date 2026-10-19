@@ -1,6 +1,7 @@
 const { getInstance } = require('../client');
 const roleRequests = require('../services/roleRequests');
 const { initializeRuntimeConfig } = require('../services/config/runtime');
+const { isGuildEnabled } = require('../utils/guildAccess');
 
 const client = getInstance();
 
@@ -8,7 +9,7 @@ module.exports = () => {
   let publication = Promise.resolve();
   async function publishInstructions() {
     const guild = await client.guilds.fetch(roleRequests.getTargetServerId()).catch(() => null);
-    if (!guild) return;
+    if (!guild || !isGuildEnabled(guild.id)) return;
 
     try {
       await guild.channels.fetch();
@@ -33,6 +34,7 @@ module.exports = () => {
       value?.homeServerId,
       value?.testingServerId,
       value?.staffMemberRoleId,
+      value?.disabledGuildIds,
     ];
     if (JSON.stringify(fields(previous)) !== JSON.stringify(fields(current))) enqueue();
   });

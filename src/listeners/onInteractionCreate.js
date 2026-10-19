@@ -4,11 +4,21 @@ const { hasPermission } = require('../utils/permissions');
 const messages = require('../utils/messages');
 const roleRequests = require('../services/roleRequests');
 const { withLogContext } = require('../services/logging');
+const { isGuildEnabled } = require('../utils/guildAccess');
 
 const client = getInstance();
 
 module.exports = () => {
   client.on('interactionCreate', async (interaction) => {
+    if (interaction.guildId && !isGuildEnabled(interaction.guildId)) {
+      if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: 'Hellbot is disabled in this server.',
+          ephemeral: true,
+        }).catch(() => {});
+      }
+      return;
+    }
     if (interaction.isButton() || interaction.isModalSubmit()) {
       await roleRequests.handleInteraction(interaction);
       return;

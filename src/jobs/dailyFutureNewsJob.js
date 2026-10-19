@@ -1,4 +1,5 @@
 const { EmbedBuilder } = require('discord.js');
+const { isGuildEnabled } = require('../utils/guildAccess');
 const { getInstance } = require('../client');
 const AIservice = require('../services/AIservice');
 const { futureNewsResponseFormat } = require('../utils/aiSchemas');
@@ -60,7 +61,7 @@ module.exports = {
       }
 
       for (const [guildId] of guilds) {
-        if (guildId === config.testingServerId) {
+        if (guildId === config.testingServerId || !isGuildEnabled(guildId)) {
           continue;
         }
 

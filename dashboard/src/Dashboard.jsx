@@ -11,6 +11,7 @@ import {
   Text,
   Title,
 } from '@mantine/core';
+import { api } from './api';
 import ConfigPage from './ConfigPages';
 import { HistoryPage, LogsPage, SecretsPage } from './DataPages';
 import { useResource } from './useResource';
@@ -26,6 +27,8 @@ export default function Dashboard() {
   const [mobileOpened, setMobileOpened] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [pending, setPending] = useState(false);
+  const [profileSyncing, setProfileSyncing] = useState(false);
+  const [profileSyncError, setProfileSyncError] = useState(null);
   const markDirty = useCallback((value) => setDirty(value), []);
   const markBusy = useCallback((value) => setPending(value), []);
   useEffect(() => {
@@ -55,7 +58,18 @@ export default function Dashboard() {
   }
   const current = pages[page];
   const selected = profiles.data?.profiles.find((item) => item.env === profile);
-  const status = profiles.data?.status?.[profile];
+  async function syncProfile() {
+    setProfileSyncing(true);
+    setProfileSyncError(null);
+    try {
+      await api('/profiles/sync', { method: 'POST', body: {} });
+      profiles.refresh();
+    } catch (error) {
+      setProfileSyncError(error.message);
+    } finally {
+      setProfileSyncing(false);
+    }
+  }
   return (
     <AppShell
       navbar={{ width: 240, breakpoint: 'sm', collapsed: { mobile: !mobileOpened } }}
@@ -67,6 +81,8 @@ export default function Dashboard() {
         page={page}
         pending={pending}
         navigate={navigate}
+        onSyncProfile={syncProfile}
+        profileSyncing={profileSyncing}
       />
       <AppShell.Main>
         <Container size="xl" px={0}>
@@ -87,8 +103,18 @@ export default function Dashboard() {
                 {current.description}
               </Text>
             </Stack>
+            {profileSyncError && (
+              <Alert
+                color="red"
+                title="Could not sync bot profile"
+                withCloseButton
+                onClose={() => setProfileSyncError(null)}
+              >
+                {profileSyncError}
+              </Alert>
+            )}
             {profiles.error && (
-              <Alert color="red" title="Bot status unavailable">
+              <Alert color="red" title="Dashboard data unavailable">
                 <Group justify="space-between">
                   <Text size="sm">{profiles.error}</Text>
                   <Button size="xs" variant="light" color="red" onClick={profiles.refresh}>
@@ -102,8 +128,7 @@ export default function Dashboard() {
                 key={profile}
                 profile={profile}
                 bot={selected}
-                status={status}
-                refreshStatus={profiles.refresh}
+                refreshProfile={profiles.refresh}
               />
             )}
             {profile && ['ai', 'settings', 'features'].includes(page) && (

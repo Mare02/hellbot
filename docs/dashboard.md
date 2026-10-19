@@ -95,6 +95,13 @@ also affects future role requests and server tool access. Existing operations ma
 finish with the values they already read. Slash-command registration is an explicit
 operation.
 
+Bot settings also list every guild cached by the active Discord.js bot connection.
+Each guild can be enabled or disabled independently. The disabled guild ID list is
+profile configuration stored in SQLite and applied through the normal IPC reload.
+Disabled guilds cannot invoke slash or prefix commands, trigger guild workflows, or
+receive scheduled guild broadcasts. The bot remains installed in those servers so
+the dashboard can continue listing and re-enabling them.
+
 ## AI tools and features
 
 AI settings choose a supported provider and model and configure each registered AI
@@ -146,13 +153,12 @@ environment integration.
 
 ## Discord profile images
 
-When the dashboard loads or refreshes `/api/profiles`, its API uses discord.js REST
-with the active bot token to fetch that Discord application's user. It creates a
-discord.js `User`, obtains `displayAvatarURL()`, and writes the Discord CDN URL to
-the active `profiles.profile_image_url` row. This is a direct REST request from
-the dashboard process; it does not use bot-process IPC or start an additional
-gateway connection. If the active profile cannot be fetched, its last saved URL
-is preserved.
+Use the sync button next to the bot name in the sidebar to refresh its dashboard
+identity. The dashboard API uses discord.js REST with the active bot token to fetch
+the Discord user, then saves its display name and avatar URL to the active `profiles`
+row. This is a direct REST request from the dashboard process; it does not use
+bot-process IPC or start an additional gateway connection. The active profile's
+last saved name and image remain in place if Discord cannot be reached.
 
 
 ## Custom AI providers

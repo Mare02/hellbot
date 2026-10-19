@@ -43,7 +43,14 @@ async function start() {
   client.on('clientReady', () => console.info('Discord bot connected', { profile }));
   Object.values(listeners).forEach((listener) => listener(client));
   stopJobs = startJobs(client, runtime);
-  closeIpc = await startBotIpc(runtime, () => client.isReady());
+  closeIpc = await startBotIpc(
+    runtime,
+    () => client.isReady(),
+    () =>
+      client.guilds.cache
+        .map((guild) => ({ id: guild.id, name: guild.name }))
+        .sort((left, right) => left.name.localeCompare(right.name))
+  );
   process.once('SIGINT', () =>
     shutdown().catch(() => {
       process.exitCode = 1;

@@ -4,6 +4,8 @@ const os = require('node:os');
 const path = require('node:path');
 const { profileEnvSchema } = require('../config/schema');
 
+const MAX_RESPONSE_BYTES = 1024 * 1024;
+
 function socketPath(profile) {
   const env = profileEnvSchema.parse(profile);
   const directory =
@@ -29,7 +31,7 @@ function requestBot(profile, operation = 'status') {
     socket.on('connect', () => socket.write(`${JSON.stringify({ operation })}\n`));
     socket.on('data', (chunk) => {
       buffer += chunk;
-      if (buffer.length > 8192)
+      if (Buffer.byteLength(buffer) > MAX_RESPONSE_BYTES)
         return finish({
           profile,
           status: 'failed',
@@ -57,7 +59,7 @@ function requestBot(profile, operation = 'status') {
   });
 }
 
-async function startBotIpc(runtime, isReady) {
+async function startBotIpc(runtime, isReady, listGuilds) {
   const file = socketPath(runtime.profile);
   const directory = path.dirname(file);
   fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -80,19 +82,35 @@ async function startBotIpc(runtime, isReady) {
       if (buffer.length > 1024) return socket.destroy();
       if (!buffer.includes('\n')) return;
       handled = true;
+      let operation = 'unknown';
       try {
-        const { operation } = JSON.parse(buffer.split('\n')[0]);
-        if (!['status', 'reload'].includes(operation)) throw new Error('Unknown operation.');
+        ({ operation } = JSON.parse(buffer.split('\n')[0]));
+        if (!['status', 'reload', 'guilds'].includes(operation))
+          throw new Error('Unknown operation.');
+        if (operation === 'guilds') {
+          if (!isReady()) {
+            socket.end(
+              `${JSON.stringify({ profile: runtime.profile, status: 'failed', online: true, ready: false, message: 'Bot is still connecting to Discord.' })}\n`
+            );
+            return;
+          }
+          socket.end(
+            `${JSON.stringify({ profile: runtime.profile, status: 'online', online: true, ready: true, guilds: listGuilds() })}\n`
+          );
+          return;
+        }
         if (operation === 'reload') runtime.reload();
         socket.end(
           `${JSON.stringify({ profile: runtime.profile, status: operation === 'reload' ? 'applied' : 'online', online: true, ready: isReady(), pid: process.pid, appliedAt: runtime.appliedAt })}\n`
         );
-      } catch {
-        console.error(
-          'Bot configuration reload failed; check stored configuration and encryption key.'
-        );
+      } catch (error) {
+        console.error('Bot IPC request failed.', { operation, error });
+        const message =
+          operation === 'guilds'
+            ? 'Bot could not list its Discord servers.'
+            : 'Bot could not apply configuration. Its last valid snapshot remains available.';
         socket.end(
-          `${JSON.stringify({ profile: runtime.profile, status: 'failed', online: true, message: 'Bot could not apply configuration. Its last valid snapshot remains available.' })}\n`
+          `${JSON.stringify({ profile: runtime.profile, status: 'failed', online: true, message })}\n`
         );
       }
     });

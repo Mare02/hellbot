@@ -12,7 +12,8 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useState } from 'react';
-import { Section } from './components';
+import { Empty, ResourceState, Section } from './components';
+import { useResource } from './useResource';
 import AiToolsSection from './AiToolsSection';
 
 const featureLabels = {
@@ -224,6 +225,9 @@ const discordIdSections = [
 ];
 
 export function BotSettingsForm({ form, update, fieldError }) {
+  const guilds = useResource('/guilds');
+  const disabledGuildIds = form.disabledGuildIds || [];
+
   return (
     <>
       <Section
@@ -293,6 +297,46 @@ export function BotSettingsForm({ form, update, fieldError }) {
           }
           error={fieldError('roleRequests.anchorRoleName')}
         />
+      </Section>
+      <Section
+        title="Server access"
+        description="Choose which Discord servers can use this bot. Changes are stored with the configuration and apply when you save."
+      >
+        <ResourceState {...guilds} onRetry={guilds.refresh} />
+        {guilds.data &&
+          (guilds.data.guilds.length ? (
+            <Stack gap="md">
+              {guilds.data.guilds.map((guild) => (
+                <Group key={guild.id} justify="space-between" wrap="nowrap">
+                  <Stack gap={2}>
+                    <Text fw={500}>{guild.name}</Text>
+                    <Text size="xs" c="dimmed">
+                      {guild.id}
+                    </Text>
+                  </Stack>
+                  <Switch
+                    aria-label={`Enable Hellbot in ${guild.name}`}
+                    checked={!disabledGuildIds.includes(guild.id)}
+                    onChange={(event) =>
+                      update(
+                        'disabledGuildIds',
+                        event.currentTarget.checked
+                          ? disabledGuildIds.filter((id) => id !== guild.id)
+                          : [...disabledGuildIds, guild.id]
+                      )
+                    }
+                  />
+                </Group>
+              ))}
+              {fieldError('disabledGuildIds') && (
+                <Text size="sm" c="red">
+                  {fieldError('disabledGuildIds')}
+                </Text>
+              )}
+            </Stack>
+          ) : (
+            <Empty>The bot is not connected to any Discord servers.</Empty>
+          ))}
       </Section>
     </>
   );

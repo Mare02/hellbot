@@ -12,6 +12,7 @@ const { usePrompt } = require('../services/AIservice');
 const { chatReplyPrompt } = require('../utils/aiPrompts');
 const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment, serializeMessageContent } = require('../services/chatContext');
 const { sendDiscordContent } = require('../utils/discordMessages');
+const { isGuildEnabled } = require('../utils/guildAccess');
 
 const client = getInstance();
 
@@ -80,6 +81,7 @@ module.exports = () => {
     if (message.system || message.author.bot) {
       return;
     }
+    if (!isGuildEnabled(message.guildId)) return;
 
     // get command name + arguments
     const fullArgs = message.content.split(' ');

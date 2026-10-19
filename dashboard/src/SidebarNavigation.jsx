@@ -1,5 +1,6 @@
 import {
   AppShell,
+  ActionIcon,
   Avatar,
   Divider,
   Group,
@@ -8,6 +9,7 @@ import {
   Stack,
   Text,
   ThemeIcon,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconActivity,
@@ -16,6 +18,7 @@ import {
   IconBrain,
   IconKey,
   IconLayoutDashboard,
+  IconRefresh,
   IconTerminal2,
 } from '@tabler/icons-react';
 
@@ -72,11 +75,13 @@ export default function SidebarNavigation({
   page,
   pending,
   navigate,
+  onSyncProfile,
+  profileSyncing,
 }) {
   return (
     <AppShell.Navbar p="md">
       <AppShell.Section>
-        <Group gap="xs" mb="xl" px="xs">
+        <Group gap="xs" mb="xl" px="xs" wrap="nowrap">
           <Avatar
             src={bot?.profileImageUrl || bot?.profile_image_url}
             radius="md"
@@ -92,6 +97,17 @@ export default function SidebarNavigation({
               {profile === 'prod' ? 'Production' : profile === 'dev' ? 'Development' : 'Connecting…'}
             </Text>
           </Stack>
+          <Tooltip label="Sync bot info">
+            <ActionIcon
+              variant="subtle"
+              aria-label="Sync bot info"
+              loading={profileSyncing}
+              disabled={!bot || profileSyncing}
+              onClick={onSyncProfile}
+            >
+              <IconRefresh size={17} />
+            </ActionIcon>
+          </Tooltip>
         </Group>
       </AppShell.Section>
       <AppShell.Section grow component={ScrollArea}>

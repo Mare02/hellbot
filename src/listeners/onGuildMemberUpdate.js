@@ -1,10 +1,12 @@
 const { getInstance } = require('../client');
 const config = require('../utils/config');
+const { isGuildEnabled } = require('../utils/guildAccess');
 
 const client = getInstance();
 
 module.exports = () => {
   client.on('guildMemberUpdate', async (oldMember, newMember) => {
+    if (!isGuildEnabled(newMember.guild.id)) return;
     if (!config.features.verification) return;
     const { verifiedRoleId, homeServerId, generalChannelId } = config;
     if (newMember.guild.id !== homeServerId) {

@@ -48,6 +48,7 @@ const cronSchema = z
   .refine((value) => cron.validate(value), 'Invalid cron schedule.');
 
 const profileConfigSchema = z.strictObject({
+  disabledGuildIds: z.array(discordIdSchema).max(2500).default([]),
   ...Object.fromEntries(
     Object.entries(discordRoutingDefaults).map(([field, value]) => [
       field,
@@ -126,6 +127,15 @@ function parseProfileConfig(env, input) {
         code: 'custom',
         path: ['ai', 'customProviders'],
         message: 'Custom provider IDs must be unique.',
+      },
+    ]);
+  }
+  if (new Set(config.disabledGuildIds).size !== config.disabledGuildIds.length) {
+    throw new z.ZodError([
+      {
+        code: 'custom',
+        path: ['disabledGuildIds'],
+        message: 'Disabled guild IDs must be unique.',
       },
     ]);
   }

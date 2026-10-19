@@ -45,7 +45,7 @@ function changedValues(before, after, prefix = '') {
     const path = prefix ? `${prefix}.${key}` : key;
     if (isObject(after[key])) {
       changes.push(...changedValues(isObject(before?.[key]) ? before[key] : {}, after[key], path));
-    } else if (before?.[key] !== after[key]) {
+    } else if (JSON.stringify(before?.[key]) !== JSON.stringify(after[key])) {
       changes.push({ path, before: before?.[key] ?? null, after: after[key] });
     }
   }
@@ -83,8 +83,9 @@ function createConfigStore(database) {
   }
 
   return {
-    updateProfileImageUrl(env, imageUrl) {
+    updateProfileIdentity(env, name, imageUrl) {
       const profile = profileEnvSchema.parse(env);
+      const profileName = z.string().trim().min(1).max(32).parse(name);
       const url = z
         .string()
         .url()
@@ -100,10 +101,10 @@ function createConfigStore(database) {
       return (
         database
           .prepare(
-            `UPDATE profiles SET profile_image_url = ?, updated_at = ?
-           WHERE env = ? AND profile_image_url IS NOT ?`
+            `UPDATE profiles SET name = ?, profile_image_url = ?, updated_at = ?
+           WHERE env = ? AND (name IS NOT ? OR profile_image_url IS NOT ?)`
           )
-          .run(url, new Date().toISOString(), profile, url).changes > 0
+          .run(profileName, url, new Date().toISOString(), profile, profileName, url).changes > 0
       );
     },
     listProfiles() {

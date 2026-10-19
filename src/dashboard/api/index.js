@@ -13,12 +13,16 @@ const { profileEnvSchema } = require('../../services/config/schema');
 const toolRegistry = require('../../data/aiToolRegistry');
 const secretProviders = require('../../data/secretProviders');
 
-async function fetchBotAvatarUrl() {
+async function fetchBotProfile() {
   const credentials = createLegacyConfig(process.env);
-  if (!credentials.bot.token) return null;
+  if (!credentials.bot.token) throw new Error('The active Discord bot token is not configured.');
   const rest = new REST({ version: '10' }).setToken(credentials.bot.token);
   const userData = await rest.get(Routes.user('@me'));
-  return new User({ rest }, userData).displayAvatarURL({ extension: 'png', size: 128 });
+  const user = new User({ rest }, userData);
+  return {
+    name: user.displayName,
+    profileImageUrl: user.displayAvatarURL({ extension: 'png', size: 128 }),
+  };
 }
 
 function queryFilters(query) {
@@ -51,17 +55,17 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
     next();
   });
 
-  router.get('/profiles', async (request, response) => {
-    const [status, avatarUrl] = await Promise.all([
-      requestBot(profile),
-      fetchBotAvatarUrl().catch(() => null),
-    ]);
-    if (avatarUrl) configs.updateProfileImageUrl(profile, avatarUrl);
+  router.get('/profiles', (request, response) => {
     response.json({
       profile,
       profiles: configs.listProfiles().filter((item) => item.env === profile),
-      status: { [profile]: status },
     });
+  });
+  router.post('/profiles/sync', async (request, response) => {
+    const identity = await fetchBotProfile();
+    configs.updateProfileIdentity(profile, identity.name, identity.profileImageUrl);
+    const bot = configs.listProfiles().find((item) => item.env === profile);
+    response.json({ profile, bot });
   });
   router.get('/catalog', (request, response) =>
     response.json({
@@ -77,6 +81,15 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
       ],
     })
   );
+  router.get('/guilds', async (request, response) => {
+    const result = await requestBot(profile, 'guilds');
+    if (result.status !== 'online' || !result.ready) {
+      return response.status(503).json({
+        error: result.message || 'The bot is unavailable. Try again when it is connected.',
+      });
+    }
+    response.json({ guilds: result.guilds });
+  });
   router.get('/profiles/:env/config', (request, response) => {
     assertActiveProfile(request.params.env);
     response.json({ config: configs.read(profile) });
@@ -186,4 +199,4 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   return router;
 }
 
-module.exports = { createApi, fetchBotAvatarUrl };
+module.exports = { createApi, fetchBotProfile };

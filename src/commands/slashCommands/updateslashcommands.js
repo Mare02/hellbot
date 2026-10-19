@@ -5,6 +5,7 @@ const slashCommands = require('.');
 const { OWNER, hasPermission } = require('../../utils/permissions');
 const messages = require('../../utils/messages');
 const { getInstance } = require('../../client');
+const { isGuildEnabled } = require('../../utils/guildAccess');
 require('dotenv').config();
 
 const rest = new REST({ version: '10' }).setToken(config.bot.token);
@@ -33,8 +34,10 @@ module.exports = {
         const targetServerId = config.isDevMode
           ? config.testingServerId
           : config.homeServerId;
-        const homeServer = await client.guilds.fetch(targetServerId);
-        updatesChannel = await homeServer.channels.fetch(config.hellbotUpdatesChannelId);
+        if (isGuildEnabled(targetServerId)) {
+          const homeServer = await client.guilds.fetch(targetServerId);
+          updatesChannel = await homeServer.channels.fetch(config.hellbotUpdatesChannelId);
+        }
       }
 
       await rest.put(Routes.applicationCommands(applicationId), {

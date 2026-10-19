@@ -12,9 +12,15 @@ module.exports = new Proxy(legacy, {
   get(target, property) {
     if (
       Object.hasOwn(discordRoutingDefaults, property) ||
-      ['commandsPrefix', 'embedColor', 'roleRequests', 'features', 'behavior', 'ai'].includes(
-        property
-      )
+      [
+        'commandsPrefix',
+        'embedColor',
+        'roleRequests',
+        'features',
+        'behavior',
+        'ai',
+        'disabledGuildIds',
+      ].includes(property)
     ) {
       return initializeRuntimeConfig().snapshot[property];
     }

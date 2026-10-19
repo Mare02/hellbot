@@ -4,12 +4,12 @@ import { dateLabel } from '../api';
 import { ResourceState, Section } from '../components';
 import { useResource } from '../useResource';
 
-export default function Overview({ profile, bot, status, refreshStatus }) {
+export default function Overview({ profile, bot, refreshProfile }) {
   const config = useResource(`/profiles/${profile}/config`);
   const history = useResource(`/history?profile=${profile}&pageSize=5&page=1`);
   const logs = useResource(`/profiles/${profile}/logs?level=error&pageSize=5&page=1`);
   function refresh() {
-    refreshStatus();
+    refreshProfile();
     config.refresh();
     history.refresh();
     logs.refresh();
@@ -37,7 +37,7 @@ export default function Overview({ profile, bot, status, refreshStatus }) {
       </Group>
       <ResourceState {...config} onRetry={config.refresh} />
       {config.data && (
-        <SimpleGrid cols={{ base: 1, sm: 3 }}>
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
           <Section title="AI provider">
             <Text fw={600} size="lg">
               {config.data.config.ai.provider === 'google' ? 'Google Gemini' : 'Groq'}
@@ -53,16 +53,6 @@ export default function Overview({ profile, bot, status, refreshStatus }) {
             </Text>
             <Text c="dimmed" size="sm">
               Bot features enabled
-            </Text>
-          </Section>
-          <Section title="Last applied">
-            <Text fw={500} size="sm">
-              {dateLabel(status?.appliedAt)}
-            </Text>
-            <Text c="dimmed" size="sm">
-              {status?.online
-                ? 'Connected to the bot process'
-                : 'Settings load when the bot starts'}
             </Text>
           </Section>
         </SimpleGrid>
