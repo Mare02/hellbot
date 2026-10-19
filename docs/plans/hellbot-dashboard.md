@@ -140,7 +140,7 @@ The actual file layout should follow the existing Hellbot organization where pra
 - **React** for dashboard screens and interactive forms.
 - **Vite** for local development and production asset builds.
 - **Mantine** for layout, controls, forms, dialogs, and notifications.
-- **@phosphor-icons/react** for icons.
+- **@tabler/icons-react** for icons.
 - A persistent profile selector for development and production, with clear visual indication of which environment is currently being edited.
 
 The dashboard is a Vite frontend in the same repository, built and served by the Express API process in production. The existing bot processes remain CommonJS JavaScript; the frontend language can be finalized when scaffolding it.

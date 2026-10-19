@@ -1,5 +1,5 @@
 import { Badge, Center, Container, Group, Paper, Stack, Text, ThemeIcon, Title } from '@mantine/core';
-import { CheckCircleIcon } from '@phosphor-icons/react';
+import { IconCircleCheck } from '@tabler/icons-react';
 
 export default function App() {
   return (
@@ -8,7 +8,7 @@ export default function App() {
         <Paper withBorder radius="lg" p={{ base: 'xl', sm: 48 }} shadow="md">
           <Stack align="center" gap="lg" ta="center">
             <ThemeIcon size={64} radius="xl" variant="light" color="orange">
-              <CheckCircleIcon size={34} weight="duotone" />
+              <IconCircleCheck size={34} stroke={1.75} />
             </ThemeIcon>
             <Badge color="orange" variant="light" size="lg">Početna stranica</Badge>
             <Title order={1}>Hellbot Dashboard</Title>

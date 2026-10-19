@@ -19,7 +19,7 @@
     "@discordjs/rest": "2.4.2",
     "@mantine/core": "9.7.3",
     "@mantine/hooks": "9.7.3",
-    "@phosphor-icons/react": "2.1.10",
+    "@tabler/icons-react": "3.49.0",
     "better-sqlite3": "13.0.3",
     "discord-api-types": "^0.37.100",
     "discord.js": "14.27.0",
