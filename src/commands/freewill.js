@@ -1,7 +1,6 @@
 const { usePrompt } = require('../services/AIservice');
 const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
-const { MODERATOR } = require('../utils/roles');
 const { brainRotPrompt } = require('../utils/aiPrompts');
 const { sendDiscordContent } = require('../utils/discordMessages');
 
@@ -28,7 +27,6 @@ module.exports = {
   name: 'freewill',
   description: 'Allows the bot to respond randomly using AI based on chat context',
   system: true,
-  perm: MODERATOR,
   async execute(interaction, args) {
     try {
       const originalMessage = interaction.originalMessage || (interaction.author ? interaction : null);

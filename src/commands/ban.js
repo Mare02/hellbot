@@ -1,6 +1,6 @@
+const { PermissionFlagsBits } = require('discord.js');
 const messages = require("../utils/messages");
 const { reply } = require("../utils/helpers");
-const { MODERATOR } = require('../utils/roles');
 const syslog = require('../commands/syslog');
 const dm = require('../commands/dm');
 
@@ -8,7 +8,7 @@ module.exports = {
   name: "ban",
   description: "Bans a user from the server.",
   slash: true,
-  perm: MODERATOR,
+  perm: PermissionFlagsBits.BanMembers,
   params: [
     {
       name: "user",
@@ -28,12 +28,12 @@ module.exports = {
         await interaction.deferReply();
       }
 
-      if (!interaction.member.permissions.has("BAN_MEMBERS")) {
-        await reply(interaction, args, messages.system.noPermission);
+      if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.BanMembers)) {
+        await reply(interaction, args, "I don't have permission to perform this action.");
         return;
       }
 
-      const userId = args[0];
+      const userId = args ? (args[0] || "").replace(/[<@!>]/g, "") : interaction.options.getUser("user").id;
 
       const bans = await interaction.guild.bans.fetch();
       const isBanned = bans.has(userId);
@@ -67,11 +67,16 @@ module.exports = {
         return;
       }
 
-      let reason = args && args[1] ? args[1] : undefined;
+      const reason = args ? args.slice(1).join(" ") || undefined : interaction.options.getString("reason") || undefined;
 
       let replyMessage = `**${userToBan.displayName}** has been banned.`;
       if (reason) {
         replyMessage += ` Reason: ${reason}.`;
+      }
+
+      if (!userToBan.bannable) {
+        await reply(interaction, args, "This user cannot be banned (higher role/privileges).");
+        return;
       }
 
       await userToBan.ban({ reason });

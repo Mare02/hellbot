@@ -1,5 +1,5 @@
 const { ChannelType } = require('discord.js');
-const { newticketquestion } = require('../commands');
+const newticketquestion = require('../commands/newticketquestion');
 const config = require('../utils/config');
 require('dotenv').config();
 

@@ -97,9 +97,9 @@ module.exports = {
 ## Discord Bot Best Practices
 
 ### Permissions
-- Check user permissions before executing admin/mod commands
-- Use role-based access control (reference staffRoleIds in config)
-- Validate user roles against config.staffRoleIds
+- Check the invoking guild member's effective Discord permissions before executing permission-gated commands. Discord.js combines permission grants from all of the member's roles; do not check only a configured staff role ID for these commands.
+- Use `config.staffRoleIds` only for features whose policy specifically depends on those configured roles.
+- Keep the user's permissions separate from the bot's own permissions and role hierarchy checks.
 
 ### Rate Limiting
 - Implement cooldowns for heavy operations

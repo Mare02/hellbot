@@ -1,11 +1,16 @@
-const { MODERATOR } = require('../utils/roles');
+const { PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
   name: 'deletemsg',
   description: 'Deletes a specified number of messages.',
-  perm: MODERATOR,
+  perm: PermissionFlagsBits.ManageMessages,
   async execute(message, args) {
     try {
+      if (!message.channel.permissionsFor(message.guild.members.me)?.has(PermissionFlagsBits.ManageMessages)) {
+        await message.channel.send("I don't have permission to manage messages in this channel.");
+        return;
+      }
+
       const limit = Math.max(args[0] || 2, 2);
       let totalDeleted = 0;
 

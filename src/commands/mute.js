@@ -1,13 +1,13 @@
+const { PermissionFlagsBits } = require('discord.js');
 const messages = require('../utils/messages');
 const { reply } = require('../utils/helpers');
 const syslog = require('../commands/syslog');
-const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'mute',
   description: 'Mutes a user in the server.',
   slash: true,
-  perm: MODERATOR,
+  perm: PermissionFlagsBits.ModerateMembers,
   params: [
     {
       name: 'user',
@@ -17,7 +17,7 @@ module.exports = {
     },
     {
       name: 'duration',
-      description: 'Duration of the mute in milliseconds (ms)',
+      description: 'Duration of the timeout in minutes',
       required: false,
     },
   ],
@@ -27,8 +27,8 @@ module.exports = {
         await interaction.deferReply();
       }
 
-      if (!interaction.member.permissions.has('MUTE_MEMBERS')) {
-        await reply(interaction, args, messages.system.noPermission);
+      if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+        await reply(interaction, args, "I don't have permission to perform this action.");
         return;
       }
 
@@ -50,7 +50,7 @@ module.exports = {
         return;
       }
 
-      if (userToMute.voice && userToMute.voice.serverMute) {
+      if (userToMute.isCommunicationDisabled()) {
         await reply(interaction, args, 'User is already muted.');
         return;
       }
@@ -62,6 +62,11 @@ module.exports = {
         duration = parseInt(args[1]) * 60000;
       } else {
         duration = 30 * 60000;
+      }
+
+      if (!userToMute.moderatable) {
+        await reply(interaction, args, "This user cannot be timed out (higher role/privileges).");
+        return;
       }
 
       await userToMute.timeout(duration);
