@@ -1,5 +1,6 @@
 /node_modules
 /build
 /dist
+/dashboard/dist
 /.env
 /media
