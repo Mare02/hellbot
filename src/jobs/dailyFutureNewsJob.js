@@ -3,7 +3,7 @@ const { getInstance } = require('../client');
 const AIservice = require('../services/AIservice');
 const { futureNewsResponseFormat } = require('../utils/aiSchemas');
 const { futureNewsPrompt } = require('../utils/aiPrompts');
-const { embedColor, testingServerId } = require('../utils/config');
+const config = require('../utils/config');
 
 function getRandomFutureDate() {
   const now = new Date();
@@ -47,7 +47,7 @@ module.exports = {
       }
 
       const embed = new EmbedBuilder()
-        .setColor(embedColor)
+        .setColor(config.embedColor)
         .setTitle(`News from the future: ${formattedDate}`)
         .addFields(categories.map(category => ({
           name: `${category[0].toUpperCase()}${category.slice(1)}`,
@@ -60,7 +60,7 @@ module.exports = {
       }
 
       for (const [guildId] of guilds) {
-        if (guildId === testingServerId) {
+        if (guildId === config.testingServerId) {
           continue;
         }
 

@@ -8,6 +8,7 @@ module.exports = (client) => {
     if (
       channel.type !== ChannelType.GuildText
       || config.isDevMode
+      || !config.features.ticketReplies
     ) {
       return;
     }

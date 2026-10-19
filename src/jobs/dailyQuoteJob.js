@@ -1,6 +1,6 @@
-require('dotenv').config();
+const { initializeRuntimeConfig } = require('../services/config/runtime');
 const { getInstance } = require('../client');
-const { embedColor, testingServerId } = require('../utils/config');
+const config = require('../utils/config');
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = {
@@ -9,11 +9,13 @@ module.exports = {
     const client = getInstance();
 
     try {
-      const response = await fetch('https://api.api-ninjas.com/v1/quotes', {
+      const response = await fetch('https://api.api-ninjas.com/v2/randomquotes', {
         method: 'GET',
+        signal: AbortSignal.timeout(15000),
+        redirect: 'error',
         headers: {
-          'X-Api-Key': process.env.NINJA_API_KEY
-        }
+          'X-Api-Key': initializeRuntimeConfig().nextKey('apininjas'),
+        },
       });
 
       if (!response.ok) {
@@ -21,11 +23,18 @@ module.exports = {
       }
 
       const data = await response.json();
+      if (
+        !Array.isArray(data) ||
+        typeof data[0]?.quote !== 'string' ||
+        typeof data[0]?.author !== 'string'
+      ) {
+        throw new Error('The quotes API returned an invalid response.');
+      }
       const quote = data[0].quote;
       const author = data[0].author;
 
       const embed = new EmbedBuilder()
-        .setColor(embedColor)
+        .setColor(config.embedColor)
         .setTitle('Daily Quote!')
         .setDescription(`"${quote}"`)
         .setFooter({ text: author });
@@ -36,24 +45,25 @@ module.exports = {
       }
 
       for (const [guildId, guild] of guilds) {
-        if (guildId === testingServerId) {
+        if (guildId === config.testingServerId) {
           continue;
         }
 
         const fetchedGuild = await client.guilds.fetch(guildId);
         const channels = await fetchedGuild.channels.fetch();
-        const generalChannel = channels.find(channel =>
-          channel.type === 0 && channel.name.startsWith('general')
+        const generalChannel = channels.find(
+          (channel) => channel.type === 0 && channel.name.startsWith('general')
         );
 
-        try {o
+        try {
           if (generalChannel) {
             await generalChannel.send({ embeds: [embed] });
           }
-        }
-        catch (error) {
+        } catch (error) {
           if (generalChannel.guild) {
-            console.error(`Failed to send message in guild: ${generalChannel.guild.name} (ID: ${generalChannel.guild.id})`);
+            console.error(
+              `Failed to send message in guild: ${generalChannel.guild.name} (ID: ${generalChannel.guild.id})`
+            );
           }
           continue;
         }

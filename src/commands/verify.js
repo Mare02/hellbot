@@ -22,6 +22,7 @@ module.exports = {
   ],
   async execute(interaction, args) {
     try {
+      if (!config.features.verification) return await reply(interaction, args, 'Verification is currently disabled.');
       if (interaction.guild.id !== config.homeServerId) {
         return await reply(interaction, args, "This command can only be used in the bot's home server (Hell's Resting Place).");
       }

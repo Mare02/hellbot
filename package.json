@@ -5,11 +5,17 @@
   "main": "src/main.js",
   "scripts": {
     "start": "node src/main.js",
-    "dev": "nodemon src/main.js",
-    "pmdev": "pm2 start src/main.js",
-    "dashboard:dev": "vite --config dashboard/vite.config.mjs",
+    "dev": "NODE_ENV=development nodemon src/main.js",
+    "bot:dev": "NODE_ENV=development node src/main.js",
+    "bot:prod": "NODE_ENV=production node src/main.js",
+    "pmdev": "NODE_ENV=development pm2 start src/main.js",
+    "db:migrate": "node scripts/migrateDatabase.js",
+    "config:import": "node scripts/importConfig.js",
+    "secrets:import": "node scripts/importSecrets.js",
+    "dashboard:setup": "node scripts/setupDashboard.js",
+    "dashboard:dev": "NODE_ENV=development node scripts/devDashboard.js",
     "dashboard:build": "vite build --config dashboard/vite.config.mjs",
-    "dashboard:start": "node src/dashboard/server.js"
+    "dashboard:start": "NODE_ENV=production node src/dashboard/server.js"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +38,7 @@
     "nodemon": "^3.1.9",
     "react": "19.3.1",
     "react-dom": "19.3.1",
+    "react-router-dom": "^7.18.4",
     "zod": "4.6.7"
   },
   "devDependencies": {

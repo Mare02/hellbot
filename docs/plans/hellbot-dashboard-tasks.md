@@ -6,11 +6,14 @@ Osnovne odluke:
 
 - SQLite je izvor istine; bot koristi validiran RAM snapshot.
 - Konfiguracija je odvojena za dev i prod profil.
-- AI ključevi su zajednički za oba profila.
+- AI ključevi su zajednički za bot servise unutar jedne instalacije; local dev i VPS prod imaju odvojene baze i ključeve.
 - Nema revision countera, periodičnog pollinga ni query-ja pri svakoj komandi.
 - Activity zapisi nastaju zajedno sa izmenama od početka; stranica za njihov pregled dolazi kasnije.
+- Upravljanje AI system promptovima je odloženo. Promptovi za sada ostaju u kodu i ne ulaze u import konfiguracije ni dashboard.
 
 ## 1. SQLite osnova i tabele
+
+**Status:** implementirano. Detalji pokretanja i granice ovog taska su u [database setup](../database.md).
 
 - Dodati SQLite driver, konekciju i migration runner.
 - Podesiti putanju baze van repozitorijuma, foreign keys, WAL i busy timeout.
@@ -22,7 +25,9 @@ Osnovne odluke:
 
 ## 2. Šema konfiguracije i početni podaci
 
-- Popisati postojeća podešavanja, promptove i mesta gde se koriste.
+**Status:** implementirano. Šema, potrošači i eksplicitan import opisani su u [configuration inventory](../config-inventory.md).
+
+- Popisati postojeća podešavanja i mesta gde se koriste.
 - Definisati Zod šemu i defaults za `config_json`.
 - Razdvojiti profile settings, zajedničke AI ključeve i startup environment vrednosti.
 - Napraviti eksplicitan početni import postojećih vrednosti.
@@ -30,6 +35,8 @@ Osnovne odluke:
 **Rezultat:** znamo tačno šta selimo u bazu; novi startup ne prepisuje sačuvana podešavanja vrednostima iz env-a.
 
 ## 3. Čitanje i menjanje konfiguracije sa activity zapisima
+
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
 
 - Dodati servis za čitanje konfiguracije po profilu.
 - Implementirati promenu samo poslatih polja.
@@ -41,17 +48,21 @@ Osnovne odluke:
 
 ## 4. Zajednički AI ključevi
 
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
+
 - Implementirati enkripciju i dekripciju pomoću environment ključa.
 - Dodavanje, zamena i brisanje više ključeva po provideru.
 - Za dashboard vraćati samo bezbedne metapodatke.
 - Beležiti operacije u activity log bez vrednosti ključeva.
 - Povezati format ključeva sa postojećom rotacijom u botu.
 
-**Rezultat:** storage za AI ključeve spreman je za oba profila.
+**Rezultat:** storage za AI ključeve spreman je unutar svake instalacije.
 
 ## 5. Bot čita konfiguraciju iz baze
 
-- Uvesti eksplicitan izbor dev/prod profila pri pokretanju.
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
+
+- Izvesti aktivni dev/prod profil isključivo iz `NODE_ENV`; ne dozvoliti prebacivanje profila kroz dashboard.
 - Napraviti `ConfigService` sa validiranim RAM snapshotom.
 - Učitati konfiguraciju i zajedničke ključeve pre pokretanja zavisnih servisa.
 - Postepeno prebaciti postojeće potrošače na `ConfigService`.
@@ -61,29 +72,35 @@ Osnovne odluke:
 
 ## 6. Live primena preko IPC-a
 
-- Dodati lokalnu komunikaciju između dashboard procesa i botova.
-- Posle promene profila obavestiti odgovarajućeg bota.
-- Posle promene zajedničkog ključa obavestiti oba bota.
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
+
+- Dodati lokalnu komunikaciju između dashboard procesa i aktivnog bot procesa.
+- Posle promene konfiguracije obavestiti samo lokalnog aktivnog bota.
+- Posle promene ključa obavestiti samo lokalnog aktivnog bota.
 - Validirati i atomarno zameniti snapshot.
 - Osvežiti pogođene AI klijente i druge potrošače.
 - Vratiti potvrdu primene ili grešku; podržati ponovno slanje obaveštenja.
 
 **Rezultat:** razlikujemo „sačuvano” od „primenjeno”, bez pollinga i restarta procesa.
 
-## 7. Express API i zaštita pristupa
+## 7. Express API i validacija zahteva
 
-- Dodati autorizaciju pre konfiguracionih ruta.
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
+
+- Dashboard se otvara direktno, bez login-a ili sesija; API sluša na loopback adresi.
 - Napraviti rute za profile, konfiguraciju i upravljanje ključevima.
 - Dodati validaciju zahteva i bezbedne odgovore na greške.
 - Povezati čuvanje sa IPC potvrdom.
-- Identitet za activity log uzimati iz autorizovanog zahteva.
+- Za activity log koristiti konfigurisani owner ID; zahteve iz browsera proveravati kroz dozvoljeni Origin i dashboard header.
 
 **Rezultat:** backend može bezbedno da podrži dashboard.
 
 ## 8. Dashboard osnova i prva podešavanja
 
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
+
 - Iskoristiti postojeći React/Vite/Mantine scaffold.
-- Dodati layout i dev/prod selector.
+- Dodati layout koji prikazuje `NODE_ENV` okruženje bez dev/prod selector-a.
 - Povezati UI sa API-jem.
 - Implementirati prefix i embed boju kao prve jednostavne forme.
 - Prikazati loading, greške, nesnimljene izmene i rezultat primene.
@@ -92,43 +109,47 @@ Osnovne odluke:
 
 ## 9. AI settings stranice
 
-- Izbor providera i odgovarajućeg modela po profilu.
-- Upravljanje zajedničkim API ključevima.
-- Jasna oznaka da promena ključeva utiče na oba bota.
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
+
+- Izbor providera i odgovarajućeg modela za aktivno okruženje.
+- Upravljanje API ključevima koji se dele između servisa te instalacije.
+- Jasna oznaka da promena ključeva utiče na aktivnog bota.
 - Provera ključa kroz backend bez izlaganja tajne.
-- Prikaz rezultata osvežavanja oba procesa.
+- Prikaz rezultata osvežavanja aktivnog procesa.
+- Dodati pregled registrovanih AI tools-a sa nazivom, opisom i pojedinačnim toggle-om, odvojeno za dev/prod.
+- Proširiti Zod šemu i konfiguraciju poljem `ai.tools`; prihvatati samo poznate tools iz registra. Početne vrednosti čuvaju trenutno ponašanje i ograničenja pristupa.
+- Isključene tools izostaviti iz svakog zahteva modelu, uključujući follow-up zahteve, i proveriti trenutno stanje neposredno pre izvršavanja svakog tool poziva.
+- Blokirati naredne pozive isključenog tool-a i u već započetom razgovoru. Operacije koje su već počele ne otkazujemo niti poništavamo toggle-om.
+- Zadržati postojeće permission i contextual access provere; uključen tool ne daje dodatna prava.
+- Promene tools-a primenjivati live kroz IPC i beležiti u Activity log.
 
-**Rezultat:** AI podešavanja mogu da se menjaju kroz dashboard.
+**Rezultat:** AI podešavanja i dostupnost pojedinačnih tools-a menjaju se za okruženje na kom dashboard radi.
 
-## 10. System prompts
+## 10. Ostala Hellbot podešavanja i feature switches
 
-- Pregled i uređivanje promptova po profilu.
-- Validacija obaveznih placeholdera.
-- Preview sa primerom podataka.
-- Pregled ranijih vrednosti iz `config_history`.
-- Vraćanje prethodnog prompta kao nove, evidentirane izmene.
-
-**Rezultat:** upravljanje promptovima koristi postojeću istoriju, bez dodatnog sistema verzionisanja.
-
-## 11. Ostala Hellbot podešavanja i feature switches
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
 
 - Dodavati samo podešavanja potvrđena inventarom iz taska 2.
 - Definisati ponašanje svake funkcije pri uključivanju i isključivanju.
 - Povezati kontrole sa komandama, listenerima i poslovima.
-- Dodati role-request routing ako taj workflow ostaje.
+- Dodati per-profile server, channel, category i role ID podešavanja za Hellbot integracije, uz role-request routing, migraciju postojećih vrednosti i live osvežavanje potrošača. Staff notification role je samo mention cilj, bez starog staff permission/sync sistema.
 
 **Rezultat:** svako izloženo podešavanje stvarno utiče na ponašanje bota.
 
-## 12. Activity log stranica
+## 11. Activity log stranica
+
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
 
 - Pregled konfiguracionih izmena i operacija nad ključevima.
-- Filteri po profilu, vremenu i akciji, uključujući zajedničke izmene.
+- Filteri po vremenu i akciji, uključujući promene zajedničkih ključeva na toj instalaciji.
 - Prikaz promenjenih polja i dostupnih prethodnih/novih vrednosti.
 - Za ključeve prikazati samo akciju i bezbedne metapodatke.
 
-**Rezultat:** vidiš šta si menjao, kada i za koji profil. Zapisi se već prikupljaju od taskova 3 i 4.
+**Rezultat:** vidiš šta si menjao i kada u aktivnom okruženju. Zapisi se već prikupljaju od taskova 3 i 4.
 
-## 13. Errors i application logs
+## 12. Errors i application logs
+
+**Status:** implementirano u kodu; source review i frontend build završeni. Live Discord/provider i browser provera nije rađena. Videti [dashboard operation](../dashboard.md).
 
 - Standardizovati strukturisane logove i redakciju tajni.
 - Dodati profil i koristan kontekst.
@@ -136,11 +157,11 @@ Osnovne odluke:
 - Dodati API i UI sa filterima.
 - Jasno razdvojiti lokalne logove od Bugsnag događaja.
 
-**Rezultat:** pregled rada i grešaka oba bota kroz dashboard.
+**Rezultat:** pregled rada i grešaka aktivnog bota kroz dashboard.
 
-## 14. VPS deployment i privatni pristup
+## 13. VPS deployment i privatni pristup
 
-- Podesiti tri PM2 procesa i njihove environment vrednosti.
+- Podesiti bot i dashboard PM2 procese na VPS-u sa `NODE_ENV=production`.
 - Podesiti trajnu lokaciju baze i encryption ključ.
 - Završiti Tailscale pristup i pravila pristupa.
 - Dokumentovati pokretanje, migracije i oporavak.
@@ -149,4 +170,4 @@ Osnovne odluke:
 
 ## Način rada
 
-Krenuti samo sa taskom 1. Taskovi 2–6 završavaju konfiguracionu osnovu pre pravljenja formi. Svaki task držati kao zasebnu, preglednu implementacionu celinu.
+Taskovi 1–12 implementirani su lokalno. Task 13 (VPS deployment i Tailscale) ostaje za zaseban zahtev. Promene nisu automatski commitovane ili pushovane.

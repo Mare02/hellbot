@@ -1,7 +1,6 @@
 const { EmbedBuilder } = require('discord.js');
-require('dotenv').config();
+const { initializeRuntimeConfig } = require('../services/config/runtime');
 const config = require('../utils/config');
-const moment = require('moment');
 
 module.exports = {
   name: 'latestnews',
@@ -12,7 +11,7 @@ module.exports = {
       name: 'query',
       description: 'Search query for the news titles.',
       required: true,
-    }
+    },
   ],
   async execute(interaction, args) {
     try {
@@ -28,17 +27,20 @@ module.exports = {
         return;
       }
 
-      const monthAgo = moment().subtract(1, 'month').format('YYYY-MM-DD');
-      const query = `q=${queryInput}`;
-      const sortBy = 'sortBy=popularity';
-      const from = `from=${monthAgo}`;
-      const pageSize = `pageSize=3`;
-      const apiKey = `apiKey=${process.env.NEWS_API_KEY}`;
-      const url = `https://newsapi.org/v2/top-headlines?${apiKey}&${query}&${from}&${sortBy}&${pageSize}`;
-
-      const response = await fetch(url);
+      if (!args) await interaction.deferReply();
+      const url = new URL('https://newsapi.org/v2/top-headlines');
+      url.search = new URLSearchParams({ q: queryInput, pageSize: '3' }).toString();
+      const response = await fetch(url, {
+        headers: { 'X-Api-Key': initializeRuntimeConfig().nextKey('newsapi') },
+        signal: AbortSignal.timeout(15000),
+        redirect: 'error',
+      });
+      if (!response.ok) throw new Error(`NewsAPI returned HTTP ${response.status}.`);
       const data = await response.json();
 
+      if (data.status !== 'ok' || !Array.isArray(data.articles)) {
+        throw new Error('NewsAPI returned an invalid response.');
+      }
       const embeds = [];
 
       for (const article of data.articles) {
@@ -48,26 +50,28 @@ module.exports = {
           .setURL(article.url)
           .setAuthor({ name: article.author || 'Unknown Author' })
           .setDescription(article.description)
-          .setThumbnail(article.urlToImage)
+          .setThumbnail(article.urlToImage);
 
         embeds.push(embed);
       }
 
-      const news = embeds.length
-        ? { embeds }
-        : 'No articles found.'
+      const news = embeds.length ? { embeds } : 'No articles found.';
 
-      if(!args){
-        interaction.reply(news);
+      if (!args) {
+        await interaction.editReply(news);
       } else {
-        interaction.channel.send(news);
+        await interaction.channel.send(news);
       }
     } catch (error) {
       console.error(error);
-      if(!args){
-        interaction.reply(error.message);
+      if (!args) {
+        const message = 'Could not load news. Check the API key and provider availability.';
+        if (interaction.deferred) await interaction.editReply(message);
+        else await interaction.reply(message);
       } else {
-        interaction.channel.send(error.message);
+        await interaction.channel.send(
+          'Could not load news. Check the API key and provider availability.'
+        );
       }
     }
   },

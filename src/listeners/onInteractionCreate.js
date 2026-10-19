@@ -3,6 +3,7 @@ const commands = require('../commands');
 const { hasPermission } = require('../utils/permissions');
 const messages = require('../utils/messages');
 const roleRequests = require('../services/roleRequests');
+const { withLogContext } = require('../services/logging');
 
 const client = getInstance();
 
@@ -24,7 +25,14 @@ module.exports = () => {
         return;
       }
 
-      await command.execute(interaction);
+      try {
+        await withLogContext({ component: 'commands', command: commandName }, () => command.execute(interaction));
+      } catch (error) {
+        withLogContext({ component: 'commands', command: commandName }, () => console.error('Slash command failed', { error }));
+        const reply = { content: messages.errorState.commandError, ephemeral: true };
+        if (interaction.deferred) await interaction.editReply(reply.content).catch(() => {});
+        else if (!interaction.replied) await interaction.reply(reply).catch(() => {});
+      }
     }
   });
 };
