@@ -2,7 +2,7 @@ const { MessageReferenceType } = require('discord.js');
 const { getInstance } = require('../client');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
-const { hasPermission } = require('../utils/roles');
+const { hasPermission } = require('../utils/permissions');
 const commands = require('../commands');
 const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
 const freewill = require('../commands/freewill');
@@ -107,9 +107,9 @@ module.exports = () => {
 
     if (
       Math.random() < RANDOM_FREEWILL_PROBABILITY
-      && message.channel.name.startsWith('general')
+      && message.channel.name?.startsWith('general')
       && !message.mentions.has(client.user.id)
-      && message.guild.id === config.homeServerId
+      && message.guild?.id === config.homeServerId
     ) {
       try {
         await freewill.execute(message, []);
@@ -124,7 +124,7 @@ module.exports = () => {
     };
 
     if (command) {
-      if (command.perm && !hasPermission(command.perm, message.author.id)) {
+      if (command.perm && !hasPermission(command.perm, message)) {
         message.channel.send(messages.system.noPermission);
         return;
       }

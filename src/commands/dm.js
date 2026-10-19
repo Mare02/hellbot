@@ -1,8 +1,8 @@
-const { ADMIN } = require('../utils/roles')
+const { PermissionFlagsBits } = require('discord.js');
 
 module.exports = {
   name: 'dm',
-  perm: ADMIN,
+  perm: PermissionFlagsBits.Administrator,
   description: 'Send a DM to a user.',
   async execute(message, args) {
     try {

@@ -1,13 +1,13 @@
+const { PermissionFlagsBits } = require('discord.js');
 const messages = require('../utils/messages');
 const { reply } = require('../utils/helpers');
 const syslog = require('../commands/syslog');
-const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'unmute',
   description: 'Unmutes a user in the server.',
   slash: true,
-  perm: MODERATOR,
+  perm: PermissionFlagsBits.ModerateMembers,
   params: [
     {
       name: 'user',
@@ -22,8 +22,8 @@ module.exports = {
         await interaction.deferReply();
       }
 
-      if (!interaction.member.permissions.has('MUTE_MEMBERS')) {
-        await reply(interaction, args, messages.system.noPermission);
+      if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.ModerateMembers)) {
+        await reply(interaction, args, "I don't have permission to perform this action.");
         return;
       }
 
@@ -47,6 +47,11 @@ module.exports = {
 
       if (!userToUnmute.communicationDisabledUntil) {
         await reply(interaction, args, 'User is not muted.');
+        return;
+      }
+
+      if (!userToUnmute.moderatable) {
+        await reply(interaction, args, "This user cannot be timed out (higher role/privileges).");
         return;
       }
 

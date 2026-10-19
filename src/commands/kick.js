@@ -1,6 +1,6 @@
+const { PermissionFlagsBits } = require('discord.js');
 const messages = require("../utils/messages");
 const { reply } = require("../utils/helpers");
-const { MODERATOR } = require('../utils/roles');
 const syslog = require('../commands/syslog');
 const dm = require('../commands/dm');
 
@@ -8,7 +8,7 @@ module.exports = {
   name: "kick",
   description: "Kicks a user from the server.",
   slash: true,
-  perm: MODERATOR,
+  perm: PermissionFlagsBits.KickMembers,
   params: [
     {
       name: "user",
@@ -28,17 +28,12 @@ module.exports = {
         await interaction.deferReply();
       }
 
-      if (!interaction.member.permissions.has("KICK_MEMBERS")) {
-        await reply(interaction, args, messages.system.noPermission);
-        return;
-      }
-
-      if (!interaction.guild.members.me.permissions.has("KICK_MEMBERS")) {
+      if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.KickMembers)) {
         await reply(interaction, args, "I don't have permission to kick members!");
         return;
       }
 
-      const userId = args[0];
+      const userId = args ? args[0] : interaction.options.getUser("user").id;
 
       let userToKick;
       if (!args) {
@@ -74,7 +69,7 @@ module.exports = {
         return;
       }
 
-      let reason = args && args[1] ? args[1] : undefined;
+      const reason = args ? args.slice(1).join(" ") || undefined : interaction.options.getString("reason") || undefined;
 
       let replyMessage = `**${userToKick.displayName}** has been kicked.`;
       if (reason) {

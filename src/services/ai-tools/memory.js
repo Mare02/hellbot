@@ -1,5 +1,4 @@
 const { ChannelType, PermissionFlagsBits } = require('discord.js');
-const config = require('../../utils/config');
 const memoryStore = require('../memoryStore');
 const MEMORY_KINDS = new Set(['task', 'fact', 'preference', 'instruction', 'note']);
 const TASK_STATUSES = new Set(['open', 'done', 'cancelled']);
@@ -65,13 +64,6 @@ function validMember(member, guildId, userId) {
   return member?.guild?.id === guildId && member?.id === userId;
 }
 
-function canWrite(user, member) {
-  if (user.id === config.owner.id) return true;
-  if (member?.permissions?.has(PermissionFlagsBits.ManageGuild)) return true;
-  return ['staffMember', 'admin', 'headAdmin', 'moderator', 'headModerator']
-    .some((role) => member?.roles?.cache?.has(config.staffRoleIds[role]));
-}
-
 function canRead(channel, member) {
   const permissions = channel.permissionsFor(member);
   return permissions?.has(PermissionFlagsBits.ViewChannel)
@@ -99,8 +91,6 @@ async function createMemoryToolSet({ channel, user, member, messageId, allowMemo
       return { toolDefinitions: [], toolHandlers: {} };
     }
   }
-  const writesEnabled = allowMemoryWrites && canWrite(user, suppliedMember);
-
   async function accessContext() {
     const requester = suppliedMember || await guild.members.fetch(user.id);
     if (!validMember(requester, guild.id, user.id)) throw new Error('Invalid requester');
@@ -164,18 +154,12 @@ async function createMemoryToolSet({ channel, user, member, messageId, allowMemo
     }),
   };
 
-  if (writesEnabled) {
-    async function writeContext() {
-      const context = await accessContext();
-      if (!canWrite(user, context.requester)) throw new Error('Write permission denied');
-      return context;
-    }
-
+  if (allowMemoryWrites) {
     toolHandlers.save_memory = safeHandler('save_memory', async ({ content, kind }) => {
       if (typeof content !== 'string' || !content.trim() || content.length > 2000 || !MEMORY_KINDS.has(kind)) {
         return { success: false, error: 'Memory content must contain 1 to 2000 characters and kind must be task, fact, preference, instruction, or note.' };
       }
-      await writeContext();
+      await accessContext();
       const memory = await memoryStore.saveMemory(guild.id, {
         content: content.trim(), kind, channelId: channel.id, authorId: user.id, messageId,
       });
@@ -190,7 +174,7 @@ async function createMemoryToolSet({ channel, user, member, messageId, allowMemo
         || (content === undefined && kind === undefined && status === undefined)) {
         return { success: false, error: 'Provide a memory ID and at least one valid content, kind, or task status change.' };
       }
-      const { allowedChannelIds } = await writeContext();
+      const { allowedChannelIds } = await accessContext();
       const result = await memoryStore.updateMemory(guild.id, {
         id,
         ...(content !== undefined ? { content: content.trim() } : {}),
@@ -214,7 +198,7 @@ async function createMemoryToolSet({ channel, user, member, messageId, allowMemo
         || requestedIds.some((memoryId) => typeof memoryId !== 'string' || !memoryId.trim())) {
         return { success: false, error: 'Provide between 1 and 500 memory IDs.' };
       }
-      const { allowedChannelIds } = await writeContext();
+      const { allowedChannelIds } = await accessContext();
       const deleted = await memoryStore.deleteMemories(guild.id, { ids: requestedIds, allowedChannelIds });
       if (!deleted) {
         return { success: false, error: 'A requested memory is inaccessible. No memories were deleted.' };

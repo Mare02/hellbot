@@ -2,12 +2,11 @@ const { EmbedBuilder } = require('discord.js');
 const messages = require('../utils/messages');
 const config = require('../utils/config');
 const gifs = require('../data/gifs');
-const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'newticketquestion',
   description: "Displays a verification question for new members in tickets.",
-  perm: MODERATOR,
+  system: true,
   async execute(message) {
     if (message.channel.guild.id !== config.homeServerId) return;
 

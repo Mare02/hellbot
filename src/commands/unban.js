@@ -1,13 +1,13 @@
+const { PermissionFlagsBits } = require('discord.js');
 const messages = require("../utils/messages");
 const { reply } = require("../utils/helpers");
-const { MODERATOR } = require('../utils/roles');
 const syslog = require('../commands/syslog');
 
 module.exports = {
   name: "unban",
   description: "Unbans a user from the server.",
   slash: true,
-  perm: MODERATOR,
+  perm: PermissionFlagsBits.BanMembers,
   params: [
     {
       name: "user",
@@ -22,12 +22,12 @@ module.exports = {
         await interaction.deferReply();
       }
 
-      if (!interaction.member.permissions.has("BAN_MEMBERS")) {
-        await reply(interaction, args, messages.system.noPermission);
+      if (!interaction.guild.members.me.permissions.has(PermissionFlagsBits.BanMembers)) {
+        await reply(interaction, args, "I don't have permission to perform this action.");
         return;
       }
 
-      const userId = args[0];
+      const userId = args ? (args[0] || "").replace(/[<@!>]/g, "") : interaction.options.getString("user");
 
       if (!userId || userId === '') {
         await reply(interaction, args, 'Please provide a user ID.');
@@ -42,7 +42,7 @@ module.exports = {
         return;
       }
 
-      await interaction.guild.members.unban(userId).catch(() => null);
+      await interaction.guild.members.unban(userId);
 
       let replyMessage = `User with ID **${userId}** has been unbanned.`;
       await reply(interaction, args, replyMessage);

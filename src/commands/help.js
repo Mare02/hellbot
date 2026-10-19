@@ -1,22 +1,23 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const config = require('../utils/config');
-const { hasPermission } = require('../utils/roles');
+const { OWNER, hasPermission } = require('../utils/permissions');
 
 const PREFIX_USAGE = {
   deletemsg: ' <count>',
   dm: ' <user-id> <message>',
   masterphoto: ' [caption] (reply to a message with an attachment)',
-  savechat: ' [days]',
   syslog: ' <message>',
   uniquecreation: ' [caption] (reply to a message with an attachment)',
 };
 
 const ACCESS_GROUPS = [
   { title: 'Everyone', permission: null },
-  { title: 'Moderator and above', permission: 'moderator' },
-  { title: 'Admin and above', permission: 'admin' },
-  { title: 'Unlocked staff and owner', permission: 'unlocked' },
-  { title: 'Owner only', permission: 'owner' },
+  { title: 'Ban Members', permission: PermissionFlagsBits.BanMembers },
+  { title: 'Kick Members', permission: PermissionFlagsBits.KickMembers },
+  { title: 'Moderate Members', permission: PermissionFlagsBits.ModerateMembers },
+  { title: 'Manage Messages', permission: PermissionFlagsBits.ManageMessages },
+  { title: 'Administrator', permission: PermissionFlagsBits.Administrator },
+  { title: 'Owner only', permission: OWNER },
 ];
 
 const getSlashUsage = command => {
@@ -68,19 +69,14 @@ module.exports = {
   slash: true,
   async execute(context) {
     try {
-      const userId = context.user?.id || context.author?.id;
       const commands = require('../commands');
       const commandEntries = Object.entries(commands)
         .filter(([key, command]) => key !== 'help' && command?.description)
         .map(([key, command]) => [key, command]);
-      commandEntries.push(['updateslashcommands', {
-        name: 'updateslashcommands',
-        perm: 'admin',
-        description: 'Refresh the registered slash commands.',
-      }]);
+      commandEntries.push(['updateslashcommands', require('./slashCommands/updateslashcommands')]);
 
       const availableCommands = commandEntries.filter(([, command]) =>
-        !command.perm || hasPermission(command.perm, userId)
+        !command.perm || hasPermission(command.perm, context)
       );
 
       const embed = new EmbedBuilder()

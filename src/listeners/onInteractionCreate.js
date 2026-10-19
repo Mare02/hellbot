@@ -1,6 +1,6 @@
 const { getInstance } = require('../client');
 const commands = require('../commands');
-const { hasPermission } = require('../utils/roles');
+const { hasPermission } = require('../utils/permissions');
 const messages = require('../utils/messages');
 const roleRequests = require('../services/roleRequests');
 
@@ -19,12 +19,12 @@ module.exports = () => {
     const command = commands[commandName];
 
     if (command) {
-      if (command.perm && !hasPermission(command.perm, interaction.user.id)) {
-        interaction.reply(messages.system.noPermission);
+      if (command.perm && !hasPermission(command.perm, interaction)) {
+        await interaction.reply({ content: messages.system.noPermission, ephemeral: true });
         return;
       }
 
-      command.execute(interaction);
+      await command.execute(interaction);
     }
   });
 };

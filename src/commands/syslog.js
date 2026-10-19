@@ -1,10 +1,9 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, PermissionFlagsBits } = require('discord.js');
 const config = require('../utils/config');
-const { MODERATOR } = require('../utils/roles');
 
 module.exports = {
   name: 'syslog',
-  perm: MODERATOR,
+  perm: PermissionFlagsBits.Administrator,
   description: 'Sends a message to the logs channel.',
   async execute(message, args, logMessage, user, customFields) {
     try {
@@ -14,12 +13,13 @@ module.exports = {
         return;
       }
 
+      const author = message.author || message.user;
       const embed = new EmbedBuilder()
         .setColor(config.embedColor)
         .setDescription(logMessage || args.join(' '))
         .setAuthor({
-          name: `${message.author.username} #${message.author.discriminator} (${message.guild.id})`,
-          iconURL: message.author.displayAvatarURL(),
+          name: `${author.username} #${author.discriminator} (${message.guild.id})`,
+          iconURL: author.displayAvatarURL(),
         });
 
       if (user) {
