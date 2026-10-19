@@ -166,7 +166,19 @@ Use a persistent data directory outside the repository and include SQLite in the
 - Use safe UI errors and log server-side context without credentials.
 - Protect owner identity and dashboard access policy changes separately from ordinary profile config.
 
-Confirm the exact Tailscale serving mechanism and access controls against the VPS setup before deployment.
+### Existing VPS Tailscale setup (checked 2026-10-19)
+
+- Tailscale is installed and running on the VPS. Its tailnet hostname is `openclaw-vps.tailbfe083.ts.net`.
+- OpenClaw's gateway binds to `127.0.0.1:18789`. Its existing tailnet HTTPS endpoint on port 443 returned the OpenClaw Control page with a valid TLS certificate. Preserve that route when adding the dashboard.
+- `tailscale serve status` reported `No serve config` even though the OpenClaw HTTPS endpoint responded. Recheck the effective routing before making any Serve changes; do not reset or overwrite port 443 based on the status output alone.
+- Tailscale SSH is disabled (`RunSSH: false`); the VPS uses ordinary `sshd` on port 22. This does not require changing SSH for the dashboard.
+
+### Dashboard exposure
+
+1. Run the Express dashboard API on a loopback address and a dedicated local port; keep that port closed to the public network.
+2. Add a separate Tailscale Serve HTTPS route to that local port, using an unused tailnet HTTPS port such as 8443 after checking the existing listener and tailnet policy. Keep OpenClaw's current port 443 route intact. Do not use Funnel, which would expose the dashboard publicly.
+3. Restrict the dashboard route to the owner's devices or identity in the tailnet access policy, and enforce dashboard authorization in the API as well.
+4. From an authorized device, verify HTTPS and dashboard/API access. From a device without access, verify the route is denied. Confirm the saved Serve route survives a VPS restart.
 
 ## Operations and failure handling
 
@@ -186,7 +198,7 @@ Confirm the exact Tailscale serving mechanism and access controls against the VP
 5. **Admin API and security:** add profile-aware read/write routes, secret-safe operations, validation, protected control-plane flows, and Tailscale access checks.
 6. **Observability:** standardize structured logs, redact secrets, define rotation/retention, and add profile-aware error/log API routes.
 7. **Dashboard UI:** scaffold React + Vite + Mantine; add profile selection and pages for AI settings, prompts, Hellbot behavior, feature switches, and errors/logs.
-8. **Deployment and recovery:** configure PM2 for three processes, persistent SQLite storage, Tailscale-only access, encrypted-secret key handling, log retention, and backups.
+8. **Deployment and recovery:** configure PM2 for three processes, persistent SQLite storage, a separate Tailscale Serve route that preserves OpenClaw on port 443, tailnet access rules, encrypted-secret key handling, log retention, and backups.
 9. **Manual verification:** confirm profile isolation, live application of supported changes without restarting the bot process, restart recovery, secret redaction, log filtering, and rejection of unauthorized requests.
 
 ## Initial scope boundaries
