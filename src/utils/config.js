@@ -51,14 +51,7 @@ module.exports = {
     anchorRoleName: isDevMode ? null : 'God Modder',
   },
 
-  staffRoleIds: {
-    staffMember: '943531442368041010',
-    unlocked: '730563949279445164',
-    headAdmin: '728767822557085786',
-    admin: '720021731846127666',
-    headModerator: '834772331922063400',
-    moderator: '1037545653087256657',
-  },
+  staffMemberRoleId: '943531442368041010',
   verifiedRoleId: '1051882112057348146',
   verificationLogsChannelId: '1331713982687350834',
   discordMsgLengthLimit: 2000,
