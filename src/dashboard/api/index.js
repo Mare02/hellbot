@@ -3,8 +3,10 @@ const { REST, Routes, User } = require('discord.js');
 const { z } = require('zod');
 const { createConfigStore } = require('../../services/config/store');
 const { createSecretStore } = require('../../services/config/secrets');
+const { createGuildStore } = require('../../services/config/guilds');
+const { fetchBotGuilds } = require('../../services/discord/guilds');
 const { createLegacyConfig } = require('../../services/config/legacyConfig');
-const { requestBot, notifyBots } = require('../../services/ipc');
+const { notifyBots } = require('../../services/ipc');
 const { readLogs, withLogContext } = require('../../services/logging');
 const { createOriginCheck } = require('../middleware/origin');
 const { checkKey } = require('./checkKey');
@@ -34,6 +36,18 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   const profile = getProfile();
   const configs = createConfigStore(database);
   const secrets = createSecretStore(database);
+  const guilds = createGuildStore(database);
+  let guildSync;
+  function syncGuilds() {
+    if (!guildSync) {
+      guildSync = fetchBotGuilds()
+        .then((items) => guilds.save(profile, items))
+        .finally(() => {
+          guildSync = null;
+        });
+    }
+    return guildSync;
+  }
   const actor = createLegacyConfig(process.env).owner.id;
   function assertActiveProfile(value) {
     if (profileEnvSchema.parse(value) !== profile) {
@@ -82,13 +96,10 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
     })
   );
   router.get('/guilds', async (request, response) => {
-    const result = await requestBot(profile, 'guilds');
-    if (result.status !== 'online' || !result.ready) {
-      return response.status(503).json({
-        error: result.message || 'The bot is unavailable. Try again when it is connected.',
-      });
-    }
-    response.json({ guilds: result.guilds });
+    response.json(guilds.read(profile) || (await syncGuilds()));
+  });
+  router.post('/guilds/sync', async (request, response) => {
+    response.json(await syncGuilds());
   });
   router.get('/profiles/:env/config', (request, response) => {
     assertActiveProfile(request.params.env);

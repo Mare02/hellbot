@@ -4,6 +4,7 @@ const path = require('node:path');
 const MIGRATIONS = [
   { version: 1, file: '001InitialSchema.sql' },
   { version: 2, file: '002DiscordRouting.sql' },
+  { version: 3, file: '003GuildSnapshots.sql' },
 ];
 
 function migrateDatabase(database) {

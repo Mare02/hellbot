@@ -1,4 +1,5 @@
 import {
+  Alert,
   Button,
   ColorInput,
   NumberInput,
@@ -12,6 +13,8 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useState } from 'react';
+import { IconRefresh } from '@tabler/icons-react';
+import { api, dateLabel } from './api';
 import { Empty, ResourceState, Section } from './components';
 import { useResource } from './useResource';
 import AiToolsSection from './AiToolsSection';
@@ -226,7 +229,22 @@ const discordIdSections = [
 
 export function BotSettingsForm({ form, update, fieldError }) {
   const guilds = useResource('/guilds');
+  const [guildsSyncing, setGuildsSyncing] = useState(false);
+  const [guildsSyncError, setGuildsSyncError] = useState(null);
   const disabledGuildIds = form.disabledGuildIds || [];
+
+  async function syncGuilds() {
+    setGuildsSyncing(true);
+    setGuildsSyncError(null);
+    try {
+      await api('/guilds/sync', { method: 'POST', body: {} });
+      guilds.refresh();
+    } catch (error) {
+      setGuildsSyncError(error.message);
+    } finally {
+      setGuildsSyncing(false);
+    }
+  }
 
   return (
     <>
@@ -302,12 +320,33 @@ export function BotSettingsForm({ form, update, fieldError }) {
         title="Server access"
         description="Choose which Discord servers can use this bot. Changes are stored with the configuration and apply when you save."
       >
+        <Group justify="space-between">
+          <Text size="xs" c="dimmed">
+            {guilds.data?.syncedAt
+              ? `Last refreshed: ${dateLabel(guilds.data.syncedAt)}`
+              : 'Load the servers this bot has joined from Discord.'}
+          </Text>
+          <Button
+            variant="default"
+            leftSection={<IconRefresh size={16} />}
+            loading={guildsSyncing}
+            disabled={guilds.loading}
+            onClick={syncGuilds}
+          >
+            Refresh
+          </Button>
+        </Group>
+        {guildsSyncError && (
+          <Alert color="yellow" title="Could not refresh servers">
+            {guildsSyncError} The last saved server list is kept.
+          </Alert>
+        )}
         <ResourceState
           {...guilds}
           onRetry={guilds.refresh}
           errorColor="yellow"
-          errorTitle="Bot must be running"
-          errorMessage="Start Hellbot for this environment to load its Discord server list, then try again."
+          errorTitle="Could not load servers"
+          errorMessage="Could not load the server list from Discord. Check this profile's Discord token and connection, then try again."
         />
         {guilds.data &&
           (guilds.data.guilds.length ? (
@@ -341,7 +380,7 @@ export function BotSettingsForm({ form, update, fieldError }) {
               )}
             </Stack>
           ) : (
-            <Empty>The bot is not connected to any Discord servers.</Empty>
+            <Empty>This bot has not joined any Discord servers.</Empty>
           ))}
       </Section>
     </>
@@ -350,12 +389,12 @@ export function BotSettingsForm({ form, update, fieldError }) {
 
 export function FeaturesForm({ form, update, fieldError }) {
   return (
-    <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg" align="start">
+    <>
       <Section
         title="Features"
         description="Changes apply to new events and scheduled executions. Existing work may finish using its previous settings."
       >
-        <Stack gap="lg">
+        <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
           {Object.entries(form.features).map(([name, enabled]) => (
             <Switch
               key={name}
@@ -365,7 +404,7 @@ export function FeaturesForm({ form, update, fieldError }) {
               onChange={(event) => update(`features.${name}`, event.currentTarget.checked)}
             />
           ))}
-        </Stack>
+        </SimpleGrid>
       </Section>
       <Section
         title="Timing and frequency"
@@ -409,6 +448,6 @@ export function FeaturesForm({ form, update, fieldError }) {
           error={fieldError('behavior.presenceRotationMinutes')}
         />
       </Section>
-    </SimpleGrid>
+    </>
   );
 }

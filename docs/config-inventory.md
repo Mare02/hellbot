@@ -31,7 +31,7 @@ roleRequests.anchorRoleName
 
 | Setting | Source and defaults | Current consumers | Intended runtime behavior |
 | --- | --- | --- | --- |
-| `disabledGuildIds` | Empty list by default; edited from the active bot's cached Discord guilds | Message/slash interactions, guild events, scheduled guild broadcasts | Live after save and IPC reload; disabled servers cannot use bot commands or receive Hellbot workflows. |
+| `disabledGuildIds` | Empty list by default; edited from the active profile's server list fetched through Discord.js REST and saved in SQLite | Message/slash interactions, guild events, scheduled guild broadcasts | Live after save and IPC reload; disabled servers cannot use bot commands or receive Hellbot workflows. |
 | `commandsPrefix` | Legacy config: `dev::` for dev, `::` for prod | `listeners/onNewMessageCreate.js`, `commands/help.js`, `commands/info.js`, `commands/newticketquestion.js`, `services/roleRequests.js` | Live for subsequent messages and generated help. |
 | `embedColor` | Legacy config: `#fc9803` | `commands/info.js`, `help.js`, `getcoin.js`, `latestnews.js`, `newticketquestion.js`, `serverinfo.js`, `syslog.js`, `uptime.js`; `services/roleRequests.js`; `jobs/dailyQuoteJob.js`, `dailyFutureNewsJob.js` | Live for new embeds after consumers use the snapshot. |
 | `ai.provider` | `AI_PROVIDER`, normalized as today; fallback `groq` | `services/AIservice.js`, `services/chatContext.js`, `utils/aiPrompts.js` | Refresh the selected profile's AI client and media handling. |

@@ -199,11 +199,25 @@ function createConfigStore(database) {
           WHERE profile_id = ? AND id < ? AND config_snapshot_json IS NOT NULL ORDER BY id DESC LIMIT 1`
           )
           .get(row.profile_id, row.id);
-        const before = previous
-          ? parseProfileConfig(row.env, JSON.parse(previous.config_snapshot_json))
-          : {};
-        const after = parseProfileConfig(row.env, JSON.parse(row.config_snapshot_json));
-        changes = changedValues(before, after);
+        const beforeSnapshot = previous ? JSON.parse(previous.config_snapshot_json) : {};
+        const afterSnapshot = JSON.parse(row.config_snapshot_json);
+        if (row.action === 'config_migrated') {
+          const valueAtPath = (snapshot, path) =>
+            path.split('.').reduce((value, key) => value?.[key], snapshot) ?? null;
+          changes = (row.changed_paths_json ? JSON.parse(row.changed_paths_json) : []).map(
+            (path) => ({
+              path,
+              before: valueAtPath(beforeSnapshot, path),
+              after: valueAtPath(afterSnapshot, path),
+            })
+          );
+        } else {
+          const before = previous
+            ? parseProfileConfig(row.env, beforeSnapshot)
+            : {};
+          const after = parseProfileConfig(row.env, afterSnapshot);
+          changes = changedValues(before, after);
+        }
       }
       return { event: historyEvent(row), changes };
     },

@@ -95,12 +95,17 @@ also affects future role requests and server tool access. Existing operations ma
 finish with the values they already read. Slash-command registration is an explicit
 operation.
 
-Bot settings also list every guild cached by the active Discord.js bot connection.
+Bot settings list the active bot's servers using Discord.js REST with its configured
+token. The dashboard fetches all pages on the first load and saves the complete list
+and refresh time per profile in SQLite (migration 003). Later visits use the saved
+list, including while the bot process is stopped. Use **Refresh** to fetch
+the current list from Discord. Failed refreshes keep the previous saved list.
 Each guild can be enabled or disabled independently. The disabled guild ID list is
 profile configuration stored in SQLite and applied through the normal IPC reload.
 Disabled guilds cannot invoke slash or prefix commands, trigger guild workflows, or
 receive scheduled guild broadcasts. The bot remains installed in those servers so
-the dashboard can continue listing and re-enabling them.
+the dashboard can continue listing and re-enabling them. Server discovery does not
+use bot IPC or open a Gateway connection.
 
 ## AI tools and features
 

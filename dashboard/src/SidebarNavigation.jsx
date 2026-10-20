@@ -12,11 +12,11 @@ import {
   Tooltip,
 } from '@mantine/core';
 import {
-  IconActivity,
   IconAdjustments,
   IconBolt,
   IconBrain,
   IconKey,
+  IconHistory,
   IconLayoutDashboard,
   IconRefresh,
   IconTerminal2,
@@ -65,7 +65,7 @@ export const pages = {
     slug: 'activity-log',
     title: 'Activity log',
     description: 'A history of changes made through this dashboard instance.',
-    icon: IconActivity,
+    icon: IconHistory,
     shared: true,
   },
 };
