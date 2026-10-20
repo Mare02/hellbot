@@ -302,7 +302,13 @@ export function BotSettingsForm({ form, update, fieldError }) {
         title="Server access"
         description="Choose which Discord servers can use this bot. Changes are stored with the configuration and apply when you save."
       >
-        <ResourceState {...guilds} onRetry={guilds.refresh} />
+        <ResourceState
+          {...guilds}
+          onRetry={guilds.refresh}
+          errorColor="yellow"
+          errorTitle="Bot must be running"
+          errorMessage="Start Hellbot for this environment to load its Discord server list, then try again."
+        />
         {guilds.data &&
           (guilds.data.guilds.length ? (
             <Stack gap="md">

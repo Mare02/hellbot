@@ -1,7 +1,14 @@
 import { Alert, Badge, Button, Group, Loader, Paper, Stack, Text } from '@mantine/core';
 import { IconAlertCircle, IconCheck, IconRefresh } from '@tabler/icons-react';
 
-export function ResourceState({ loading, error, onRetry }) {
+export function ResourceState({
+  loading,
+  error,
+  onRetry,
+  errorColor = 'red',
+  errorTitle = 'Could not load this page',
+  errorMessage = error,
+}) {
   if (loading)
     return (
       <Group p="xl" justify="center">
@@ -11,10 +18,10 @@ export function ResourceState({ loading, error, onRetry }) {
     );
   if (error)
     return (
-      <Alert color="red" title="Could not load this page" icon={<IconAlertCircle size={18} />}>
+      <Alert color={errorColor} title={errorTitle} icon={<IconAlertCircle size={18} />}>
         <Stack gap="sm">
-          <Text size="sm">{error}</Text>
-          <Button variant="light" color="red" onClick={onRetry} w="fit-content">
+          <Text size="sm">{errorMessage}</Text>
+          <Button variant="light" color={errorColor} onClick={onRetry} w="fit-content">
             Try again
           </Button>
         </Stack>
