@@ -89,25 +89,28 @@ export default function HistoryPage({ profile, focusId }) {
               label="Action"
               placeholder="Filter by action"
               value={filters.action}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, action: event.currentTarget.value }))
-              }
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setFilters((current) => ({ ...current, action: value }));
+              }}
             />
             <TextInput
               label="From"
               type="date"
               value={filters.from}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, from: event.currentTarget.value }))
-              }
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setFilters((current) => ({ ...current, from: value }));
+              }}
             />
             <TextInput
               label="To"
               type="date"
               value={filters.to}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, to: event.currentTarget.value }))
-              }
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setFilters((current) => ({ ...current, to: value }));
+              }}
             />
           </SimpleGrid>
           <Group justify="space-between">

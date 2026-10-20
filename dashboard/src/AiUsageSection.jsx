@@ -476,12 +476,13 @@ export default function AiUsageSection({ profile }) {
             value={draft.from}
             min={dates.from}
             max={draft.to || dates.to}
-            onChange={(event) =>
+            onChange={(event) => {
+              const value = event.currentTarget.value;
               setDraft((current) => ({
                 ...current,
-                from: event.currentTarget.value,
-              }))
-            }
+                from: value,
+              }));
+            }}
           />
           <TextInput
             type="date"
@@ -489,12 +490,13 @@ export default function AiUsageSection({ profile }) {
             value={draft.to}
             min={draft.from || dates.from}
             max={dates.to}
-            onChange={(event) =>
+            onChange={(event) => {
+              const value = event.currentTarget.value;
               setDraft((current) => ({
                 ...current,
-                to: event.currentTarget.value,
-              }))
-            }
+                to: value,
+              }));
+            }}
           />
         </SimpleGrid>
       )}

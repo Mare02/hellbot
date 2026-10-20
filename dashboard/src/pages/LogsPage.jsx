@@ -60,9 +60,10 @@ export default function LogsPage({ profile, focusItem }) {
               leftSection={<IconSearch size={16} />}
               maxLength={256}
               value={filters.search}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, search: event.currentTarget.value }))
-              }
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setFilters((current) => ({ ...current, search: value }));
+              }}
             />
             <Select
               label="Level"
@@ -76,32 +77,36 @@ export default function LogsPage({ profile, focusItem }) {
             <TextInput
               label="Component"
               value={filters.component}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, component: event.currentTarget.value }))
-              }
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setFilters((current) => ({ ...current, component: value }));
+              }}
             />
             <TextInput
               label="Command"
               value={filters.command}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, command: event.currentTarget.value }))
-              }
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setFilters((current) => ({ ...current, command: value }));
+              }}
             />
             <TextInput
               label="From"
               type="date"
               value={filters.from}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, from: event.currentTarget.value }))
-              }
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setFilters((current) => ({ ...current, from: value }));
+              }}
             />
             <TextInput
               label="To"
               type="date"
               value={filters.to}
-              onChange={(event) =>
-                setFilters((current) => ({ ...current, to: event.currentTarget.value }))
-              }
+              onChange={(event) => {
+                const value = event.currentTarget.value;
+                setFilters((current) => ({ ...current, to: value }));
+              }}
             />
           </SimpleGrid>
           <Group justify="space-between">
