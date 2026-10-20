@@ -8,9 +8,9 @@ import {
   ScrollArea,
   Stack,
   Text,
-  ThemeIcon,
   Tooltip,
 } from '@mantine/core';
+import { useState } from 'react';
 import {
   IconAdjustments,
   IconBolt,
@@ -19,9 +19,11 @@ import {
   IconHistory,
   IconLayoutDashboard,
   IconRefresh,
+  IconSettings,
   IconTerminal2,
   IconX,
 } from '@tabler/icons-react';
+import AppSettingsModal from './AppSettingsModal.jsx';
 
 export const pages = {
   overview: {
@@ -80,6 +82,8 @@ export default function SidebarNavigation({
   onSyncProfile,
   profileSyncing,
 }) {
+  const [settingsOpened, setSettingsOpened] = useState(false);
+
   return (
     <AppShell.Navbar p="md">
       <AppShell.Section>
@@ -157,7 +161,19 @@ export default function SidebarNavigation({
               bdrs="sm"
             />
           ))}
+        <Divider my="lg" />
+        <Text tt="uppercase" size="xs" fw={600} c="dimmed" px="sm" mb="xs">
+          App
+        </Text>
+        <NavLink
+          label="Settings"
+          leftSection={<IconSettings size={19} stroke={1.7} />}
+          onClick={() => setSettingsOpened(true)}
+          mb={4}
+          bdrs="sm"
+        />
       </AppShell.Section>
+      <AppSettingsModal opened={settingsOpened} onClose={() => setSettingsOpened(false)} />
     </AppShell.Navbar>
   );
 }
