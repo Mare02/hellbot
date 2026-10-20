@@ -350,7 +350,7 @@ export function BotSettingsForm({ form, update, fieldError }) {
 
 export function FeaturesForm({ form, update, fieldError }) {
   return (
-    <>
+    <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg" align="start">
       <Section
         title="Features"
         description="Changes apply to new events and scheduled executions. Existing work may finish using its previous settings."
@@ -409,6 +409,6 @@ export function FeaturesForm({ form, update, fieldError }) {
           error={fieldError('behavior.presenceRotationMinutes')}
         />
       </Section>
-    </>
+    </SimpleGrid>
   );
 }
