@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  ActionIcon,
   Badge,
   Button,
   Code,
@@ -130,7 +129,7 @@ export default function LogsPage({ profile }) {
                   <Table.Thead>
                     <Table.Tr>
                       <Table.Th>When</Table.Th>
-                      <Table.Th>Level</Table.Th>
+                      <Table.Th miw={100}>Level</Table.Th>
                       <Table.Th>Context</Table.Th>
                       <Table.Th>Message</Table.Th>
                       <Table.Th>Details</Table.Th>
@@ -144,8 +143,9 @@ export default function LogsPage({ profile }) {
                             {dateLabel(item.timestamp)}
                           </Text>
                         </Table.Td>
-                        <Table.Td>
+                        <Table.Td miw={100}>
                           <Badge
+                            w="max-content"
                             size="sm"
                             variant="light"
                             color={
@@ -166,18 +166,19 @@ export default function LogsPage({ profile }) {
                           </Stack>
                         </Table.Td>
                         <Table.Td>
-                          <Text size="sm" ff="monospace" lineClamp={3}>
+                          <Text size="sm" ff="monospace" lineClamp={2}>
                             {item.message}
                           </Text>
                         </Table.Td>
                         <Table.Td>
-                          <ActionIcon
-                            aria-label="View log details"
+                          <Button
+                            size="xs"
                             variant="subtle"
+                            leftSection={<IconEye size={16} />}
                             onClick={() => setSelected(item)}
                           >
-                            <IconEye size={17} />
-                          </ActionIcon>
+                            View
+                          </Button>
                         </Table.Td>
                       </Table.Tr>
                     ))}
