@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     port: 5173,
     strictPort: true,
     proxy: {
-      '/api': `http://127.0.0.1:${process.env.DASHBOARD_PORT || loadEnv(mode, process.cwd(), '').DASHBOARD_PORT || 3001}`,
+      '/api/': `http://127.0.0.1:${process.env.DASHBOARD_PORT || loadEnv(mode, process.cwd(), '').DASHBOARD_PORT || 3001}`,
     },
   },
 }));
