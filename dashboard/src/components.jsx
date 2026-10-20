@@ -1,5 +1,5 @@
 import { Alert, Badge, Button, Group, Loader, Paper, Stack, Text } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconRefresh } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 
 export function ResourceState({
   loading,
@@ -48,41 +48,9 @@ export function Section({ title, description, children }) {
   );
 }
 
-export function ApplyStatus({ application, onRetry, pending }) {
+export function ApplyStatus({ application }) {
   if (!application?.length) return null;
-  return (
-    <Stack gap="xs">
-      {application.map((item, index) => (
-        <Alert
-          key={`${item.profile}-${index}`}
-          color={item.status === 'applied' ? 'teal' : item.status === 'offline' ? 'yellow' : 'red'}
-          icon={item.status === 'applied' ? <IconCheck size={18} /> : <IconAlertCircle size={18} />}
-          title={`${item.profile === 'dev' ? 'Development' : item.profile === 'prod' ? 'Production' : item.profile}: ${item.status === 'applied' ? 'Saved and applied' : item.status === 'offline' ? 'Saved, bot offline' : 'Saved, application failed'}`}
-        >
-          <Group justify="space-between">
-            <Text size="sm">
-              {item.message ||
-                (item.status === 'applied'
-                  ? 'The bot is using the saved settings.'
-                  : 'The saved settings are safe. Retry when the bot is available.')}
-            </Text>
-            {item.status !== 'applied' && onRetry && (
-              <Button
-                size="xs"
-                variant="light"
-                color="inherit"
-                leftSection={<IconRefresh size={14} />}
-                loading={pending}
-                onClick={() => onRetry(item.profile)}
-              >
-                Retry
-              </Button>
-            )}
-          </Group>
-        </Alert>
-      ))}
-    </Stack>
-  );
+  return <Alert color="green" icon={<IconCheck size={18} />} title="Saved" />;
 }
 
 

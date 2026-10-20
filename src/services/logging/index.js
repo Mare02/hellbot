@@ -114,7 +114,7 @@ function invalidFilter() {
 }
 
 function validateFilters(filters) {
-  const allowed = ['level', 'component', 'command', 'from', 'to', 'page', 'pageSize'];
+  const allowed = ['search', 'level', 'component', 'command', 'from', 'to', 'page', 'pageSize'];
   if (
     !filters ||
     typeof filters !== 'object' ||
@@ -131,10 +131,17 @@ function validateFilters(filters) {
       invalidFilter();
     }
   }
+  if (
+    filters.search !== undefined &&
+    (typeof filters.search !== 'string' || filters.search.length > 256)
+  ) {
+    invalidFilter();
+  }
   if (filters.level !== undefined && !LEVELS.includes(filters.level)) {
     invalidFilter();
   }
   const result = { ...filters };
+  if (result.search !== undefined) result.search = result.search.trim().toLowerCase();
   for (const key of ['from', 'to']) {
     if (filters[key] !== undefined) {
       if (
@@ -184,6 +191,20 @@ function readLogs(profile, filters = {}) {
         (!checked.level || entry.level === checked.level) &&
         (!checked.component || entry.component === checked.component) &&
         (!checked.command || entry.command === checked.command) &&
+        (!checked.search ||
+          redactor
+            .text(
+              JSON.stringify({
+                timestamp: entry.timestamp,
+                level: entry.level,
+                component: entry.component,
+                command: entry.command,
+                message: entry.message,
+                context: entry.context,
+              })
+            )
+            .toLowerCase()
+            .includes(checked.search)) &&
         (checked.from === undefined || timestamp >= checked.from) &&
         (checked.to === undefined || timestamp <= checked.to)
       );

@@ -71,7 +71,7 @@ export default function HistoryPage({ profile }) {
         title="Filter activity"
         description={`Configuration changes for the ${profile === 'prod' ? 'Production' : 'Development'} bot and shared dashboard data.`}
       >
-        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }}>
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
           <TextInput
             label="Action"
             placeholder="Filter by action"
@@ -96,31 +96,31 @@ export default function HistoryPage({ profile }) {
               setFilters((current) => ({ ...current, to: event.currentTarget.value }))
             }
           />
+          <Group h="100%" align="end" justify="flex-end" wrap="nowrap">
+            <Button
+              variant="default"
+              onClick={() => {
+                const empty = { action: '', from: '', to: '' };
+                setFilters(empty);
+                setQuery(empty);
+                setPage(1);
+                resource.refresh();
+              }}
+            >
+              Reset
+            </Button>
+            <Button
+              leftSection={<IconRefresh size={16} />}
+              onClick={() => {
+                setQuery({ ...filters });
+                setPage(1);
+                resource.refresh();
+              }}
+            >
+              Apply filters
+            </Button>
+          </Group>
         </SimpleGrid>
-        <Group justify="flex-end">
-          <Button
-            variant="default"
-            onClick={() => {
-              const empty = { action: '', from: '', to: '' };
-              setFilters(empty);
-              setQuery(empty);
-              setPage(1);
-              resource.refresh();
-            }}
-          >
-            Reset
-          </Button>
-          <Button
-            leftSection={<IconRefresh size={16} />}
-            onClick={() => {
-              setQuery({ ...filters });
-              setPage(1);
-              resource.refresh();
-            }}
-          >
-            Apply filters
-          </Button>
-        </Group>
       </Section>
       <ResourceState {...resource} onRetry={resource.refresh} />
       {resource.data && (

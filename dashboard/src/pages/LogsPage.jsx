@@ -15,13 +15,14 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import { IconEye, IconRefresh } from '@tabler/icons-react';
+import { IconEye, IconRefresh, IconSearch } from '@tabler/icons-react';
 import { dateLabel, queryString } from '../api';
 import { Empty, ResourceState, Section } from '../components';
 import { useResource } from '../useResource';
 
 export default function LogsPage({ profile }) {
   const [filters, setFilters] = useState({
+    search: '',
     level: '',
     component: '',
     command: '',
@@ -41,6 +42,16 @@ export default function LogsPage({ profile }) {
         description="Refresh to load new entries. Sensitive values are redacted before logs are stored."
       >
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }}>
+          <TextInput
+            label="Text search"
+            placeholder="Search messages and details"
+            leftSection={<IconSearch size={16} />}
+            maxLength={256}
+            value={filters.search}
+            onChange={(event) =>
+              setFilters((current) => ({ ...current, search: event.currentTarget.value }))
+            }
+          />
           <Select
             label="Level"
             data={[
@@ -85,7 +96,7 @@ export default function LogsPage({ profile }) {
           <Button
             variant="default"
             onClick={() => {
-              const empty = { level: '', component: '', command: '', from: '', to: '' };
+              const empty = { search: '', level: '', component: '', command: '', from: '', to: '' };
               setFilters(empty);
               setQuery(empty);
               setPage(1);

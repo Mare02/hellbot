@@ -84,18 +84,6 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
       if (active.current) setBusy(false);
     }
   }
-  async function retry() {
-    setBusy(true);
-    setError(null);
-    try {
-      const result = await api(`/profiles/${profile}/apply`, { method: 'POST', body: {} });
-      if (active.current) setApplication(result.application);
-    } catch (failure) {
-      if (active.current) setError(failure.message);
-    } finally {
-      if (active.current) setBusy(false);
-    }
-  }
   if (resource.loading || resource.error || !form)
     return <ResourceState {...resource} onRetry={resource.refresh} />;
 
@@ -107,7 +95,7 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
             {error}
           </Alert>
         )}
-        <ApplyStatus application={application} onRetry={retry} pending={busy} />
+        <ApplyStatus application={application} />
         {page === 'ai' && (
           <AiSettingsForm form={form} update={update} fieldError={fieldError} catalog={catalog} />
         )}

@@ -184,11 +184,7 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
           {message.text}
         </Alert>
       )}
-      <ApplyStatus
-        application={application}
-        pending={busy}
-        onRetry={(env) => action(() => api(`/profiles/${env}/apply`, { method: 'POST', body: {} }))}
-      />
+      <ApplyStatus application={application} />
       <Group justify="space-between">
         <Text size="sm" c="dimmed">
           Manage credentials for AI providers and integrations used by this bot.
