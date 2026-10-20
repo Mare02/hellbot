@@ -35,7 +35,7 @@ function ActivityTable({ resource, onOpen, onViewAll }) {
                 {resource.data.items.map((item) => (
                   <Table.Tr key={item.id}>
                     <Table.Td>
-                      <Text size="xs" className="overview-table-secondary">
+                      <Text size="xs">
                         {dateLabel(item.createdAt || item.created_at)}
                       </Text>
                     </Table.Td>
