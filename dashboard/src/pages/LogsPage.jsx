@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Badge,
   Button,
@@ -20,7 +20,7 @@ import { dateLabel, queryString } from '../api';
 import { Empty, ResourceState } from '../components';
 import { useResource } from '../useResource';
 
-export default function LogsPage({ profile }) {
+export default function LogsPage({ profile, focusItem }) {
   const [filters, setFilters] = useState({
     search: '',
     level: '',
@@ -37,6 +37,9 @@ export default function LogsPage({ profile }) {
   const resource = useResource(
     `/profiles/${profile}/logs?${queryString({ ...query, page, pageSize: 25 })}`
   );
+  useEffect(() => {
+    if (focusItem) setSelected(focusItem);
+  }, [focusItem]);
   return (
     <Stack gap="lg">
       <Modal

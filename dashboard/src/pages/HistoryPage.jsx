@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Badge,
   Button,
@@ -60,7 +60,7 @@ function HistoryDetail({ id }) {
   );
 }
 
-export default function HistoryPage({ profile }) {
+export default function HistoryPage({ profile, focusId }) {
   const [filters, setFilters] = useState({ action: '', from: '', to: '' });
   const [query, setQuery] = useState(filters);
   const [page, setPage] = useState(1);
@@ -68,6 +68,9 @@ export default function HistoryPage({ profile }) {
   const [filtersOpened, setFiltersOpened] = useState(false);
   const activeFilterCount = Object.values(query).filter(Boolean).length;
   const resource = useResource(`/history?${queryString({ ...query, page, pageSize: 25 })}`);
+  useEffect(() => {
+    if (focusId !== undefined && focusId !== null) setSelected(focusId);
+  }, [focusId]);
   return (
     <Stack gap="lg">
       <Modal
@@ -160,7 +163,7 @@ export default function HistoryPage({ profile }) {
                   <Table.Thead>
                     <Table.Tr>
                       <Table.Th>When</Table.Th>
-                      <Table.Th>Scope</Table.Th>
+                      <Table.Th w={100}>Scope</Table.Th>
                       <Table.Th>Action</Table.Th>
                       <Table.Th>Changed by</Table.Th>
                       <Table.Th>Details</Table.Th>
@@ -172,6 +175,7 @@ export default function HistoryPage({ profile }) {
                         <Table.Td>{dateLabel(item.createdAt || item.created_at)}</Table.Td>
                         <Table.Td>
                           <Badge
+                            w="max-content"
                             variant="light"
                             color={(item.profile || item.env) === 'shared' ? 'gray' : undefined}
                           >

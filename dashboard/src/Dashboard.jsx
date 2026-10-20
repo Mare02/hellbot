@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
   AppShell,
@@ -21,6 +21,7 @@ import Overview from './pages/Overview';
 export default function Dashboard() {
   const profiles = useResource('/profiles');
   const profile = profiles.data?.profile;
+  const location = useLocation();
   const { slug } = useParams();
   const routerNavigate = useNavigate();
   const page = Object.keys(pages).find((key) => pages[key].slug === slug) || 'overview';
@@ -134,6 +135,18 @@ export default function Dashboard() {
                 profile={profile}
                 bot={selected}
                 refreshProfile={profiles.refresh}
+                onOpenActivity={(id) =>
+                  routerNavigate(`/${pages.activity.slug}`, {
+                    state: id ? { focusActivityId: id } : null,
+                  })
+                }
+                onOpenLogs={(item) =>
+                  routerNavigate(`/${pages.logs.slug}`, {
+                    state: item ? { focusLogItem: item } : null,
+                  })
+                }
+                onOpenAiSettings={() => routerNavigate(`/${pages.ai.slug}`)}
+                onOpenApiKeys={() => routerNavigate(`/${pages.keys.slug}`)}
               />
             )}
             {profile && ['ai', 'settings', 'features'].includes(page) && (
@@ -153,8 +166,12 @@ export default function Dashboard() {
                 onBusy={markBusy}
               />
             )}
-            {profile && page === 'activity' && <HistoryPage profile={profile} />}
-            {profile && page === 'logs' && <LogsPage key={profile} profile={profile} />}
+            {profile && page === 'activity' && (
+              <HistoryPage profile={profile} focusId={location.state?.focusActivityId} />
+            )}
+            {profile && page === 'logs' && (
+              <LogsPage key={profile} profile={profile} focusItem={location.state?.focusLogItem} />
+            )}
           </Stack>
         </Container>
       </AppShell.Main>

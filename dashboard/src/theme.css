@@ -1,0 +1,12 @@
+:root[data-mantine-color-scheme='light'],
+:host([data-mantine-color-scheme='light']) {
+  --mantine-color-dimmed: #545c68;
+}
+
+[data-mantine-color-scheme='light'] .overview-table-secondary {
+  color: #4b5563;
+}
+
+[data-mantine-color-scheme='dark'] .overview-table-secondary {
+  color: var(--mantine-color-dimmed);
+}
