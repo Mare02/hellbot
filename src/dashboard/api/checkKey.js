@@ -1,3 +1,5 @@
+const { createTrackedFetch } = require('../../services/aiUsage/tracking');
+
 async function checkKey({ provider, value }, { allowGeneration, customProvider }) {
   if (provider === 'edenai' && !allowGeneration) {
     return {
@@ -55,7 +57,11 @@ async function checkKey({ provider, value }, { allowGeneration, customProvider }
     }
     const check = Object.hasOwn(checks, provider) ? checks[provider] : null;
     if (!check) return { success: false, tested: false, message: 'Unsupported provider.' };
-    const response = await fetch(check.endpoint, {
+    const providerFetch =
+      ['groq', 'google'].includes(provider) || provider.startsWith('custom_')
+        ? createTrackedFetch({ provider, operation: 'connection.check' })
+        : fetch;
+    const response = await providerFetch(check.endpoint, {
       headers: check.headers,
       signal: AbortSignal.timeout(15000),
       redirect: 'error',

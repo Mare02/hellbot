@@ -95,3 +95,41 @@ Adds missing guild/channel/category/role ID fields to existing profile JSON usin
 the previous constants. Existing values are preserved. Each changed profile gets a
 `config_migrated` history entry with its snapshot and added paths. New imports
 include these fields directly; old history snapshots remain readable.
+
+## AI provider calls (migration 004)
+
+`ai_api_calls` records each actual outbound provider HTTP attempt, including retry
+attempts, as a pending row before dispatch and a success/error row on completion.
+Rows contain a run ID, profile, provider/model, operation, timestamps, elapsed time,
+HTTP status, sanitized endpoint and request/response headers and bodies, and
+provider-reported token counts. The request/response records include prompts,
+messages, tool arguments/results and generated content. They are available only
+through the active profile's dashboard API. Failed requests with no response
+usage have unknown token counts, rather than an invented zero-token measurement.
+Cached and reasoning tokens are subsets of input/output usage, so totals do not
+add them a second time. Native Gemini thinking counts are included in output.
+
+Call records and their bodies expire after 30 days. Cleanup runs when the store
+opens and at most hourly during store operations; expired rows are excluded from
+reads immediately. A stopped application does not run background cleanup.
+Individual bodies are bounded to 256 KiB of sanitized JSON, individual strings
+to 256 Ki characters, and nested objects/arrays to bounded depth and item counts.
+Truncated records include an explicit marker. No price or billing calculation is
+stored.
+
+The transport captures at most 1 MiB of each response before returning it to the
+existing provider client. Larger responses keep a marked preview; the original
+response is still available to the client. If a response cannot be captured or
+does not include usage, its unavailable token counts are not estimated.
+
+The active profile API exposes `GET /profiles/:env/ai-usage` for totals and daily
+UTC series, `GET /profiles/:env/ai-calls` for paginated metadata and
+`GET /profiles/:env/ai-calls/:id` for the sanitized payload detail. Summary/list
+filters include ISO date-time `from`/`to`, `provider` and `model`; list also accepts
+`outcome`, `page` and `pageSize` (1–100). The default date window is the last 30 UTC
+calendar days including today. Ranges are limited to 366 days and daily summary
+series include zero-use days. Records older than retention remain unavailable
+even when a broader range is selected. `missingUsageCalls` counts successful
+chat completion calls missing any input, output or total token count. Provider
+options cover the selected range/profile, and model options additionally respect
+the selected provider, so selecting an option does not hide its siblings.

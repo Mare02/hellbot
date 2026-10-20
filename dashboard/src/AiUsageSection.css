@@ -1,0 +1,35 @@
+.ai-usage-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-usage-key {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.ai-usage-input {
+  background: var(--hellbot-ai-usage-input-token-color);
+}
+
+.ai-usage-output {
+  background: var(--hellbot-ai-usage-output-token-color);
+}
+
+.ai-usage-tooltip-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: var(--mantine-font-size-xs);
+}
+
+.ai-usage-tooltip-row > span:first-child {
+  color: var(--mantine-color-dimmed);
+}
+
+.ai-usage-payload {
+  max-height: 480px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

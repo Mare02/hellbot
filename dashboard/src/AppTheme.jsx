@@ -22,6 +22,15 @@ const accentPalettes = {
   copper: ['#FFF3EC', '#FBE5D9', '#F3C9B1', '#EBAE8A', '#E19A72', '#D98B68', '#CE7A55', '#AD613F', '#8D4D32', '#733F2B'],
 };
 
+const cssVariablesResolver = () => ({
+  variables: {
+    '--hellbot-ai-usage-input-token-color': 'var(--mantine-primary-color-filled)',
+    '--hellbot-ai-usage-output-token-color': 'var(--mantine-color-copper-3)',
+  },
+  light: {},
+  dark: {},
+});
+
 export const themeOptions = [
   { value: 'hellbot', label: 'Hellbot Dark', scheme: 'dark', primaryColor: 'copper' },
   { value: 'light', label: 'Hellbot Light', scheme: 'light', primaryColor: 'copper' },
@@ -91,7 +100,11 @@ export function AppThemeProvider({ children }) {
 
   return (
     <ThemeContext.Provider value={contextValue}>
-      <MantineProvider theme={theme} forceColorScheme={selectedTheme.scheme}>
+      <MantineProvider
+        theme={theme}
+        cssVariablesResolver={cssVariablesResolver}
+        forceColorScheme={selectedTheme.scheme}
+      >
         {children}
       </MantineProvider>
     </ThemeContext.Provider>

@@ -26,7 +26,7 @@ function collectSecrets(value, result, visited = new WeakSet()) {
   }
 }
 
-function createRedactor(secretProvider) {
+function createRedactor(secretProvider, { maxStringLength = MAX_STRING_LENGTH } = {}) {
   const secrets = new Set();
   for (const [name, value] of Object.entries(process.env)) {
     if (SENSITIVE_FIELD.test(name)) {
@@ -74,9 +74,7 @@ function createRedactor(secretProvider) {
       )
       .replace(/(https?:\/\/)[^\s/@:]+:[^\s/@]+@/gi, `$1${REDACTED}@`);
 
-    return text.length > MAX_STRING_LENGTH
-      ? `${text.slice(0, MAX_STRING_LENGTH)} [truncated]`
-      : text;
+    return text.length > maxStringLength ? `${text.slice(0, maxStringLength)} [truncated]` : text;
   }
 
   function sanitize(value, depth = 0, visited = new WeakSet()) {

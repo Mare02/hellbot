@@ -8,6 +8,10 @@ const { createGeminiCompletion, hasGeminiApiKeys } = require('./geminiCompletion
 const { createToolSet, isToolEnabled, filterEnabledTools } = require('./ai-tools');
 const { setTimeout: delay } = require('node:timers/promises');
 const { toolSupportPrompt } = require('../utils/aiPrompts');
+const { randomUUID } = require('node:crypto');
+const { createTrackedFetch, withAiCallContext } = require('./aiUsage/tracking');
+
+const imageFetch = createTrackedFetch({ provider: 'edenai', operation: 'image.generation' });
 
 let groq = null;
 let groqKey;
@@ -40,6 +44,7 @@ async function createCompletion(request, provider) {
             baseURL: definition.baseUrl.replace(/\/$/, ''),
             timeout: 60000,
             maxRetries: 0,
+            fetch: createTrackedFetch({ provider, operation: 'chat.completion' }),
           }),
         };
         customClients.set(provider, entry);
@@ -49,11 +54,18 @@ async function createCompletion(request, provider) {
     for (let attempt = 0; ; attempt++) {
       const key = initializeRuntimeConfig().nextKey('groq');
       if (!groq || key !== groqKey) {
-        groq = new Groq({ apiKey: key, timeout: 60000, maxRetries: 0 });
+        groq = new Groq({
+          apiKey: key,
+          timeout: 60000,
+          maxRetries: 0,
+          fetch: createTrackedFetch({ provider: 'groq', operation: 'chat.completion' }),
+        });
         groqKey = key;
       }
       try {
-        return await groq.chat.completions.create(filterEnabledTools(request));
+        return await withAiCallContext({ attempt: attempt + 1 }, () =>
+          groq.chat.completions.create(filterEnabledTools(request))
+        );
       } catch (error) {
         const retryable =
           [408, 409, 429, 500, 502, 503, 504].includes(error.status) ||
@@ -217,90 +229,95 @@ function validatePrompt(userPrompt) {
 }
 
 module.exports = {
-  usePrompt: async (userPrompt, systemPrompt, imageUrl, responseFormat, toolOptions = {}) => {
-    const prompt = validatePrompt(userPrompt);
-    const provider = config.currentAiProvider;
-    const customProvider = config.ai.customProviders.find((item) => item.id === provider);
-    if (!['google', 'groq'].includes(provider) && !customProvider) {
-      throw new Error(`Unsupported AI provider: ${provider}`);
-    }
-    if (provider === 'google' && !hasGeminiApiKeys()) {
-      throw new Error('Add a shared Google API key in the dashboard.');
-    }
-    if (provider !== 'google' && !initializeRuntimeConfig().secretValues[provider]?.length) {
-      throw new Error(`Add a shared ${customProvider?.name || 'Groq'} API key in the dashboard.`);
-    }
-    const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
-    const toolTraceMessageIds = new Set();
-    const toolSet = shouldEnableTools
-      ? await createToolSet(toolOptions.channel, {
-          ...toolOptions,
-          promptImageUrl: imageUrl,
-          toolTraceMessageIds,
-        })
-      : null;
-    const effectiveSystemPrompt = shouldEnableTools
-      ? [
-          systemPrompt,
-          toolSupportPrompt(),
-          toolSet.memoryPrompt,
-          'Only tools listed in the current request are available. If a description refers to an unavailable tool, do not call it; ask for essential missing context instead.',
-        ]
-          .filter(Boolean)
-          .join('\n\n')
-      : systemPrompt;
-    const request = {
-      messages: buildRequestMessages(prompt, effectiveSystemPrompt, imageUrl),
-      model:
-        provider === 'groq' && imageUrl
-          ? config.ai.models.groq.vision
-          : customProvider?.model || config.ai.models[provider].text,
-      stream: false,
-    };
-    if (provider === 'google') {
-      request.reasoning_effort = 'medium';
-    }
-    if (provider === 'groq' && !imageUrl && request.model === aiModels.gpt_oss_120b) {
-      request.reasoning_effort = 'low';
-    }
-    if (responseFormat) {
-      request.response_format = responseFormat;
-    }
-    if (toolSet) {
-      request.tools = toolSet.toolDefinitions;
-      request.tool_choice = 'auto';
-      request.parallel_tool_calls = false;
-    }
+  usePrompt: (userPrompt, systemPrompt, imageUrl, responseFormat, toolOptions = {}) =>
+    withAiCallContext({ runId: randomUUID() }, async () => {
+      const prompt = validatePrompt(userPrompt);
+      const provider = config.currentAiProvider;
+      const customProvider = config.ai.customProviders.find((item) => item.id === provider);
+      if (!['google', 'groq'].includes(provider) && !customProvider) {
+        throw new Error(`Unsupported AI provider: ${provider}`);
+      }
+      if (provider === 'google' && !hasGeminiApiKeys()) {
+        throw new Error('Add a shared Google API key in the dashboard.');
+      }
+      if (provider !== 'google' && !initializeRuntimeConfig().secretValues[provider]?.length) {
+        throw new Error(`Add a shared ${customProvider?.name || 'Groq'} API key in the dashboard.`);
+      }
+      const shouldEnableTools = Boolean(toolOptions.channel) && (toolOptions.enableTools ?? true);
+      const toolTraceMessageIds = new Set();
+      const toolSet = shouldEnableTools
+        ? await createToolSet(toolOptions.channel, {
+            ...toolOptions,
+            promptImageUrl: imageUrl,
+            toolTraceMessageIds,
+          })
+        : null;
+      const effectiveSystemPrompt = shouldEnableTools
+        ? [
+            systemPrompt,
+            toolSupportPrompt(),
+            toolSet.memoryPrompt,
+            'Only tools listed in the current request are available. If a description refers to an unavailable tool, do not call it; ask for essential missing context instead.',
+          ]
+            .filter(Boolean)
+            .join('\n\n')
+        : systemPrompt;
+      const request = {
+        messages: buildRequestMessages(prompt, effectiveSystemPrompt, imageUrl),
+        model:
+          provider === 'groq' && imageUrl
+            ? config.ai.models.groq.vision
+            : customProvider?.model || config.ai.models[provider].text,
+        stream: false,
+      };
+      if (provider === 'google') {
+        request.reasoning_effort = 'medium';
+      }
+      if (provider === 'groq' && !imageUrl && request.model === aiModels.gpt_oss_120b) {
+        request.reasoning_effort = 'low';
+      }
+      if (responseFormat) {
+        request.response_format = responseFormat;
+      }
+      if (toolSet) {
+        request.tools = toolSet.toolDefinitions;
+        request.tool_choice = 'auto';
+        request.parallel_tool_calls = false;
+      }
 
-    const data = await createCompletion(request, provider);
-    const answer = toolSet
-      ? await executeToolCalls(
-          request,
-          data,
-          toolSet.toolHandlers,
-          toolOptions.channel,
-          toolTraceMessageIds,
-          provider
-        )
-      : data?.choices?.[0]?.message?.content;
-    if (typeof answer !== 'string' || !answer.trim()) {
-      throw new Error(messages.emptyState.noResponseAI);
-    }
-    return answer;
-  },
+      const data = await createCompletion(request, provider);
+      const answer = toolSet
+        ? await executeToolCalls(
+            request,
+            data,
+            toolSet.toolHandlers,
+            toolOptions.channel,
+            toolTraceMessageIds,
+            provider
+          )
+        : data?.choices?.[0]?.message?.content;
+      if (typeof answer !== 'string' || !answer.trim()) {
+        throw new Error(messages.emptyState.noResponseAI);
+      }
+      return answer;
+    }),
 
   useImageGen: async (userPrompt, { apiKey } = {}) => {
     const prompt = validatePrompt(userPrompt);
     const provider = 'amazon/titan-image-generator-v1_standard';
-    const response = await fetch('https://api.edenai.run/v2/image/generation', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey || initializeRuntimeConfig().nextKey('edenai')}`,
-        'Content-Type': 'application/json',
+    const response = await imageFetch(
+      'https://api.edenai.run/v2/image/generation',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey || initializeRuntimeConfig().nextKey('edenai')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ providers: provider, text: prompt, resolution: '512x512' }),
+        signal: AbortSignal.timeout(60000),
       },
-      body: JSON.stringify({ providers: provider, text: prompt, resolution: '512x512' }),
-      signal: AbortSignal.timeout(60000),
-    });
+      { model: provider }
+    );
     if (!response.ok) {
       throw new Error(messages.errorState.apiError);
     }

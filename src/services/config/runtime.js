@@ -3,6 +3,7 @@ const { initializeDatabase } = require('../database');
 const { createConfigStore } = require('./store');
 const { createSecretStore } = require('./secrets');
 const { profileEnvSchema } = require('./schema');
+const { createAiUsageStore } = require('../aiUsage/store');
 
 let runtime;
 
@@ -60,6 +61,9 @@ function initializeRuntimeConfig() {
     reload();
     runtime = {
       profile,
+      aiUsage: createAiUsageStore(database, {
+        secretProvider: () => [state.secrets, secrets.readAll()],
+      }),
       get snapshot() {
         return state.config;
       },

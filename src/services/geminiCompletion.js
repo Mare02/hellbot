@@ -1,5 +1,8 @@
 const { setTimeout: delay } = require('node:timers/promises');
 const { initializeRuntimeConfig } = require('./config/runtime');
+const { createTrackedFetch } = require('./aiUsage/tracking');
+
+const trackedFetch = createTrackedFetch({ provider: 'google', operation: 'chat.completion' });
 
 const GEMINI_COMPLETIONS_URL =
   'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions';
@@ -18,15 +21,19 @@ async function createGeminiCompletion(request, prepareRequest = (value) => value
   for (let attempt = 0; ; attempt++) {
     let response;
     try {
-      response = await fetch(GEMINI_COMPLETIONS_URL, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${initializeRuntimeConfig().nextKey('google')}`,
-          'Content-Type': 'application/json',
+      response = await trackedFetch(
+        GEMINI_COMPLETIONS_URL,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${initializeRuntimeConfig().nextKey('google')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(prepareRequest(request)),
+          signal: AbortSignal.timeout(60000),
         },
-        body: JSON.stringify(prepareRequest(request)),
-        signal: AbortSignal.timeout(60000),
-      });
+        { attempt: attempt + 1 }
+      );
     } catch (error) {
       if (!isRetryableNetworkError(error) || attempt >= MAX_RETRIES) {
         throw error;

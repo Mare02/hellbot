@@ -68,7 +68,6 @@ const server = app.listen(port, '127.0.0.1', (error) => {
     database.close();
     throw error;
   }
-  console.log(`Hellbot dashboard is listening on 127.0.0.1:${port}`);
   if (process.send) process.send({ type: 'dashboard-ready' });
 });
 

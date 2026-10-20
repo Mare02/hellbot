@@ -4,6 +4,7 @@ const { z } = require('zod');
 const { createConfigStore } = require('../../services/config/store');
 const { createSecretStore } = require('../../services/config/secrets');
 const { createGuildStore } = require('../../services/config/guilds');
+const { createAiUsageStore } = require('../../services/aiUsage/store');
 const { fetchBotGuilds } = require('../../services/discord/guilds');
 const { createLegacyConfig } = require('../../services/config/legacyConfig');
 const { notifyBots } = require('../../services/ipc');
@@ -37,6 +38,7 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   const configs = createConfigStore(database);
   const secrets = createSecretStore(database);
   const guilds = createGuildStore(database);
+  const aiUsage = createAiUsageStore(database, { secretProvider: () => secrets.readAll() });
   let guildSync;
   function syncGuilds() {
     if (!guildSync) {
@@ -166,6 +168,20 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
     if (!result || ![profile, 'shared'].includes(result.event.env))
       return response.status(404).json({ error: 'Activity entry was not found.' });
     response.json(result);
+  });
+  router.get('/profiles/:env/ai-usage', (request, response) => {
+    assertActiveProfile(request.params.env);
+    response.json(aiUsage.summary(profile, queryFilters(request.query)));
+  });
+  router.get('/profiles/:env/ai-calls', (request, response) => {
+    assertActiveProfile(request.params.env);
+    response.json(aiUsage.list(profile, queryFilters(request.query)));
+  });
+  router.get('/profiles/:env/ai-calls/:id', (request, response) => {
+    assertActiveProfile(request.params.env);
+    const call = aiUsage.detail(profile, request.params.id);
+    if (!call) return response.status(404).json({ error: 'AI call was not found.' });
+    response.json(call);
   });
   router.get('/profiles/:env/logs', (request, response) => {
     assertActiveProfile(request.params.env);

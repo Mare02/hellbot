@@ -6,6 +6,7 @@ import { api, changedFields } from './api';
 import { ApplyStatus, ResourceState } from './components';
 import { useResource } from './useResource';
 import { AiSettingsForm, BotSettingsForm, FeaturesForm } from './ConfigForms';
+import AiUsageSection from './AiUsageSection';
 
 export default function ConfigPage({ profile, page, onDirty, onBusy }) {
   const resource = useResource(`/profiles/${profile}/config`);
@@ -48,7 +49,7 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
   };
   const fieldError = (path) => {
     const issue = issues.find(
-      (item) => (Array.isArray(item.path) ? item.path.join('.') : item.path) === path
+      (item) => (Array.isArray(item.path) ? item.path.join('.') : item.path) === path,
     );
     if (!issue) return undefined;
     return (
@@ -88,56 +89,63 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
     return <ResourceState {...resource} onRetry={resource.refresh} />;
 
   return (
-    <Fieldset disabled={busy} variant="unstyled">
-      <Stack gap="lg" w="100%">
-        {error && (
-          <Alert color="red" title="Could not save settings">
-            {error}
-          </Alert>
-        )}
-        <ApplyStatus application={application} />
-        {page === 'ai' && (
-          <AiSettingsForm form={form} update={update} fieldError={fieldError} catalog={catalog} />
-        )}
-        {page === 'settings' && (
-          <BotSettingsForm form={form} update={update} fieldError={fieldError} />
-        )}
-        {page === 'features' && (
-          <FeaturesForm form={form} update={update} fieldError={fieldError} />
-        )}
-        {dirty && (
-          <Paper pos="sticky" bottom="md" p="md" withBorder shadow="md">
-            <Group justify="space-between">
-              <Stack gap={2}>
-                <Text fw={600} size="sm">
-                  Unsaved changes
-                </Text>
-                <Text c="dimmed" size="xs">
-                  {profile === 'prod' ? 'Production' : 'Development'} ·{' '}
-                  {Object.keys(changedFields(original, form)).length} section(s) changed
-                </Text>
-              </Stack>
-              <Group gap="xs">
-                <Button
-                  variant="default"
-                  leftSection={<IconRotate size={16} />}
-                  disabled={busy}
-                  onClick={() => {
-                    setForm(structuredClone(original));
-                    setError(null);
-                    setIssues([]);
-                  }}
-                >
-                  Discard
-                </Button>
-                <Button loading={busy} leftSection={<IconDeviceFloppy size={16} />} onClick={save}>
-                  Save changes
-                </Button>
+    <Stack gap="lg">
+      <Fieldset disabled={busy} variant="unstyled">
+        <Stack gap="lg" w="100%">
+          {error && (
+            <Alert color="red" title="Could not save settings">
+              {error}
+            </Alert>
+          )}
+          <ApplyStatus application={application} />
+          {page === 'ai' && (
+            <AiSettingsForm form={form} update={update} fieldError={fieldError} catalog={catalog} />
+          )}
+          {page === 'settings' && (
+            <BotSettingsForm form={form} update={update} fieldError={fieldError} />
+          )}
+          {page === 'features' && (
+            <FeaturesForm form={form} update={update} fieldError={fieldError} />
+          )}
+          {dirty && (
+            <Paper pos="sticky" bottom="md" p="md" withBorder shadow="md">
+              <Group justify="space-between">
+                <Stack gap={2}>
+                  <Text fw={600} size="sm">
+                    Unsaved changes
+                  </Text>
+                  <Text c="dimmed" size="xs">
+                    {profile === 'prod' ? 'Production' : 'Development'} ·{' '}
+                    {Object.keys(changedFields(original, form)).length} section(s) changed
+                  </Text>
+                </Stack>
+                <Group gap="xs">
+                  <Button
+                    variant="default"
+                    leftSection={<IconRotate size={16} />}
+                    disabled={busy}
+                    onClick={() => {
+                      setForm(structuredClone(original));
+                      setError(null);
+                      setIssues([]);
+                    }}
+                  >
+                    Discard
+                  </Button>
+                  <Button
+                    loading={busy}
+                    leftSection={<IconDeviceFloppy size={16} />}
+                    onClick={save}
+                  >
+                    Save changes
+                  </Button>
+                </Group>
               </Group>
-            </Group>
-          </Paper>
-        )}
-      </Stack>
-    </Fieldset>
+            </Paper>
+          )}
+        </Stack>
+      </Fieldset>
+      {page === 'ai' && <AiUsageSection key={profile} profile={profile} />}
+    </Stack>
   );
 }

@@ -54,3 +54,19 @@ The console wrapper catches the application's existing `console.log`, `info`, `w
 The existing application calls `Bugsnag.start({ apiKey: process.env.BUGSNAG_API_KEY })` during bot startup. A source audit found no explicit `Bugsnag.notify` calls in the application. Existing handled errors generally go through `console.error`; that does not by itself mean Bugsnag receives those errors. Bugsnag's enabled runtime integrations may report unhandled exceptions/rejections according to its SDK behavior and runtime configuration.
 
 The dashboard feed contains **local captured application logs only**. There is no Bugsnag event API integration, import, delivery confirmation, or historical Bugsnag event list in this feature. Bugsnag operates separately, and its own transmitted payloads are not sanitized by this local logging service.
+
+## AI call payload history
+
+AI settings have a separate SQLite-backed API call history. Unlike general
+application logs, this explicitly captures sanitized AI request/response bodies,
+including messages, prompts, generated content and tool arguments/results, plus
+HTTP metadata and provider-reported token usage. It expires after 30 days and is
+restricted to the active dashboard profile. See `docs/database.md` for limits,
+retention and routes.
+
+The AI payload sanitizer preserves content fields while redacting credentials in
+nested objects, JSON-encoded strings, headers and endpoint URLs. It reuses the
+general logger's exact-secret and credential-text redactor, with decrypted keys
+supplied at writes and dashboard reads. Failure to retrieve current secrets
+fails closed. General application logging continues to omit request/response
+bodies and private content; its existing exclusions are unchanged.
