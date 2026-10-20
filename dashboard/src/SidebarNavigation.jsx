@@ -49,7 +49,7 @@ export const pages = {
   },
   logs: {
     slug: 'errors-logs',
-    title: 'Errors & logs',
+    title: 'Logs',
     description: 'Inspect recent events and errors for this bot.',
     icon: IconTerminal2,
   },
