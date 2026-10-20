@@ -90,7 +90,7 @@ export default function Dashboard() {
         profileSyncing={profileSyncing}
       />
       <AppShell.Main>
-        <Container size="xl" px={0}>
+        <Container size={1200} px={0}>
           <Stack gap="xl">
             <Group hiddenFrom="sm">
               <Burger

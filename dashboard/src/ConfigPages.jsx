@@ -89,7 +89,7 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
 
   return (
     <Fieldset disabled={busy} variant="unstyled">
-      <Stack gap="lg" w="100%" maw={1200} mx="auto">
+      <Stack gap="lg" w="100%">
         {error && (
           <Alert color="red" title="Could not save settings">
             {error}

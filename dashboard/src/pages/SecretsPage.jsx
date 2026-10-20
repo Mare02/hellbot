@@ -251,9 +251,9 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
                         {items.map((item) => (
                           <Table.Tr key={item.id}>
                             <Table.Td>
-                              <Group gap="xs">
+                              <Group gap="xs" wrap="nowrap">
                                 <IconKey size={16} />
-                                <Text fw={500} size="sm">
+                                <Text fw={500} size="sm" style={{ whiteSpace: 'nowrap' }}>
                                   {item.label}
                                 </Text>
                               </Group>
