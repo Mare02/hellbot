@@ -20,6 +20,7 @@ import {
   IconLayoutDashboard,
   IconRefresh,
   IconTerminal2,
+  IconX,
 } from '@tabler/icons-react';
 
 export const pages = {
@@ -74,6 +75,7 @@ export default function SidebarNavigation({
   bot,
   page,
   pending,
+  onClose,
   navigate,
   onSyncProfile,
   profileSyncing,
@@ -81,6 +83,15 @@ export default function SidebarNavigation({
   return (
     <AppShell.Navbar p="md">
       <AppShell.Section>
+        <Group justify="flex-end" hiddenFrom="sm" mb="xs">
+          <ActionIcon
+            variant="subtle"
+            aria-label="Close navigation"
+            onClick={onClose}
+          >
+            <IconX size={19} />
+          </ActionIcon>
+        </Group>
         <Group gap="xs" mb="xl" px="xs" wrap="nowrap">
           <Avatar
             src={bot?.profileImageUrl || bot?.profile_image_url}

@@ -52,7 +52,11 @@ export default function Dashboard() {
     return true;
   }
   function navigate(next) {
-    if (next === page || !leave()) return;
+    if (next === page) {
+      setMobileOpened(false);
+      return;
+    }
+    if (!leave()) return;
     routerNavigate(`/${pages[next].slug}`);
     setMobileOpened(false);
   }
@@ -80,6 +84,7 @@ export default function Dashboard() {
         bot={selected}
         page={page}
         pending={pending}
+        onClose={() => setMobileOpened(false)}
         navigate={navigate}
         onSyncProfile={syncProfile}
         profileSyncing={profileSyncing}
