@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Button, Fieldset, Group, Paper, Stack, Text } from '@mantine/core';
+import { Alert, Button, Fieldset, Group, Paper, Stack, Tabs, Text } from '@mantine/core';
+import { useSearchParams } from 'react-router-dom';
 
 import { IconDeviceFloppy, IconRotate } from '@tabler/icons-react';
 import { api, changedFields } from './api';
@@ -9,6 +10,8 @@ import { AiSettingsForm, BotSettingsForm, FeaturesForm } from './ConfigForms';
 import AiUsageSection from './AiUsageSection';
 
 export default function ConfigPage({ profile, page, onDirty, onBusy }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('tab') === 'usage' ? 'usage' : 'settings';
   const resource = useResource(`/profiles/${profile}/config`);
   const catalog = useResource('/catalog');
   const [original, setOriginal] = useState(null);
@@ -88,64 +91,86 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
   if (resource.loading || resource.error || !form)
     return <ResourceState {...resource} onRetry={resource.refresh} />;
 
-  return (
-    <Stack gap="lg">
-      <Fieldset disabled={busy} variant="unstyled">
-        <Stack gap="lg" w="100%">
-          {error && (
-            <Alert color="red" title="Could not save settings">
-              {error}
-            </Alert>
-          )}
-          <ApplyStatus application={application} />
-          {page === 'ai' && (
-            <AiSettingsForm form={form} update={update} fieldError={fieldError} catalog={catalog} />
-          )}
-          {page === 'settings' && (
-            <BotSettingsForm form={form} update={update} fieldError={fieldError} />
-          )}
-          {page === 'features' && (
-            <FeaturesForm form={form} update={update} fieldError={fieldError} />
-          )}
-          {dirty && (
-            <Paper pos="sticky" bottom="md" p="md" withBorder shadow="md">
-              <Group justify="space-between">
-                <Stack gap={2}>
-                  <Text fw={600} size="sm">
-                    Unsaved changes
-                  </Text>
-                  <Text c="dimmed" size="xs">
-                    {profile === 'prod' ? 'Production' : 'Development'} ·{' '}
-                    {Object.keys(changedFields(original, form)).length} section(s) changed
-                  </Text>
-                </Stack>
-                <Group gap="xs">
-                  <Button
-                    variant="default"
-                    leftSection={<IconRotate size={16} />}
-                    disabled={busy}
-                    onClick={() => {
-                      setForm(structuredClone(original));
-                      setError(null);
-                      setIssues([]);
-                    }}
-                  >
-                    Discard
-                  </Button>
-                  <Button
-                    loading={busy}
-                    leftSection={<IconDeviceFloppy size={16} />}
-                    onClick={save}
-                  >
-                    Save changes
-                  </Button>
-                </Group>
+  const settings = (
+    <Fieldset disabled={busy} variant="unstyled">
+      <Stack gap="lg" w="100%">
+        {error && (
+          <Alert color="red" title="Could not save settings">
+            {error}
+          </Alert>
+        )}
+        <ApplyStatus application={application} />
+        {page === 'ai' && (
+          <AiSettingsForm form={form} update={update} fieldError={fieldError} catalog={catalog} />
+        )}
+        {page === 'settings' && (
+          <BotSettingsForm form={form} update={update} fieldError={fieldError} />
+        )}
+        {page === 'features' && (
+          <FeaturesForm form={form} update={update} fieldError={fieldError} />
+        )}
+        {dirty && (
+          <Paper pos="sticky" bottom="md" p="md" withBorder shadow="md">
+            <Group justify="space-between">
+              <Stack gap={2}>
+                <Text fw={600} size="sm">
+                  Unsaved changes
+                </Text>
+                <Text c="dimmed" size="xs">
+                  {profile === 'prod' ? 'Production' : 'Development'} ·{' '}
+                  {Object.keys(changedFields(original, form)).length} section(s) changed
+                </Text>
+              </Stack>
+              <Group gap="xs">
+                <Button
+                  variant="default"
+                  leftSection={<IconRotate size={16} />}
+                  disabled={busy}
+                  onClick={() => {
+                    setForm(structuredClone(original));
+                    setError(null);
+                    setIssues([]);
+                  }}
+                >
+                  Discard
+                </Button>
+                <Button
+                  loading={busy}
+                  leftSection={<IconDeviceFloppy size={16} />}
+                  onClick={save}
+                >
+                  Save changes
+                </Button>
               </Group>
-            </Paper>
-          )}
-        </Stack>
-      </Fieldset>
-      {page === 'ai' && <AiUsageSection key={profile} profile={profile} />}
-    </Stack>
+            </Group>
+          </Paper>
+        )}
+      </Stack>
+    </Fieldset>
+  );
+
+  if (page !== 'ai') return settings;
+
+  return (
+    <Tabs
+      value={activeTab}
+      onChange={(value) => {
+        if (!value || value === activeTab) return;
+        setSearchParams((current) => {
+          const next = new URLSearchParams(current);
+          next.set('tab', value);
+          return next;
+        });
+      }}
+    >
+      <Tabs.List aria-label="AI settings navigation" mb="lg">
+        <Tabs.Tab value="settings">Settings</Tabs.Tab>
+        <Tabs.Tab value="usage">Usage</Tabs.Tab>
+      </Tabs.List>
+      <Tabs.Panel value="settings">{settings}</Tabs.Panel>
+      <Tabs.Panel value="usage" keepMounted={false}>
+        <AiUsageSection key={profile} profile={profile} />
+      </Tabs.Panel>
+    </Tabs>
   );
 }
