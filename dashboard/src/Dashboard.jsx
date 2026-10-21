@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import {
   Alert,
@@ -12,12 +12,16 @@ import {
   Title,
 } from '@mantine/core';
 import { api } from './api';
-import ConfigPage from './ConfigPages';
-import { HistoryPage, LogsPage, SecretsPage } from './DataPages';
+import LazyContent from './LazyContent';
 import { useResource } from './useResource';
 import SidebarNavigation, { pages } from './SidebarNavigation';
-import Overview from './pages/Overview';
-import CodeUpdatesPage from './pages/CodeUpdatesPage';
+
+const Overview = lazy(() => import('./pages/Overview'));
+const ConfigPage = lazy(() => import('./ConfigPages'));
+const HistoryPage = lazy(() => import('./pages/HistoryPage'));
+const LogsPage = lazy(() => import('./pages/LogsPage'));
+const SecretsPage = lazy(() => import('./pages/SecretsPage'));
+const CodeUpdatesPage = lazy(() => import('./pages/CodeUpdatesPage'));
 
 export default function Dashboard() {
   const profiles = useResource('/profiles');
@@ -130,49 +134,53 @@ export default function Dashboard() {
                 </Group>
               </Alert>
             )}
-            {profile && page === 'overview' && (
-              <Overview
-                key={profile}
-                profile={profile}
-                bot={selected}
-                refreshProfile={profiles.refresh}
-                onOpenActivity={(id) =>
-                  routerNavigate(`/${pages.activity.slug}`, {
-                    state: id ? { focusActivityId: id } : null,
-                  })
-                }
-                onOpenLogs={(item) =>
-                  routerNavigate(`/${pages.logs.slug}`, {
-                    state: item ? { focusLogItem: item } : null,
-                  })
-                }
-                onOpenAiSettings={() => routerNavigate(`/${pages.ai.slug}`)}
-                onOpenApiKeys={() => routerNavigate(`/${pages.keys.slug}`)}
-              />
-            )}
-            {profile && ['ai', 'settings', 'features'].includes(page) && (
-              <ConfigPage
-                key={`${profile}-${page}`}
-                profile={profile}
-                page={page}
-                onDirty={markDirty}
-                onBusy={markBusy}
-              />
-            )}
-            {profile && page === 'keys' && (
-              <SecretsPage
-                key={`keys-${profile}`}
-                profile={profile}
-                onDirty={markDirty}
-                onBusy={markBusy}
-              />
-            )}
-            {profile && page === 'activity' && (
-              <HistoryPage profile={profile} focusId={location.state?.focusActivityId} />
-            )}
-            {profile && page === 'code' && <CodeUpdatesPage />}
-            {profile && page === 'logs' && (
-              <LogsPage key={profile} profile={profile} focusItem={location.state?.focusLogItem} />
+            {profile && (
+              <LazyContent resetKey={`${profile}-${page}`}>
+                {page === 'overview' && (
+                  <Overview
+                    key={profile}
+                    profile={profile}
+                    bot={selected}
+                    refreshProfile={profiles.refresh}
+                    onOpenActivity={(id) =>
+                      routerNavigate(`/${pages.activity.slug}`, {
+                        state: id ? { focusActivityId: id } : null,
+                      })
+                    }
+                    onOpenLogs={(item) =>
+                      routerNavigate(`/${pages.logs.slug}`, {
+                        state: item ? { focusLogItem: item } : null,
+                      })
+                    }
+                    onOpenAiSettings={() => routerNavigate(`/${pages.ai.slug}`)}
+                    onOpenApiKeys={() => routerNavigate(`/${pages.keys.slug}`)}
+                  />
+                )}
+                {['ai', 'settings', 'features'].includes(page) && (
+                  <ConfigPage
+                    key={`${profile}-${page}`}
+                    profile={profile}
+                    page={page}
+                    onDirty={markDirty}
+                    onBusy={markBusy}
+                  />
+                )}
+                {page === 'keys' && (
+                  <SecretsPage
+                    key={`keys-${profile}`}
+                    profile={profile}
+                    onDirty={markDirty}
+                    onBusy={markBusy}
+                  />
+                )}
+                {page === 'activity' && (
+                  <HistoryPage profile={profile} focusId={location.state?.focusActivityId} />
+                )}
+                {page === 'code' && <CodeUpdatesPage />}
+                {page === 'logs' && (
+                  <LogsPage key={profile} profile={profile} focusItem={location.state?.focusLogItem} />
+                )}
+              </LazyContent>
             )}
           </Stack>
         </Container>

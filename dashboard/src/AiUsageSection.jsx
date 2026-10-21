@@ -1,3 +1,4 @@
+import '@mantine/charts/styles.css';
 import { useState } from "react";
 import {
   Alert,

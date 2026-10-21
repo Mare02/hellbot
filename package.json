@@ -15,7 +15,7 @@
     "logs:import": "node scripts/importLogs.js",
     "dashboard:setup": "node scripts/setupDashboard.js",
     "dashboard:dev": "NODE_ENV=development node scripts/devDashboard.js",
-    "dashboard:build": "vite build --config dashboard/vite.config.mjs",
+    "dashboard:build": "NODE_ENV=production vite build --config dashboard/vite.config.mjs",
     "dashboard:start": "NODE_ENV=production node src/dashboard/server.js"
   },
   "keywords": [],

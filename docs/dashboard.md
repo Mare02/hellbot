@@ -59,9 +59,11 @@ the combined development launcher.
 
 The single-owner dashboard opens without login, passwords, sessions or cookies.
 The API binds to loopback. Browser mutations must include the expected local origin
-and dashboard request header. Private access from another device is planned through
-the owner's Tailscale network; see the architecture plan before changing network
-routing. No VPS or Tailscale deployment is performed by local startup.
+and dashboard request header. Production access is through the owner's Tailscale
+network at `https://openclaw-vps.tailbfe083.ts.net:8443`. Tailscale Serve proxies
+that private HTTPS endpoint to `127.0.0.1:3001`; it is not exposed publicly. Set
+`HELLBOT_DASHBOARD_ORIGIN` to that exact HTTPS origin. Local startup does not change
+VPS services or Tailscale routing.
 
 ## Environment and live configuration
 
@@ -152,9 +154,9 @@ requests run only when explicitly requested. Weather uses Open-Meteo without a k
 
 Activity shows configuration changes for this bot and key operations in this
 installation. Secret values are never recorded. Errors & logs shows structured,
-redacted local application logs for the active bot; it is not a Bugsnag feed. Logs are rotated and kept
-under the Hellbot data directory outside the repository. Bugsnag remains a startup
-environment integration.
+redacted application logs for the active bot from the `application_logs` SQLite table.
+Records expire after seven days; filtering and pagination run in SQL. This is not
+a Bugsnag feed. Bugsnag remains a startup environment integration.
 
 ## Discord profile images
 

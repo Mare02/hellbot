@@ -101,7 +101,9 @@ module.exports = () => {
       try {
         await withLogContext({ component: 'ai', command: 'mentionReply' }, () => replyWithRecentContext(message));
       } catch (error) {
-        console.error('AI response error:', error);
+        withLogContext({ component: 'ai', command: 'mentionReply' }, () => {
+          console.error('AI response error:', error);
+        });
       }
       return;
     }
@@ -117,7 +119,9 @@ module.exports = () => {
         await withLogContext({ component: 'ai', command: 'freewill' }, () => freewill.execute(message, []));
       }
       catch (error) {
-        console.error('Error executing random freewill command:', error);
+        withLogContext({ component: 'ai', command: 'freewill' }, () => {
+          console.error('Error executing random freewill command:', error);
+        });
       }
     }
 

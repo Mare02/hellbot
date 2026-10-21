@@ -36,7 +36,9 @@ function startJobs(client, runtime) {
           try {
             await withLogContext({ component: 'jobs', command: feature }, () => job.execute());
           } catch (error) {
-            console.error('Scheduled job failed', { feature, error });
+            withLogContext({ component: 'jobs', command: feature }, () => {
+              console.error('Scheduled job failed', { feature, error });
+            });
           } finally {
             running.delete(feature);
           }

@@ -1,3 +1,4 @@
+import '@mantine/charts/styles.css';
 import { Heatmap } from '@mantine/charts';
 import { Alert, Badge, Grid, Group, ScrollArea, Select, Stack, Table, Text, Code } from '@mantine/core';
 import { useElementSize } from '@mantine/hooks';

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { lazy, useEffect, useRef, useState } from 'react';
 import { Alert, Button, Fieldset, Group, Paper, Stack, Tabs, Text } from '@mantine/core';
 import { useSearchParams } from 'react-router-dom';
 
@@ -7,7 +7,9 @@ import { api, changedFields } from './api';
 import { ApplyStatus, ResourceState } from './components';
 import { useResource } from './useResource';
 import { AiSettingsForm, BotSettingsForm, FeaturesForm } from './ConfigForms';
-import AiUsageSection from './AiUsageSection';
+import LazyContent from './LazyContent';
+
+const AiUsageSection = lazy(() => import('./AiUsageSection'));
 
 export default function ConfigPage({ profile, page, onDirty, onBusy }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -169,7 +171,9 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
       </Tabs.List>
       <Tabs.Panel value="settings">{settings}</Tabs.Panel>
       <Tabs.Panel value="usage" keepMounted={false}>
-        <AiUsageSection key={profile} profile={profile} />
+        <LazyContent resetKey={profile}>
+          {activeTab === 'usage' && <AiUsageSection key={profile} profile={profile} />}
+        </LazyContent>
       </Tabs.Panel>
     </Tabs>
   );
