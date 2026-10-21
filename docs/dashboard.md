@@ -177,3 +177,55 @@ becomes available in its AI provider selector. Add its API key in the API keys
 page; custom-provider keys are encrypted and available to this installation's bot.
 Development and production have independent provider entries and keys. This does
 not add adapters for provider-specific APIs that are not OpenAI-compatible.
+
+## Deploys
+
+**Workspace → Deploys** reads production runs from this repository's
+`.github/workflows/main.yml` on `main` through the GitHub REST API. It shows
+workflow status, commit, branch, actor, timestamps, approximate elapsed time,
+individual jobs and steps, and job logs loaded on demand. Workflow duration is
+measured from GitHub's run start to its last update, so it can include waiting
+between jobs. Only active workflows refresh automatically, every 15 seconds while
+the page is visible. Use **Refresh** to discover a newly started workflow.
+
+Set this variable in the dashboard server's environment:
+
+```dotenv
+HELLBOT_GITHUB_TOKEN=<fine-grained GitHub personal access token>
+```
+
+Limit the token to this repository and grant **Actions: read**. The token is used
+only by the server over HTTPS; it is never returned to the browser or saved in the
+configuration database. Without it, the page still shows the verified release
+state and explains how to enable history. Restart the dashboard process after
+setting or rotating this environment variable. Local development can use its own
+read-only token; it reads production workflow history without deploying anything.
+
+Logs come from GitHub, receive additional server-side credential redaction, and
+are rendered as plain text. GitHub makes logs available after a job completes;
+while it runs, the page shows step progress. Previews are limited to roughly 1 MiB,
+with a GitHub link for the complete output. Deleted or expired GitHub logs cannot
+be recovered here. The dashboard holds only a short, bounded in-memory API cache;
+it does not copy the GitHub log archive into SQLite. These are separate from the
+bot's application logs already stored in SQLite.
+
+Migration 007 adds `deployment_release` to the existing SQLite database. The
+workflow restarts both processes with `DEPLOY_SHA`, then verifies that the
+production bot is connected to Discord, the built dashboard and API respond,
+and both processes report that revision. Only after these checks does it record
+the SHA, workflow run ID, attempt, and verification timestamp in SQLite. The page
+shows a live release only when both running processes still report the recorded
+revision. A Git checkout or a green GitHub workflow alone does not establish that
+release state. Existing deployments have no marker until the next successful
+health-verified deploy; manual deploys must use the same verification/recording
+step rather than inserting a marker by hand.
+
+Production checkout, dependency installation, build, migrations, restart and
+verification are separate workflow steps. Slash registration runs afterward.
+Discord notification is a separate **Notify Discord** job, so notification
+failure does not turn the **Deploy production** job red. The overall GitHub
+workflow may still fail; the page labels that as **Workflow status** and shows
+each job's outcome separately, alongside the verified live release.
+
+GitHub API references: [workflow runs](https://docs.github.com/en/rest/actions/workflow-runs)
+and [workflow jobs and logs](https://docs.github.com/en/rest/actions/workflow-jobs).

@@ -8,6 +8,7 @@ const MIGRATIONS = [
   { version: 4, file: '004AiUsage.sql' },
   { version: 5, file: '005ApplicationLogs.sql' },
   { version: 6, file: '006RoleRequestAnchorId.sql' },
+  { version: 7, file: '007DeploymentRelease.sql' },
 ];
 
 function migrateDatabase(database) {

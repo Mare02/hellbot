@@ -60,6 +60,7 @@ function requestBot(profile, operation = 'status') {
 }
 
 async function startBotIpc(runtime, isReady) {
+  const deploymentSha = process.env.DEPLOY_SHA || null;
   const file = socketPath(runtime.profile);
   const directory = path.dirname(file);
   fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
@@ -89,7 +90,7 @@ async function startBotIpc(runtime, isReady) {
           throw new Error('Unknown operation.');
         if (operation === 'reload') runtime.reload();
         socket.end(
-          `${JSON.stringify({ profile: runtime.profile, status: operation === 'reload' ? 'applied' : 'online', online: true, ready: isReady(), pid: process.pid, appliedAt: runtime.appliedAt })}\n`
+          `${JSON.stringify({ profile: runtime.profile, status: operation === 'reload' ? 'applied' : 'online', online: true, ready: isReady(), pid: process.pid, appliedAt: runtime.appliedAt, deploymentSha })}\n`
         );
       } catch (error) {
         console.error('Bot IPC request failed.', { operation, error });

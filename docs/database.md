@@ -55,6 +55,9 @@ database or silently continue with defaults.
   Populate explicitly with `npm run secrets:import -- --apply` or dashboard key management.
 - `application_logs`: sanitized application logs for `dev`, `prod` and `dashboard`, with SQL
   filtering and pagination and seven-day retention. See [logging](logging.md).
+- `deployment_release`: the last health-verified deployment per profile, including commit SHA,
+  GitHub run ID, attempt and verification time (migration 007). GitHub workflow history and
+  job logs remain on GitHub; see [Deploys](dashboard.md#deploys).
 - `config_history`: profile or shared audit events with non-secret snapshots and
   metadata. Imports and subsequent configuration/key operations are recorded transactionally.
 

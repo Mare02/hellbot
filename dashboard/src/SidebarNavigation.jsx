@@ -18,6 +18,7 @@ import {
   IconKey,
   IconHistory,
   IconGitCommit,
+  IconRocket,
   IconLayoutDashboard,
   IconRefresh,
   IconSettings,
@@ -76,6 +77,13 @@ export const pages = {
     title: 'Code updates',
     description: 'Development activity and recent commits in this project.',
     icon: IconGitCommit,
+    shared: true,
+  },
+  deploys: {
+    slug: 'deploys',
+    title: 'Deploys',
+    description: 'Production releases, workflow progress and deployment logs.',
+    icon: IconRocket,
     shared: true,
   },
 };

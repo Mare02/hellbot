@@ -1,0 +1,20 @@
+.deploy-duration {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.deploy-log {
+  margin: 0;
+  max-height: 420px;
+  overflow: auto;
+  padding: var(--mantine-spacing-md);
+  border-radius: var(--mantine-radius-sm);
+  background: var(--mantine-color-default-hover);
+  color: var(--mantine-color-text);
+  font-family: var(--mantine-font-family-monospace);
+  font-size: var(--mantine-font-size-xs);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}

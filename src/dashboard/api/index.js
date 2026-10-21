@@ -16,6 +16,7 @@ const { profileEnvSchema } = require('../../services/config/schema');
 const toolRegistry = require('../../data/aiToolRegistry');
 const secretProviders = require('../../data/secretProviders');
 const { createCodeUpdatesService } = require('../../services/codeUpdates');
+const { createDeploymentsService } = require('../../services/deployments');
 
 async function fetchBotProfile() {
   const credentials = createLegacyConfig(process.env);
@@ -41,6 +42,8 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   const guilds = createGuildStore(database);
   const aiUsage = createAiUsageStore(database, { secretProvider: () => secrets.readAll() });
   const codeUpdates = createCodeUpdatesService();
+  const deploymentSha = process.env.DEPLOY_SHA || null;
+  const deployments = createDeploymentsService(database, profile, { secretProvider: () => secrets.readAll() });
   let guildSync;
   function syncGuilds() {
     if (!guildSync) {
@@ -76,6 +79,7 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   router.get('/profiles', (request, response) => {
     response.json({
       profile,
+      deploymentSha,
       profiles: configs.listProfiles().filter((item) => item.env === profile),
     });
   });
@@ -99,6 +103,33 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
       ],
     })
   );
+  const deploymentId = z.coerce.number().int().positive().max(Number.MAX_SAFE_INTEGER);
+  const deploymentAttempt = z.coerce.number().int().positive().max(10000).optional();
+  const deployPage = z.coerce.number().int().min(1).max(50).default(1);
+  function deployResponse(handler) {
+    return async (request, response, next) => {
+      try {
+        response.json(await handler(request));
+      } catch (error) {
+        if (!error.deploymentError) return next(error);
+        response.status(error.status).json({ error: error.message });
+      }
+    };
+  }
+  router.get('/project/deploys', deployResponse((request) =>
+    deployments.summary(deployPage.parse(request.query.page))
+  ));
+  router.get('/project/deploys/:id', deployResponse((request) =>
+    deployments.detail(
+      deploymentId.parse(request.params.id), deploymentAttempt.parse(request.query.attempt)
+    )
+  ));
+  router.get('/project/deploys/:id/jobs/:jobId/logs', deployResponse((request) =>
+    deployments.logs(
+      deploymentId.parse(request.params.id), deploymentId.parse(request.params.jobId),
+      deploymentAttempt.parse(request.query.attempt)
+    )
+  ));
   router.get('/project/commits', async (request, response) => {
     const currentYear = new Date().getUTCFullYear();
     const year = z.coerce.number().int().min(1970).max(currentYear).default(currentYear).parse(request.query.year);

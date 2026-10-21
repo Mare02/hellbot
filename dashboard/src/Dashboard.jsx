@@ -22,6 +22,7 @@ const HistoryPage = lazy(() => import('./pages/HistoryPage'));
 const LogsPage = lazy(() => import('./pages/LogsPage'));
 const SecretsPage = lazy(() => import('./pages/SecretsPage'));
 const CodeUpdatesPage = lazy(() => import('./pages/CodeUpdatesPage'));
+const DeploysPage = lazy(() => import('./pages/DeploysPage'));
 
 export default function Dashboard() {
   const profiles = useResource('/profiles');
@@ -177,6 +178,7 @@ export default function Dashboard() {
                   <HistoryPage profile={profile} focusId={location.state?.focusActivityId} />
                 )}
                 {page === 'code' && <CodeUpdatesPage />}
+                {page === 'deploys' && <DeploysPage />}
                 {page === 'logs' && (
                   <LogsPage key={profile} profile={profile} focusItem={location.state?.focusLogItem} />
                 )}

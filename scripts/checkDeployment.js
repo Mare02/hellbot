@@ -13,9 +13,14 @@ async function checkDeployment() {
       assert((await page.text()).includes('type="module"'), 'Dashboard build is unavailable.');
       const response = await fetch(`${base}/api/profiles`, { signal: AbortSignal.timeout(5000) });
       assert.equal(response.status, 200, 'Dashboard API is unavailable.');
-      assert.equal((await response.json()).profile, 'prod', 'Dashboard is not in production mode.');
+      const dashboard = await response.json();
+      assert.equal(dashboard.profile, 'prod', 'Dashboard is not in production mode.');
       const bot = await requestBot('prod');
       assert(bot.online && bot.ready, 'Production bot is not connected to Discord.');
+      if (process.env.DEPLOY_SHA) {
+        assert.equal(dashboard.deploymentSha, process.env.DEPLOY_SHA, 'Dashboard is running another revision.');
+        assert.equal(bot.deploymentSha, process.env.DEPLOY_SHA, 'Bot is running another revision.');
+      }
       console.log('Production bot and built dashboard are ready.');
       return;
     } catch (error) {
@@ -26,7 +31,11 @@ async function checkDeployment() {
   throw lastError;
 }
 
-checkDeployment().catch(() => {
-  console.error('Deployment health check failed: bot or dashboard did not become ready.');
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  checkDeployment().catch(() => {
+    console.error('Deployment health check failed: bot or dashboard did not become ready.');
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { checkDeployment };

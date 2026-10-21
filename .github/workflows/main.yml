@@ -12,9 +12,14 @@ concurrency:
   group: hellbot-production
   cancel-in-progress: false
 
+env:
+  DEPLOY_SHA: ${{ github.sha }}
+  DEPLOY_RUN_ID: ${{ github.run_id }}
+  DEPLOY_RUN_ATTEMPT: ${{ github.run_attempt }}
+
 jobs:
   deploy:
-    name: Validate and deploy
+    name: Deploy production
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -32,56 +37,61 @@ jobs:
         with:
           version: 12.6.0
 
-      - name: Install dependencies
+      - name: Install CI dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Check JavaScript syntax
-        run: find src -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
+        run: find src scripts -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
 
       - name: Verify SQLite migrations
         env:
           HELLBOT_DATABASE_PATH: ${{ runner.temp }}/hellbot-ci-db
         run: pnpm run db:migrate
 
-      - name: Build dashboard
+      - name: Build CI dashboard
         run: pnpm run dashboard:build
 
       - name: Configure VPS SSH
         env:
           VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
+        run: bash scripts/configureDeploySsh.sh
 
-      - name: Deploy to VPS
+      - name: Prepare production checkout
+        run: bash scripts/deployRemote.sh prepare
+
+      - name: Install production dependencies
+        run: bash scripts/deployRemote.sh install
+
+      - name: Build production dashboard
+        run: bash scripts/deployRemote.sh build
+
+      - name: Migrate production database
+        run: bash scripts/deployRemote.sh migrate
+
+      - name: Restart bot and dashboard
+        run: bash scripts/deployRemote.sh restart
+
+      - name: Verify production health and record release
+        run: bash scripts/deployRemote.sh verify
+
+      - name: Register slash commands
+        run: bash scripts/deployRemote.sh register
+
+  notify:
+    name: Notify Discord
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure VPS SSH
         env:
-          DEPLOY_SHA: ${{ github.sha }}
-        run: |
-          ssh -o BatchMode=yes hellbot@93.127.160.57 "bash -l -i -c 'exec bash -euo pipefail -s -- $DEPLOY_SHA'" <<'REMOTE'
-            set -euo pipefail
-            export NODE_ENV=production
-            cd /home/hellbot/projects/hellbot
-            test -z "$(git status --porcelain)"
-            git fetch origin main
-            git merge --ff-only "$1"
-            test "$(git rev-parse HEAD)" = "$1"
-            test "$(pnpm --version)" = '12.6.0'
-            pnpm install --frozen-lockfile --prod=false
-            pnpm run dashboard:build
-            pnpm run db:migrate
-            pm2 restart hellbot --update-env
-            if pm2 describe hellbot-dashboard >/dev/null 2>&1; then
-              pm2 restart hellbot-dashboard --update-env
-            else
-              pm2 start src/dashboard/server.js --name hellbot-dashboard --cwd "$PWD"
-            fi
-            pm2 save
-            node scripts/checkDeployment.js
-            node -e 'require("./src/commands/slashCommands/updateslashcommands").execute(null, true).catch(() => { console.error("Slash-command registration failed."); process.exitCode = 1; })'
-            commit_message="$(git log -1 --format=%s)"
-            COMMIT_MESSAGE="$commit_message" node scripts/announceDeployment.js
-          REMOTE
+          VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+        run: bash scripts/configureDeploySsh.sh
+
+      - name: Announce deployment
+        run: bash scripts/deployRemote.sh notify
