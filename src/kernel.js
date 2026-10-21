@@ -1,4 +1,5 @@
 const cron = require('node-cron');
+const { randomUUID } = require('node:crypto');
 const dailyQuoteJob = require('./jobs/dailyQuoteJob');
 const dailyFutureNewsJob = require('./jobs/dailyFutureNewsJob');
 const presence = require('./jobs/funnyPresenceJob');
@@ -33,11 +34,33 @@ function startJobs(client, runtime) {
         cron.schedule(schedule, async () => {
           if (!runtime.snapshot.features[feature] || running.has(feature)) return;
           running.add(feature);
+          const runId = randomUUID();
+          const startedAt = Date.now();
           try {
-            await withLogContext({ component: 'jobs', command: feature }, () => job.execute());
+            const result = await withLogContext(
+              { component: 'jobs', command: feature, jobRunId: runId },
+              () => job.execute()
+            );
+            if (result?.failedGuildIds?.length) {
+              withLogContext({ component: 'jobs', command: feature, jobRunId: runId }, () => {
+                console.error('Scheduled job completed with delivery failures', {
+                  feature,
+                  runId,
+                  durationMs: Date.now() - startedAt,
+                  attemptedGuilds: result.attemptedGuilds,
+                  failedGuildCount: result.failedGuildIds.length,
+                  failedGuildIds: result.failedGuildIds,
+                });
+              });
+            }
           } catch (error) {
-            withLogContext({ component: 'jobs', command: feature }, () => {
-              console.error('Scheduled job failed', { feature, error });
+            withLogContext({ component: 'jobs', command: feature, jobRunId: runId }, () => {
+              console.error('Scheduled job failed', {
+                feature,
+                runId,
+                durationMs: Date.now() - startedAt,
+                error,
+              });
             });
           } finally {
             running.delete(feature);

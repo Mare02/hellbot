@@ -1,4 +1,5 @@
 const funnyStatuses = require('../data/funnyStatuses');
+const { withLogContext } = require('../services/logging');
 
 let rotationInterval;
 let lastStatus;
@@ -13,8 +14,14 @@ function chooseStatus() {
 function updatePresence(client) {
   if (!client.user || !funnyStatuses.length) return;
 
-  lastStatus = chooseStatus();
-  client.user.setActivity(lastStatus);
+  try {
+    lastStatus = chooseStatus();
+    client.user.setActivity(lastStatus);
+  } catch (error) {
+    withLogContext({ component: 'jobs', command: 'presenceRotation' }, () => {
+      console.error('Presence rotation failed.', { error });
+    });
+  }
 }
 
 function start(client, minutes = 360) {

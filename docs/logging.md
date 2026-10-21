@@ -58,6 +58,8 @@ Sensitive nested properties are replaced with `[REDACTED]`. HTTP request/respons
 
 The console wrapper catches the application's existing `console.log`, `info`, `warn`, `error`, and `debug` calls. It does not intercept direct stdout/stderr writes, PM2's own logs, or arbitrary third-party file loggers. Unhandled errors should pass through the explicit startup error handler to be included in this feed.
 
+Scheduled quote and future-news jobs run with `component=jobs` and their feature name as `command`. Each run carries a `jobRunId`; uncaught run failures include the error and duration, while per-guild delivery failures include guild details and a run summary. Presence rotation failures use `command=presenceRotation`. These entries are available through the dashboard Logs page and its component/command filters.
+
 ## Bugsnag boundary
 
 The existing application calls `Bugsnag.start({ apiKey: process.env.BUGSNAG_API_KEY })` during bot startup. A source audit found no explicit `Bugsnag.notify` calls in the application. Existing handled errors generally go through `console.error`; that does not by itself mean Bugsnag receives those errors. Bugsnag's enabled runtime integrations may report unhandled exceptions/rejections according to its SDK behavior and runtime configuration.
