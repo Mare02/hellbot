@@ -27,6 +27,7 @@
     "@mantine/charts": "9.7.3",
     "@mantine/core": "9.7.3",
     "@mantine/hooks": "9.7.3",
+    "@mantine/notifications": "9.7.3",
     "@tabler/icons-react": "3.49.0",
     "better-sqlite3": "13.0.3",
     "discord-api-types": "^0.37.100",

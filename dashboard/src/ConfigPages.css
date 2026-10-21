@@ -1,0 +1,22 @@
+.config-save-footer {
+  position: fixed;
+  z-index: 100;
+  inset-inline-start: calc(var(--app-shell-navbar-offset, 0rem) + var(--app-shell-padding));
+  inset-inline-end: var(--app-shell-padding);
+  bottom: var(--mantine-spacing-md);
+  pointer-events: none;
+}
+
+.config-save-footer-inner {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  pointer-events: auto;
+  background: var(--mantine-color-body);
+}
+
+@media (max-width: 36em) {
+  .config-save-footer {
+    bottom: var(--mantine-spacing-xs);
+  }
+}

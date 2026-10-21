@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState } from 'react';
 import { createTheme, MantineProvider } from '@mantine/core';
+import { Notifications } from '@mantine/notifications';
 
 const THEME_STORAGE_KEY = 'hellbot-dashboard-theme';
 const FONT_STORAGE_KEY = 'hellbot-dashboard-font';
@@ -202,6 +203,7 @@ export function AppThemeProvider({ children }) {
         forceColorScheme={selectedTheme.scheme}
       >
         {children}
+        <Notifications position="top-right" autoClose={3000} />
       </MantineProvider>
     </ThemeContext.Provider>
   );
