@@ -122,10 +122,13 @@ export default function DeploysPage() {
                   </Badge>
                 </Group>
                 {live ? (
-                  <Group gap="xs">
-                    <Code title={live.sha}>{live.sha.slice(0, 7)}</Code>
-                    <Text size="xs" c="dimmed">Verified {dateLabel(live.verifiedAt)}</Text>
-                  </Group>
+                  <Stack gap={6}>
+                    {live.title && <Text size="sm" fw={500} style={{ overflowWrap: 'anywhere' }}>{live.title}</Text>}
+                    <Group gap="xs">
+                      <Code title={live.sha}>{live.sha.slice(0, 7)}</Code>
+                      <Text size="xs" c="dimmed">Verified {dateLabel(live.verifiedAt)}</Text>
+                    </Group>
+                  </Stack>
                 ) : (
                   <Text size="sm" c={data.liveNotice ? 'yellow' : 'dimmed'}>
                     {data.liveNotice || 'No verified release has been recorded for this installation.'}

@@ -109,8 +109,13 @@ function createDeploymentsService(database, profile, { secretProvider, fetchImpl
     ]);
     const verified = readRelease(database, profile);
     const bot = verified ? await requestBot(profile) : null;
-    const live = verified && runtimeSha === verified.sha && bot?.online && bot.ready &&
-      bot.deploymentSha === verified.sha ? verified : null;
+    const healthy = verified && runtimeSha === verified.sha && bot?.online && bot.ready &&
+      bot.deploymentSha === verified.sha;
+    const live = healthy ? {
+      ...verified,
+      title: await cached(`release-title:${verified.sha}`, 60_000, () =>
+        git(['show', '-s', '--format=%s', verified.sha, '--']).catch(() => null)),
+    } : null;
     const liveNotice = verified && !live
       ? 'The running processes have not both confirmed the last verified revision. Check the latest deploy steps and bot status.'
       : null;
