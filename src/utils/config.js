@@ -1,63 +1,39 @@
-const aiModels = require('../data/aiModels');
 require('dotenv').config();
+const discordRoutingDefaults = require('../data/discordRoutingDefaults');
+const { createLegacyConfig } = require('../services/config/legacyConfig');
+const { getProfile, initializeRuntimeConfig } = require('../services/config/runtime');
 
-const isDevMode = process.env.NODE_ENV === 'development';
-const currentAiProvider = (process.env.AI_PROVIDER || 'groq').trim().toLowerCase();
-const currentGeminiModel = aiModels.gemini_3_5_flash_lite;
-const botAppId = isDevMode
-  ? process.env.DEV_CLIENT_ID || process.env.CLIENT_ID
-  : process.env.CLIENT_ID;
-const botPublicKey = isDevMode
-  ? process.env.PUBLIC_KEY_DEV || process.env.PUBLIC_KEY
-  : process.env.PUBLIC_KEY;
-const botToken = isDevMode
-  ? process.env.DEV_DISCORD_TOKEN || process.env.DISCORD_TOKEN
-  : process.env.DISCORD_TOKEN;
+const legacy = createLegacyConfig({
+  ...process.env,
+  NODE_ENV: getProfile() === 'dev' ? 'development' : 'production',
+});
 
-module.exports = {
-  bot: {
-    name: "Hellbot",
-    description: "The Custom General-Purpose Bot for Hell's Resting Place™",
-    version: "2.0",
-    appId: botAppId,
-    publicKey: botPublicKey,
-    token: botToken,
-    inviteLink: `https://discord.com/api/oauth2/authorize?client_id=${botAppId}&permissions=8&scope=bot`,
+module.exports = new Proxy(legacy, {
+  get(target, property) {
+    if (
+      Object.hasOwn(discordRoutingDefaults, property) ||
+      [
+        'commandsPrefix',
+        'embedColor',
+        'roleRequests',
+        'features',
+        'behavior',
+        'ai',
+        'disabledGuildIds',
+      ].includes(property)
+    ) {
+      return initializeRuntimeConfig().snapshot[property];
+    }
+    if (property === 'currentAiProvider') return initializeRuntimeConfig().snapshot.ai.provider;
+    if (property === 'currentGeminiModel')
+      return initializeRuntimeConfig().snapshot.ai.models.google.text;
+    if (property === 'currentAiModel') {
+      const ai = initializeRuntimeConfig().snapshot.ai;
+      return (
+        ai.customProviders.find((item) => item.id === ai.provider)?.model ||
+        ai.models[ai.provider]?.text
+      );
+    }
+    return Reflect.get(target, property);
   },
-
-  commandsPrefix: isDevMode ? "dev::" : "::",
-
-  isDevMode,
-
-  owner: {
-    id: "652993719808557087",
-    name: "hellismyrestingplace",
-  },
-
-  homeServerId: "720011764934115400",
-  testingServerId: "1324427229278503043",
-  logChannelId: "732790467615391846",
-  verifyChannelId: "830224625350344724",
-  generalChannelId: "720011765672444007",
-  hellbotUpdatesChannelId: "1561754267457687643",
-  masterCreationsChannelId: "858872397935018024",
-  uniqueCreationsChannelId: "1331702240964116551",
-  masterPhotosChannelId: "1275913045981397105",
-  minecraftCategoryId: "1402414837669040140",
-
-  roleRequests: {
-    requestChannelId: isDevMode ? '1553890262902644786' : '795486828190105622',
-    reviewChannelId: isDevMode ? '1553890264337219646' : '1553912040849154189',
-    anchorRoleName: isDevMode ? null : 'God Modder',
-  },
-
-  staffMemberRoleId: '943531442368041010',
-  verifiedRoleId: '1051882112057348146',
-  verificationLogsChannelId: '1331713982687350834',
-  discordMsgLengthLimit: 2000,
-  embedColor: '#fc9803',
-
-  currentAiProvider,
-  currentAiModel: currentAiProvider === 'google' ? currentGeminiModel : aiModels.gpt_oss_120b,
-  currentGeminiModel,
-};
+});

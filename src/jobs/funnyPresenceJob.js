@@ -1,6 +1,5 @@
 const funnyStatuses = require('../data/funnyStatuses');
 
-const ROTATION_INTERVAL_MS = 6 * 60 * 60 * 1000;
 let rotationInterval;
 let lastStatus;
 
@@ -18,11 +17,16 @@ function updatePresence(client) {
   client.user.setActivity(lastStatus);
 }
 
-function start(client) {
+function start(client, minutes = 360) {
   clearInterval(rotationInterval);
   updatePresence(client);
-  rotationInterval = setInterval(() => updatePresence(client), ROTATION_INTERVAL_MS);
+  rotationInterval = setInterval(() => updatePresence(client), minutes * 60 * 1000);
   rotationInterval.unref?.();
 }
 
-module.exports = { start };
+function stop() {
+  clearInterval(rotationInterval);
+  rotationInterval = undefined;
+}
+
+module.exports = { start, stop };

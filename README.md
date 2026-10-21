@@ -11,26 +11,43 @@ This project is a Discord bot built using Node.js and the Discord.js library. It
 
 ### How to run
 
-Install dependencies and configure bot and AI provider credentials in `.env`:
+Install dependencies and configure Discord credentials in `.env`:
 
 ```sh
 pnpm install
 ```
 
-Start development mode:
+Initialize the database, import initial settings and encrypted AI keys, and configure
+the local dashboard using [dashboard setup](docs/dashboard.md). Then start development mode:
 
 ```sh
-NODE_ENV=development pnpm run dev
+npm run dev
 ```
 
 Start production mode:
 
 ```sh
-NODE_ENV=production pnpm start
+npm run bot:prod
 ```
 
-`NODE_ENV` selects the bot credentials, command prefix, and memory environment.
-The dev script starts nodemon; it does not set `NODE_ENV` itself.
+`NODE_ENV` selects the bot profile: `development` runs the Development bot and
+`production` runs the Production bot. `npm run dev` and `npm run bot:dev` select
+the development Discord credentials; `npm run bot:prod` selects production.
+The dev script explicitly selects dev and starts nodemon. Runtime settings and AI
+keys are loaded from SQLite; Discord credentials remain in env.
+
+### Dashboard database
+
+Initialize the dashboard SQLite schema with `npm run db:migrate`.
+The database defaults to `~/.local/share/hellbot/hellbot-db`; set
+`HELLBOT_DATABASE_PATH` for another persistent location outside the repository.
+See [database setup](docs/database.md) for migration and startup details.
+
+Import initial non-secret settings for the current installation explicitly with
+`npm run config:import -- --profile dev --apply` locally or
+`npm run config:import -- --profile prod --apply` on the VPS (omit `--apply` for a
+dry run). Existing configurations are preserved. See the
+[configuration inventory](docs/config-inventory.md).
 
 ### AI server memory
 
@@ -50,7 +67,7 @@ storage limits, and backups.
 
 ### Gemini API key rotation
 
-Configure numbered keys in `.env`:
+For the initial import, configure numbered keys in `.env`:
 
 ```env
 AI_PROVIDER=google
@@ -58,10 +75,13 @@ GEMINI_API_KEY_1=your-first-key
 GEMINI_API_KEY_2=your-second-key
 ```
 
-Every Gemini HTTP request uses the next key, including retries and tool follow-ups.
-Keys rotate in numeric order and wrap back to the first key. Empty entries are
-ignored. If no numbered keys are configured, `GEMINI_API_KEY` is used as a fallback.
-Restart the bot after changing keys; each process maintains its own rotation.
+Run `npm run secrets:import -- --apply` to encrypt and import keys for providers
+without stored keys in this installation. Numeric order is preserved and empty entries are ignored;
+`GEMINI_API_KEY` is the fallback when no numbered keys exist. Thereafter, manage
+keys for the current bot installation in the dashboard. Each Gemini HTTP attempt,
+including retries and follow-ups, rotates through the current RAM snapshot.
+Dashboard changes notify the active bot over IPC and do not require restarting
+its Discord connection.
 
 The shared utility can be used by other services with their own environment prefix:
 

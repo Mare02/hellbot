@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require('discord.js');
-const { masterPhotosChannelId } = require('../utils/config');
+const config = require('../utils/config');
 const { forwardAttachmentsToChannel } = require('../utils/helpers');
 
 module.exports = {
@@ -7,6 +7,6 @@ module.exports = {
   description: 'Displays a photo in the Master Photos channel.',
   perm: PermissionFlagsBits.Administrator,
   async execute(message, args) {
-    await forwardAttachmentsToChannel(message, args, masterPhotosChannelId, 'photo');
+    await forwardAttachmentsToChannel(message, args, config.masterPhotosChannelId, 'photo');
   },
 };

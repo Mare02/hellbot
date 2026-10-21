@@ -3,6 +3,7 @@ require('dotenv').config();
 const config = require('./utils/config');
 
 let instance;
+let loginPromise;
 
 function getInstance() {
   if (!instance) {
@@ -16,7 +17,8 @@ function getInstance() {
       ],
     });
 
-    instance.login(config.bot.token);
+    loginPromise = instance.login(config.bot.token);
+    loginPromise.catch(() => {});
   }
 
   return instance;
@@ -24,4 +26,5 @@ function getInstance() {
 
 module.exports = {
   getInstance,
+  getLoginPromise: () => loginPromise,
 };

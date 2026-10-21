@@ -14,7 +14,7 @@ const PROCESSING_REQUESTS = new Set();
 const SUBMITTING_REQUESTS = new Set();
 const HEX_COLOR_PATTERN = /^#?([\da-f]{6})$/i;
 const INSTRUCTIONS_TITLE = 'Request a role';
-const targetServerId = config.isDevMode ? config.testingServerId : config.homeServerId;
+const getTargetServerId = () => config.isDevMode ? config.testingServerId : config.homeServerId;
 
 const fetchTextChannel = async (guild, channelId) => {
   if (!guild || !channelId) return null;
@@ -156,7 +156,12 @@ const replyToRequestContext = async (context, isSlashCommand, content) => {
 };
 
 const requestRole = async (context, args = []) => {
+  const routing = config.roleRequests;
   const isSlashCommand = typeof context.isChatInputCommand === 'function' && context.isChatInputCommand();
+  if (!config.features.roleRequests) {
+    await replyToRequestContext(context, isSlashCommand, 'Role requests are currently disabled.');
+    return;
+  }
   const prefixCommand = `${config.commandsPrefix}request-role`;
   const usage = `Usage: /request-role name:<role name> color:<hex color> or ${prefixCommand} "role name" <hex color>. Example: ${prefixCommand} "Role name" #66CC99.`;
   let requestPosted = false;
@@ -167,12 +172,12 @@ const requestRole = async (context, args = []) => {
 
     const guild = context.guild;
     const guildId = isSlashCommand ? context.guildId : guild?.id;
-    if (!guild || guildId !== targetServerId) {
+    if (!guild || guildId !== getTargetServerId()) {
       await replyToRequestContext(context, isSlashCommand, 'Role requests are only available in the configured server.');
       return;
     }
 
-    const requestChannel = await fetchTextChannel(guild, config.roleRequests.requestChannelId);
+    const requestChannel = await fetchTextChannel(guild, routing.requestChannelId);
     const channelId = isSlashCommand ? context.channelId : context.channel?.id;
     if (!requestChannel) {
       await replyToRequestContext(context, isSlashCommand, 'Role requests are temporarily unavailable. Please contact the staff team.');
@@ -217,9 +222,9 @@ const requestRole = async (context, args = []) => {
     }
 
     const anchorRole = config.isDevMode ? null : guild.roles.cache.find(
-      role => role.name === config.roleRequests.anchorRoleName
+      role => role.name === routing.anchorRoleName
     );
-    const reviewChannel = await fetchTextChannel(guild, config.roleRequests.reviewChannelId);
+    const reviewChannel = await fetchTextChannel(guild, routing.reviewChannelId);
     const botMember = guild.members.me;
 
     if ((!config.isDevMode && !anchorRole) || !reviewChannel || !botMember ||
@@ -307,6 +312,7 @@ const openDenialModal = async interaction => {
 };
 
 const approveRequest = async interaction => {
+  const routing = config.roleRequests;
   const lockKey = interaction.message.id;
   if (PROCESSING_REQUESTS.has(lockKey)) {
     await interaction.reply({ content: 'This request has already been reviewed or is being processed.', ephemeral: true });
@@ -322,7 +328,7 @@ const approveRequest = async interaction => {
   try {
     await interaction.deferReply({ ephemeral: true });
     const guild = interaction.guild;
-    const reviewChannel = await fetchTextChannel(guild, config.roleRequests.reviewChannelId);
+    const reviewChannel = await fetchTextChannel(guild, routing.reviewChannelId);
     message = await reviewChannel?.messages.fetch({ message: lockKey, force: true }).catch(() => null);
     const request = message && getRequestFields(message);
     if (!request || message.author.id !== interaction.client.user.id || isResolved(message)) {
@@ -333,7 +339,7 @@ const approveRequest = async interaction => {
     const existingRoles = await guild.roles.fetch();
     const anchorRole = config.isDevMode
       ? null
-      : existingRoles.find(role => role.name === config.roleRequests.anchorRoleName);
+      : existingRoles.find(role => role.name === routing.anchorRoleName);
     const botMember = guild.members.me;
     if ((!config.isDevMode && !anchorRole) || !botMember || !botMember.permissions.has('ManageRoles') ||
       (anchorRole && botMember.roles.highest.comparePositionTo(anchorRole) <= 0)) {
@@ -422,9 +428,10 @@ const approveRequest = async interaction => {
 };
 
 const denyRequest = async interaction => {
+  const routing = config.roleRequests;
   await interaction.deferReply({ ephemeral: true });
   const messageId = interaction.customId.split(':')[2];
-  const reviewChannel = await fetchTextChannel(interaction.guild, config.roleRequests.reviewChannelId);
+  const reviewChannel = await fetchTextChannel(interaction.guild, routing.reviewChannelId);
   const message = await reviewChannel?.messages.fetch({ message: messageId, force: true }).catch(() => null);
   const request = message && getRequestFields(message);
 
@@ -481,8 +488,12 @@ const denyRequest = async interaction => {
 
 const handleInteraction = async interaction => {
   try {
+    if (!config.features.roleRequests && interaction.customId?.startsWith(`${REQUEST_PREFIX}:`)) {
+      await interaction.reply({ content: 'Role requests are currently disabled.', ephemeral: true });
+      return;
+    }
     if (interaction.isButton() && interaction.customId.startsWith(`${REQUEST_PREFIX}:`)) {
-      if (interaction.guildId !== targetServerId) {
+      if (interaction.guildId !== getTargetServerId()) {
         await interaction.reply({ content: 'Role requests can only be reviewed in the configured server.', ephemeral: true });
         return;
       }
@@ -506,7 +517,7 @@ const handleInteraction = async interaction => {
     }
 
     if (interaction.isModalSubmit() && interaction.customId.startsWith(`${REQUEST_PREFIX}:deny-reason:`)) {
-      if (interaction.guildId !== targetServerId) {
+      if (interaction.guildId !== getTargetServerId()) {
         await interaction.reply({ content: 'Role requests can only be reviewed in the configured server.', ephemeral: true });
         return;
       }
@@ -526,7 +537,9 @@ const handleInteraction = async interaction => {
 };
 
 const ensureInstructions = async guild => {
-  const channel = await fetchTextChannel(guild, config.roleRequests.requestChannelId);
+  const routing = config.roleRequests;
+  if (!config.features.roleRequests) return;
+  const channel = await fetchTextChannel(guild, routing.requestChannelId);
   if (!channel) return;
 
   const instructions = new EmbedBuilder()
@@ -566,4 +579,4 @@ const ensureInstructions = async guild => {
   await message.pin();
 };
 
-module.exports = { handleInteraction, requestRole, ensureInstructions, targetServerId };
+module.exports = { handleInteraction, requestRole, ensureInstructions, getTargetServerId };

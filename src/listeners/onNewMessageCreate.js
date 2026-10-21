@@ -1,4 +1,5 @@
 const { MessageReferenceType } = require('discord.js');
+const { withLogContext } = require('../services/logging');
 const { getInstance } = require('../client');
 const config = require('../utils/config');
 const messages = require('../utils/messages');
@@ -11,10 +12,9 @@ const { usePrompt } = require('../services/AIservice');
 const { chatReplyPrompt } = require('../utils/aiPrompts');
 const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment, serializeMessageContent } = require('../services/chatContext');
 const { sendDiscordContent } = require('../utils/discordMessages');
+const { isGuildEnabled } = require('../utils/guildAccess');
 
 const client = getInstance();
-
-const RANDOM_FREEWILL_PROBABILITY = 0.05;
 
 async function replyWithRecentContext(message) {
   const currentMessageContext = serializeMessageContent(message)
@@ -81,6 +81,7 @@ module.exports = () => {
     if (message.system || message.author.bot) {
       return;
     }
+    if (!isGuildEnabled(message.guildId)) return;
 
     // get command name + arguments
     const fullArgs = message.content.split(' ');
@@ -96,26 +97,31 @@ module.exports = () => {
     const mentionsBot = message.mentions.has(client.user.id);
     const repliesToBot = await isReplyToBot(message);
 
-    if ((mentionsBot || repliesToBot) && commandName !== askai.name) {
+    if (config.features.mentionReplies && (mentionsBot || repliesToBot) && commandName !== askai.name) {
       try {
-        await replyWithRecentContext(message);
+        await withLogContext({ component: 'ai', command: 'mentionReply' }, () => replyWithRecentContext(message));
       } catch (error) {
-        console.error('AI response error:', error);
+        withLogContext({ component: 'ai', command: 'mentionReply' }, () => {
+          console.error('AI response error:', error);
+        });
       }
       return;
     }
 
     if (
-      Math.random() < RANDOM_FREEWILL_PROBABILITY
+      config.features.randomReplies
+      && Math.random() < config.behavior.randomReplyProbability
       && message.channel.name?.startsWith('general')
       && !message.mentions.has(client.user.id)
       && message.guild?.id === config.homeServerId
     ) {
       try {
-        await freewill.execute(message, []);
+        await withLogContext({ component: 'ai', command: 'freewill' }, () => freewill.execute(message, []));
       }
       catch (error) {
-        console.error('Error executing random freewill command:', error);
+        withLogContext({ component: 'ai', command: 'freewill' }, () => {
+          console.error('Error executing random freewill command:', error);
+        });
       }
     }
 
@@ -134,7 +140,11 @@ module.exports = () => {
         return;
       }
 
-      await command.execute(message, args);
+      try {
+        await withLogContext({ component: 'commands', command: commandName }, () => command.execute(message, args));
+      } catch (error) {
+        withLogContext({ component: 'commands', command: commandName }, () => console.error('Prefix command failed', { error }));
+      }
     }
   });
 };

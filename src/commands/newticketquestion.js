@@ -8,6 +8,7 @@ module.exports = {
   description: "Displays a verification question for new members in tickets.",
   system: true,
   async execute(message) {
+    if (!config.features.ticketReplies) return;
     if (message.channel.guild.id !== config.homeServerId) return;
 
     const serverWelcomeMessage = `Welcome to the server! Use /verify command for automatic verification. In case the slash command is not working, use the ${config.commandsPrefix}verify command (ex. ${config.commandsPrefix}verify [age] [invite source]).`;

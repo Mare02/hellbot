@@ -5,8 +5,18 @@
   "main": "src/main.js",
   "scripts": {
     "start": "node src/main.js",
-    "dev": "nodemon src/main.js",
-    "pmdev": "pm2 start src/main.js"
+    "dev": "NODE_ENV=development nodemon src/main.js",
+    "bot:dev": "NODE_ENV=development node src/main.js",
+    "bot:prod": "NODE_ENV=production node src/main.js",
+    "pmdev": "NODE_ENV=development pm2 start src/main.js",
+    "db:migrate": "node scripts/migrateDatabase.js",
+    "config:import": "node scripts/importConfig.js",
+    "secrets:import": "node scripts/importSecrets.js",
+    "logs:import": "node scripts/importLogs.js",
+    "dashboard:setup": "node scripts/setupDashboard.js",
+    "dashboard:dev": "NODE_ENV=development node scripts/devDashboard.js",
+    "dashboard:build": "NODE_ENV=production vite build --config dashboard/vite.config.mjs",
+    "dashboard:start": "NODE_ENV=production node src/dashboard/server.js"
   },
   "keywords": [],
   "author": "",
@@ -14,13 +24,28 @@
   "dependencies": {
     "@bugsnag/js": "^8.0.0",
     "@discordjs/rest": "2.4.2",
+    "@mantine/charts": "9.7.3",
+    "@mantine/core": "9.7.3",
+    "@mantine/hooks": "9.7.3",
+    "@tabler/icons-react": "3.49.0",
+    "better-sqlite3": "13.0.3",
     "discord-api-types": "^0.37.100",
     "discord.js": "14.27.0",
     "dotenv": "^16.4.5",
+    "express": "5.3.0",
     "groq-sdk": "^1.3.0",
     "moment": "^2.30.1",
     "node-cron": "^3.0.3",
     "node-schedule": "^2.1.1",
-    "nodemon": "^3.1.9"
+    "nodemon": "^3.1.9",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "react-router-dom": "^7.18.4",
+    "recharts": "3.10.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "6.1.2",
+    "vite": "8.3.4"
   }
 }

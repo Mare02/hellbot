@@ -1,0 +1,15 @@
+module.exports = {
+  homeServerId: '720011764934115400',
+  testingServerId: '1324427229278503043',
+  logChannelId: '732790467615391846',
+  verifyChannelId: '830224625350344724',
+  generalChannelId: '720011765672444007',
+  hellbotUpdatesChannelId: '1561754267457687643',
+  masterCreationsChannelId: '858872397935018024',
+  uniqueCreationsChannelId: '1331702240964116551',
+  masterPhotosChannelId: '1275913045981397105',
+  minecraftCategoryId: '1402414837669040140',
+  staffMemberRoleId: '943531442368041010',
+  verifiedRoleId: '1051882112057348146',
+  verificationLogsChannelId: '1331713982687350834',
+};

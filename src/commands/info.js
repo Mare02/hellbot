@@ -26,7 +26,7 @@ module.exports = {
         { name: 'Version', value: config.bot.version, inline: true },
         { name: 'Description', value: config.bot.description, inline: true },
         { name: 'AI model', value: config.currentAiModel, inline: true },
-        { name: 'Environment', value: process.env.NODE_ENV, inline: true },
+        { name: 'Environment', value: config.isDevMode ? 'Development' : 'Production', inline: true },
         { name: 'Owner', value: config.owner.name, inline: true },
         { name: 'Servers count', value: serverCount.toString(), inline: true },
         { name: 'Invite link', value: `[Invite ${config.bot.name}](<${config.bot.inviteLink}>)`, inline: true },

@@ -1,5 +1,5 @@
 const { PermissionFlagsBits } = require('discord.js');
-const { masterCreationsChannelId } = require('../utils/config');
+const config = require('../utils/config');
 const { forwardAttachmentsToChannel } = require('../utils/helpers');
 
 module.exports = {
@@ -7,6 +7,6 @@ module.exports = {
   description: 'Displays an SFS design in the Master Creations channel.',
   perm: PermissionFlagsBits.Administrator,
   async execute(message, args) {
-    await forwardAttachmentsToChannel(message, args, masterCreationsChannelId, 'design');
+    await forwardAttachmentsToChannel(message, args, config.masterCreationsChannelId, 'design');
   },
 };

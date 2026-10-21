@@ -1,15 +1,15 @@
 const { getInstance } = require('../client');
 const roleRequests = require('../services/roleRequests');
-const funnyPresenceJob = require('../jobs/funnyPresenceJob');
+const { initializeRuntimeConfig } = require('../services/config/runtime');
+const { isGuildEnabled } = require('../utils/guildAccess');
 
 const client = getInstance();
 
 module.exports = () => {
-  client.on('clientReady', async () => {
-    funnyPresenceJob.start(client);
-
-    const guild = await client.guilds.fetch(roleRequests.targetServerId).catch(() => null);
-    if (!guild) return;
+  let publication = Promise.resolve();
+  async function publishInstructions() {
+    const guild = await client.guilds.fetch(roleRequests.getTargetServerId()).catch(() => null);
+    if (!guild || !isGuildEnabled(guild.id)) return;
 
     try {
       await guild.channels.fetch();
@@ -17,5 +17,25 @@ module.exports = () => {
     } catch (error) {
       console.error('Could not publish role-request instructions:', error);
     }
+  }
+  const enqueue = () => {
+    publication = publication
+      .then(publishInstructions)
+      .catch((error) => console.error('Could not refresh role-request instructions:', error));
+  };
+  client.on('clientReady', enqueue);
+  initializeRuntimeConfig().onChange(({ previous, current }) => {
+    if (!client.isReady()) return;
+    const fields = (value) => [
+      value?.commandsPrefix,
+      value?.embedColor,
+      value?.roleRequests,
+      value?.features.roleRequests,
+      value?.homeServerId,
+      value?.testingServerId,
+      value?.staffMemberRoleId,
+      value?.disabledGuildIds,
+    ];
+    if (JSON.stringify(fields(previous)) !== JSON.stringify(fields(current))) enqueue();
   });
 };

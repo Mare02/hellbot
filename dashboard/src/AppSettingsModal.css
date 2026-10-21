@@ -1,0 +1,25 @@
+.app-theme-choice {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  text-align: left;
+  border: 1px solid var(--mantine-color-default-border);
+  border-radius: var(--mantine-radius-md);
+  transition-property: border-color, background-color;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
+
+.app-theme-choice[aria-pressed='true'] {
+  border-color: var(--mantine-primary-color-6);
+  background: var(--mantine-color-default-hover);
+}
+
+.app-theme-choice:hover {
+  border-color: var(--mantine-primary-color-5);
+}
+
+.app-theme-choice:focus-visible {
+  outline: 2px solid var(--mantine-primary-color-5);
+  outline-offset: 2px;
+}

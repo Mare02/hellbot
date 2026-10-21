@@ -1,7 +1,7 @@
 const { getMessageContent } = require('../utils/messageContent');
 
 const DEFAULT_CHAT_CONTEXT_LIMIT = 15;
-const { currentAiProvider } = require('../utils/config');
+const config = require('../utils/config');
 const GROQ_IMAGE_URL_SIZE_LIMIT_BYTES = 20 * 1024 * 1024;
 const STATIC_IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.bmp', '.tiff'];
 const GEMINI_IMAGE_MIME_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'];
@@ -31,7 +31,7 @@ function isUnsupportedVisionMedia(attachment) {
     return true;
   }
 
-  if (currentAiProvider === 'google') {
+  if (config.currentAiProvider === 'google') {
     if (contentType.startsWith('image/') && !GEMINI_IMAGE_MIME_TYPES.includes(contentType.split(';')[0])) {
       return true;
     }
