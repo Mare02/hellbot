@@ -15,25 +15,34 @@ const sharedTheme = {
 };
 
 const darkPalettes = {
-  hellbot: ['#EDF0F4', '#D1D7E0', '#A5AEBB', '#7D8797', '#4B5461', '#303641', '#252B34', '#1C2027', '#14171C', '#101318'],
+  hellbot: ['#F2EFED', '#D8D0CC', '#B2A6A0', '#897C75', '#594D47', '#382E29', '#211B18', '#171311', '#100D0B', '#0A0807'],
 };
 
 const accentPalettes = {
+  ember: ['#FFF1E8', '#FFD6C2', '#FFB08A', '#FF8555', '#FF622B', '#F94A18', '#E83A0C', '#D12F08', '#AE2708', '#8C2109'],
   copper: ['#FFF3EC', '#FBE5D9', '#F3C9B1', '#EBAE8A', '#E19A72', '#D98B68', '#CE7A55', '#AD613F', '#8D4D32', '#733F2B'],
+};
+
+const surfacePalettes = {
+  hellbot: ['#F5F0ED', '#E7DDD8', '#D2C4BC', '#B7A69D', '#958177', '#594A42', '#2B211C', '#241B17', '#1D1613', '#17110F'],
 };
 
 const cssVariablesResolver = () => ({
   variables: {
     '--hellbot-ai-usage-input-token-color': 'var(--mantine-primary-color-filled)',
-    '--hellbot-ai-usage-output-token-color': 'var(--mantine-color-copper-3)',
+    '--hellbot-ai-usage-output-token-color': 'var(--mantine-primary-color-3)',
   },
-  light: {},
-  dark: {},
+  light: {
+    '--hellbot-surface-color': 'var(--mantine-color-gray-0)',
+  },
+  dark: {
+    '--hellbot-surface-color': 'var(--mantine-color-surface-6)',
+  },
 });
 
 export const themeOptions = [
-  { value: 'hellbot', label: 'Hellbot Dark', scheme: 'dark', primaryColor: 'copper' },
-  { value: 'light', label: 'Hellbot Light', scheme: 'light', primaryColor: 'copper' },
+  { value: 'hellbot', label: 'Hellbot Dark', scheme: 'dark', primaryColor: 'ember' },
+  { value: 'light', label: 'Hellbot Light', scheme: 'light', primaryColor: 'ember' },
 ];
 
 export const fontOptions = [
@@ -73,6 +82,8 @@ export function AppThemeProvider({ children }) {
     colors: {
       dark: darkPalettes[selectedTheme.value] || darkPalettes.hellbot,
       copper: accentPalettes.copper,
+      ember: accentPalettes.ember,
+      surface: surfacePalettes.hellbot,
     },
   }), [selectedFont, selectedTheme]);
   const contextValue = useMemo(() => ({

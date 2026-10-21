@@ -32,7 +32,7 @@ export function ResourceState({
 
 export function Section({ title, description, children }) {
   return (
-    <Paper withBorder p={{ base: 'md', sm: 'xl' }} radius="md">
+    <Paper className="config-section-card" withBorder p={{ base: 'md', sm: 'xl' }} radius="md">
       <Stack gap="lg">
         <Stack gap={4}>
           <Text fw={600}>{title}</Text>

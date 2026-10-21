@@ -4,30 +4,30 @@ import { fontOptions, themeOptions, useAppTheme } from './AppTheme.jsx';
 import './AppSettingsModal.css';
 
 const previewColors = {
-  dark: {
-    canvas: '#1c2027',
-    sidebar: '#1c2027',
-    surface: '#252b34',
-    border: '#4b5461',
-    text: '#edf0f4',
-    muted: '#a5aebb',
-    accent: '#ad613f',
-    active: '#3a241b',
+  hellbot: {
+    canvas: '#171311',
+    sidebar: '#2b211c',
+    surface: '#2b211c',
+    border: '#594d47',
+    text: '#f2efed',
+    muted: '#b2a6a0',
+    accent: '#d12f08',
+    active: '#382018',
   },
   light: {
     canvas: '#ffffff',
     sidebar: '#ffffff',
-    surface: '#ffffff',
+    surface: '#f8f9fa',
     border: '#d1d7e0',
     text: '#252b34',
     muted: '#7d8797',
-    accent: '#ad613f',
-    active: '#fbe5d9',
+    accent: '#d12f08',
+    active: '#fff1e8',
   },
 };
 
-function ThemePreview({ scheme }) {
-  const colors = previewColors[scheme];
+function ThemePreview({ themeName }) {
+  const colors = previewColors[themeName];
 
   return (
     <Box
@@ -116,7 +116,7 @@ export default function AppSettingsModal({ opened, onClose }) {
                   onClick={() => setThemeName(option.value)}
                 >
                   <Stack gap="xs">
-                    <ThemePreview scheme={option.scheme} />
+                    <ThemePreview themeName={option.value} />
                     <Group justify="space-between" gap="xs" wrap="nowrap">
                       <Text size="sm" fw={selected ? 600 : 500} c="var(--mantine-color-text)">
                         {option.label}

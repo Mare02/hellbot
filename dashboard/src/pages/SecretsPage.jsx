@@ -232,7 +232,7 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
             (item) => (providerInfo(item.provider)?.group || 'Other providers') === group
           );
           return (
-            <Paper key={group} withBorder p={{ base: 'md', sm: 'lg' }} radius="md">
+            <Paper className="table-wrapper-card" key={group} withBorder p={{ base: 'md', sm: 'lg' }} radius="md">
               <Stack gap="md">
                 <Group justify="space-between" align="center">
                   <Text fw={600}>{group}</Text>

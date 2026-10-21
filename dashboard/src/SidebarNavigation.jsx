@@ -101,7 +101,7 @@ export default function SidebarNavigation({
   const [settingsOpened, setSettingsOpened] = useState(false);
 
   return (
-    <AppShell.Navbar p="md">
+    <AppShell.Navbar p="md" className="hellbot-sidebar">
       <AppShell.Section>
         <Group justify="flex-end" hiddenFrom="sm" mb="xs">
           <ActionIcon

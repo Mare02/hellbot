@@ -83,7 +83,7 @@ export default function LogsPage({ profile, focusItem }) {
       {resource.data && (
         <>
           {resource.data.items.length ? (
-            <Paper withBorder>
+            <Paper className="table-wrapper-card" withBorder>
               <Table.ScrollContainer minWidth={700}>
                 <Table verticalSpacing="sm">
                   <Table.Thead>

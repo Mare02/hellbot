@@ -20,7 +20,7 @@ function ActivityTable({ resource, onOpen, onViewAll }) {
       </Group>
       <ResourceState {...resource} onRetry={resource.refresh} />
       {resource.data && (resource.data.items.length ? (
-        <Paper withBorder>
+        <Paper className="table-wrapper-card" withBorder>
           <Table.ScrollContainer minWidth={620}>
             <Table verticalSpacing="sm">
               <Table.Thead>
@@ -85,7 +85,7 @@ function ErrorsTable({ resource, onOpen, onViewAll }) {
       </Group>
       <ResourceState {...resource} onRetry={resource.refresh} />
       {resource.data && (resource.data.items.length ? (
-        <Paper withBorder>
+        <Paper className="table-wrapper-card" withBorder>
           <Table.ScrollContainer minWidth={700}>
             <Table verticalSpacing="sm">
               <Table.Thead>

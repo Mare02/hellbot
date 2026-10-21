@@ -137,7 +137,6 @@ export default function DeploysPage() {
                 {data.checkout?.sha && data.checkout.sha !== live?.sha && (
                   <Text size="xs" c="dimmed">
                     Current checkout: {data.checkout.sha.slice(0, 7)} · {data.checkout.branch}.
-                    {' '}A checkout alone does not confirm a healthy release.
                   </Text>
                 )}
               </Stack>

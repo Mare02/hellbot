@@ -102,7 +102,7 @@ export default function HistoryPage({ profile, focusId }) {
       {resource.data && (
         <>
           {resource.data.items.length ? (
-            <Paper withBorder>
+            <Paper className="table-wrapper-card" withBorder>
               <Table.ScrollContainer minWidth={650}>
                 <Table verticalSpacing="md">
                   <Table.Thead>

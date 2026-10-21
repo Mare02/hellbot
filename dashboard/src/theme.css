@@ -3,6 +3,18 @@
   --mantine-color-dimmed: #545c68;
 }
 
+[data-mantine-color-scheme='dark'] .hellbot-sidebar,
+[data-mantine-color-scheme='dark'] .config-section-card,
+[data-mantine-color-scheme='dark'] .table-wrapper-card {
+  background: var(--hellbot-surface-color);
+}
+
+[data-mantine-color-scheme='light'] .hellbot-sidebar,
+[data-mantine-color-scheme='light'] .config-section-card,
+[data-mantine-color-scheme='light'] .table-wrapper-card {
+  background: var(--hellbot-surface-color);
+}
+
 [data-mantine-color-scheme='light'] .overview-table-secondary {
   color: #4b5563;
 }
