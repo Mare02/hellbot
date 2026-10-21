@@ -75,14 +75,14 @@ export default function AppSettingsModal({ opened, onClose }) {
   const { themeName, setThemeName, fontName, setFontName } = useAppTheme();
 
   return (
-    <Modal opened={opened} onClose={onClose} title="App settings" size="sm">
+    <Modal opened={opened} onClose={onClose} title="App settings" size="lg">
       <Stack gap="md">
         <Text size="sm" c="dimmed">
           Personalize the dashboard appearance on this device.
         </Text>
         <Stack gap="xs">
           <Text size="sm" fw={600}>Theme</Text>
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="sm">
+          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm">
             {themeOptions.map((option) => {
               const selected = themeName === option.value;
               return (

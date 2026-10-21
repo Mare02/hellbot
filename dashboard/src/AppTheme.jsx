@@ -17,6 +17,10 @@ const sharedTheme = {
 const sharedPalettes = {
   ember: ['#FFF1E8', '#FFD6C2', '#FFB08A', '#FF8555', '#FF622B', '#F94A18', '#E83A0C', '#D12F08', '#AE2708', '#8C2109'],
   copper: ['#FFF3EC', '#FBE5D9', '#F3C9B1', '#EBAE8A', '#E19A72', '#D98B68', '#CE7A55', '#AD613F', '#8D4D32', '#733F2B'],
+  gold: ['#FFF9E8', '#F8EDC9', '#F0DDA0', '#E6C76D', '#D8AE42', '#C29429', '#A87A16', '#8F650B', '#745009', '#5B3F07'],
+  amethyst: ['#F5EEFF', '#E7D6FF', '#CEB1FF', '#B48AFF', '#9A68F0', '#824BDB', '#6D37C2', '#5B2DA8', '#492586', '#391E68'],
+  teal: ['#E8F3F1', '#CFE2DE', '#A9C8C2', '#7FA9A1', '#5A877F', '#3D6D65', '#2B5A52', '#20483F', '#193B34', '#122F2A'],
+  emerald: ['#E9FBF2', '#C9F3DC', '#9CE8BF', '#68D99B', '#3BC779', '#22AA60', '#168B4C', '#11723E', '#0F5C34', '#0D482B'],
 };
 
 const themeDefinitions = {
@@ -42,6 +46,50 @@ const themeDefinitions = {
       ...sharedPalettes,
     },
   },
+  creamLight: {
+    value: 'cream-light',
+    label: 'Cream Light',
+    scheme: 'light',
+    primaryColor: 'gold',
+    colors: {
+      dark: ['#F8F5ED', '#E8E0D0', '#CFC3AC', '#A99B82', '#81745E', '#625641', '#493E2D', '#372F22', '#292319', '#1D1912'],
+      surface: ['#FDFBF7', '#FCFAF4', '#FBF8F0', '#FAF6EB', '#F9F4E7', '#F8F2E2', '#F7F3E9', '#F0E9D9', '#E6DCC6', '#D9CCB1'],
+      ...sharedPalettes,
+    },
+  },
+  creamDark: {
+    value: 'cream-dark',
+    label: 'Cream Dark',
+    scheme: 'dark',
+    primaryColor: 'gold',
+    colors: {
+      dark: ['#F2ECE0', '#D9CDB3', '#B5A580', '#887957', '#5E523C', '#413829', '#2E271C', '#1B1711', '#14100B', '#0D0A07'],
+      surface: ['#F2ECE0', '#E5D8BD', '#C9B58E', '#A98F60', '#806B45', '#413729', '#211B13', '#1B1711', '#15110C', '#0F0C08'],
+      ...sharedPalettes,
+    },
+  },
+  amethyst: {
+    value: 'amethyst',
+    label: 'Amethyst',
+    scheme: 'dark',
+    primaryColor: 'amethyst',
+    colors: {
+      dark: ['#F5F0FA', '#E0D7EA', '#BDAFCB', '#9585A8', '#665776', '#453852', '#312840', '#241C32', '#191322', '#100D18'],
+      surface: ['#F5F0FA', '#E8DEF0', '#CFBFDD', '#AB98C2', '#79678F', '#49395D', '#342744', '#291F38', '#1D172B', '#151020'],
+      ...sharedPalettes,
+    },
+  },
+  emerald: {
+    value: 'emerald',
+    label: 'Emerald',
+    scheme: 'light',
+    primaryColor: 'emerald',
+    colors: {
+      dark: ['#F0F7F3', '#D8E5DE', '#B5C9BE', '#8CA797', '#5F7B6A', '#3F5A49', '#294634', '#1E3829', '#152A1E', '#0E1E15'],
+      surface: ['#F2F8F3', '#EDF5EF', '#E7F1E9', '#E1EDE4', '#D9E8DD', '#D0E2D5', '#E6F1E8', '#DBEADF', '#CDE1D2', '#BED6C5'],
+      ...sharedPalettes,
+    },
+  },
 };
 
 const cssVariablesResolver = () => ({
@@ -50,14 +98,24 @@ const cssVariablesResolver = () => ({
     '--hellbot-ai-usage-output-token-color': 'var(--mantine-primary-color-3)',
     '--hellbot-surface-color': 'var(--mantine-color-surface-6)',
   },
-  light: {},
+  light: {
+    '--mantine-color-body': 'var(--mantine-color-surface-0)',
+  },
   dark: {},
 });
 
-export const themeOptions = Object.values(themeDefinitions);
+export const themeOptions = [
+  themeDefinitions.hellbot,
+  themeDefinitions.creamDark,
+  themeDefinitions.amethyst,
+  themeDefinitions.light,
+  themeDefinitions.creamLight,
+  themeDefinitions.emerald,
+];
 
 export function getThemePreviewColors(themeName) {
-  const definition = themeDefinitions[themeName] || themeDefinitions.hellbot;
+  const definition = Object.values(themeDefinitions).find((theme) => theme.value === themeName)
+    || themeDefinitions.hellbot;
   const { colors, scheme, primaryColor } = definition;
   const light = scheme === 'light';
   const canvas = light ? colors.surface[0] : colors.dark[7];
