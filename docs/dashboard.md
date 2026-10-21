@@ -87,7 +87,7 @@ configuration query.
 Bot settings expose Hellbot's server routing IDs for home/testing servers,
 verification, general, update, creation, photo and log channels, the Minecraft
 category, verified role, and staff notification role. The role-request form also
-configures its request/review channels and anchor role. These IDs are profile
+configures its request/review channels and anchor role ID. These IDs are profile
 specific, validated as Discord snowflakes, stored in SQLite, and included in
 activity history. Migration 002 fills absent IDs using existing values without
 overwriting saved profile configuration. Runtime consumers read the current

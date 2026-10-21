@@ -135,3 +135,13 @@ even when a broader range is selected. `missingUsageCalls` counts successful
 chat completion calls missing any input, output or total token count. Provider
 options cover the selected range/profile, and model options additionally respect
 the selected provider, so selecting an option does not hide its siblings.
+
+## Role-request anchor ID (migration 006)
+
+Replaces `roleRequests.anchorRoleName` with `anchorRoleId`. The production
+`God Modder` role on the configured main server is migrated to its verified ID,
+`1553854743384957010`. Existing IDs are preserved; development keeps a null anchor.
+An enabled production profile with an unrecognized legacy anchor name stops the
+migration rather than guessing a role ID. Resolve that mapping before retrying.
+The conversion is recorded in activity history. Historical snapshots retain their
+original schema and remain readable.

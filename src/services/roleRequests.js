@@ -221,9 +221,9 @@ const requestRole = async (context, args = []) => {
       return;
     }
 
-    const anchorRole = config.isDevMode ? null : guild.roles.cache.find(
-      role => role.name === routing.anchorRoleName
-    );
+    const anchorRole = config.isDevMode
+      ? null
+      : await guild.roles.fetch(routing.anchorRoleId).catch(() => null);
     const reviewChannel = await fetchTextChannel(guild, routing.reviewChannelId);
     const botMember = guild.members.me;
 
@@ -339,7 +339,7 @@ const approveRequest = async interaction => {
     const existingRoles = await guild.roles.fetch();
     const anchorRole = config.isDevMode
       ? null
-      : existingRoles.find(role => role.name === routing.anchorRoleName);
+      : existingRoles.get(routing.anchorRoleId);
     const botMember = guild.members.me;
     if ((!config.isDevMode && !anchorRole) || !botMember || !botMember.permissions.has('ManageRoles') ||
       (anchorRole && botMember.roles.highest.comparePositionTo(anchorRole) <= 0)) {

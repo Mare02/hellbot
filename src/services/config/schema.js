@@ -81,12 +81,7 @@ const profileConfigSchema = z.strictObject({
   roleRequests: z.strictObject({
     requestChannelId: discordIdSchema,
     reviewChannelId: discordIdSchema,
-    anchorRoleName: z
-      .string()
-      .min(1)
-      .max(100)
-      .refine((value) => Boolean(value.trim()))
-      .nullable(),
+    anchorRoleId: discordIdSchema.nullable(),
   }),
 });
 
@@ -96,13 +91,13 @@ function parseProfileConfig(env, input) {
   if (
     profile === 'prod' &&
     config.features.roleRequests &&
-    !config.roleRequests.anchorRoleName?.trim()
+    !config.roleRequests.anchorRoleId
   ) {
     throw new z.ZodError([
       {
         code: 'custom',
-        path: ['roleRequests', 'anchorRoleName'],
-        message: 'Production role requests require an anchor role name.',
+        path: ['roleRequests', 'anchorRoleId'],
+        message: 'Production role requests require an anchor role ID.',
       },
     ]);
   }

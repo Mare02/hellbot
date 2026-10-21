@@ -307,13 +307,13 @@ export function BotSettingsForm({ form, update, fieldError }) {
           error={fieldError('roleRequests.reviewChannelId')}
         />
         <TextInput
-          label="Anchor role name"
-          description="Required for production role requests. Leave empty for no anchor in development."
-          value={form.roleRequests.anchorRoleName || ''}
+          label="Anchor role ID"
+          description="Required for production role requests. Not used in development."
+          value={form.roleRequests.anchorRoleId || ''}
           onChange={(event) =>
-            update('roleRequests.anchorRoleName', event.currentTarget.value || null)
+            update('roleRequests.anchorRoleId', event.currentTarget.value || null)
           }
-          error={fieldError('roleRequests.anchorRoleName')}
+          error={fieldError('roleRequests.anchorRoleId')}
         />
       </Section>
       <Section

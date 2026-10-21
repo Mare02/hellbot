@@ -26,7 +26,7 @@ behavior.futureNewsSchedule
 behavior.presenceRotationMinutes
 roleRequests.requestChannelId
 roleRequests.reviewChannelId
-roleRequests.anchorRoleName
+roleRequests.anchorRoleId
 ```
 
 | Setting | Source and defaults | Current consumers | Intended runtime behavior |

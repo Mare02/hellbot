@@ -212,11 +212,8 @@ function createConfigStore(database) {
             })
           );
         } else {
-          const before = previous
-            ? parseProfileConfig(row.env, beforeSnapshot)
-            : {};
-          const after = parseProfileConfig(row.env, afterSnapshot);
-          changes = changedValues(before, after);
+          // Audit snapshots retain the schema they had when the event was recorded.
+          changes = changedValues(beforeSnapshot, afterSnapshot);
         }
       }
       return { event: historyEvent(row), changes };

@@ -7,6 +7,7 @@ const MIGRATIONS = [
   { version: 3, file: '003GuildSnapshots.sql' },
   { version: 4, file: '004AiUsage.sql' },
   { version: 5, file: '005ApplicationLogs.sql' },
+  { version: 6, file: '006RoleRequestAnchorId.sql' },
 ];
 
 function migrateDatabase(database) {
