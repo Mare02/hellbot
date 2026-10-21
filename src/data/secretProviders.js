@@ -1,6 +1,6 @@
 module.exports = [
   { id: 'groq', label: 'Groq', group: 'AI providers', envPrefix: 'GROQ_API_KEY' },
-  { id: 'google', label: 'Google Gemini', group: 'AI providers', envPrefix: 'GEMINI_API_KEY' },
+  { id: 'google', label: 'Google', group: 'AI providers', envPrefix: 'GEMINI_API_KEY' },
   {
     id: 'edenai',
     label: 'EdenAI · image generation',

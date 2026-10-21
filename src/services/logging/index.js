@@ -14,7 +14,7 @@ function withLogContext(context, callback) {
   return contextStorage.run({ ...contextStorage.getStore(), ...context }, callback);
 }
 
-function createLogger({ profile, component = 'application', secretProvider } = {}) {
+function createLogger({ profile, component = 'application', secretProvider, database } = {}) {
   assertProfile(profile);
   if (secretProvider !== undefined && typeof secretProvider !== 'function') {
     throw new Error('Log secretProvider must be a function.');
@@ -23,7 +23,7 @@ function createLogger({ profile, component = 'application', secretProvider } = {
     secretProviders.add(secretProvider);
   }
   const redactor = createRedactor(() => [...secretProviders].map((provider) => provider()));
-  const write = createWriter(profile);
+  const write = createWriter(profile, database);
 
   function emit(level, message, context, formatArguments = false) {
     let entry;
@@ -64,7 +64,7 @@ function createLogger({ profile, component = 'application', secretProvider } = {
 
     nativeConsole[level](serialized);
     try {
-      write(`${serialized}\n`);
+      write(entry);
     } catch {
       nativeConsole.error('[Hellbot logging] A sanitized log record could not be persisted.');
     }
@@ -75,6 +75,12 @@ function createLogger({ profile, component = 'application', secretProvider } = {
   );
   Object.defineProperty(logger, 'capture', {
     value: (level, args) => emit(level, args, undefined, true),
+  });
+  Object.defineProperty(logger, 'close', {
+    value: () => {
+      write.close();
+      if (secretProvider) secretProviders.delete(secretProvider);
+    },
   });
   return logger;
 }
@@ -97,9 +103,7 @@ function installConsoleLogging(options) {
         console[method] = previous[method];
       }
     }
-    if (options.secretProvider) {
-      secretProviders.delete(options.secretProvider);
-    }
+    logger.close();
     activeInstallation = undefined;
   };
   activeInstallation = cleanup;
@@ -176,42 +180,13 @@ function validateFilters(filters) {
   return result;
 }
 
-function readLogs(profile, filters = {}) {
+function readLogs(profile, filters = {}, database) {
   assertProfile(profile);
   const checked = validateFilters(filters);
   const redactor = createRedactor(() => [...secretProviders].map((provider) => provider()));
   redactor.refreshSecrets();
-  const entries = readEntries(profile)
-    .filter((entry) => {
-      const timestamp = Date.parse(entry.timestamp);
-      return (
-        LEVELS.includes(entry.level) &&
-        typeof entry.component === 'string' &&
-        typeof entry.message === 'string' &&
-        (!checked.level || entry.level === checked.level) &&
-        (!checked.component || entry.component === checked.component) &&
-        (!checked.command || entry.command === checked.command) &&
-        (!checked.search ||
-          redactor
-            .text(
-              JSON.stringify({
-                timestamp: entry.timestamp,
-                level: entry.level,
-                component: entry.component,
-                command: entry.command,
-                message: entry.message,
-                context: entry.context,
-              })
-            )
-            .toLowerCase()
-            .includes(checked.search)) &&
-        (checked.from === undefined || timestamp >= checked.from) &&
-        (checked.to === undefined || timestamp <= checked.to)
-      );
-    })
-    .sort((left, right) => right.timestamp.localeCompare(left.timestamp));
-  const start = (checked.page - 1) * checked.pageSize;
-  const items = entries.slice(start, start + checked.pageSize).map((entry) => {
+  const result = readEntries(database, profile, checked);
+  const items = result.items.map((entry) => {
     const item = {
       timestamp: entry.timestamp,
       level: entry.level,
@@ -227,7 +202,7 @@ function readLogs(profile, filters = {}) {
     }
     return item;
   });
-  return { items, total: entries.length, page: checked.page, pageSize: checked.pageSize };
+  return { ...result, items };
 }
 
 module.exports = { createLogger, installConsoleLogging, readLogs, withLogContext };

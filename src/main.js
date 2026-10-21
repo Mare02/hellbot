@@ -7,6 +7,7 @@ let runtime;
 let client;
 let closeIpc;
 let stopJobs;
+let cleanupLogging;
 let stopping = false;
 
 async function shutdown() {
@@ -19,14 +20,18 @@ async function shutdown() {
     try {
       if (closeIpc) await closeIpc();
     } finally {
-      runtime?.close();
+      try {
+        runtime?.close();
+      } finally {
+        cleanupLogging?.();
+      }
     }
   }
 }
 
 async function start() {
   const profile = getProfile();
-  installConsoleLogging({ profile, component: 'bot', secretProvider: peekSecrets });
+  cleanupLogging = installConsoleLogging({ profile, component: 'bot', secretProvider: peekSecrets });
   runtime = initializeRuntimeConfig();
   if (profile === 'dev' && (!process.env.DEV_DISCORD_TOKEN || !process.env.DEV_CLIENT_ID)) {
     throw new Error(

@@ -22,7 +22,7 @@ function getDatabasePath() {
   const configuredPath = process.env.HELLBOT_DATABASE_PATH;
   const databasePath =
     configuredPath === undefined
-      ? path.join(os.homedir(), '.local/share/hellbot/config.sqlite')
+      ? path.join(os.homedir(), '.local/share/hellbot/hellbot-db')
       : configuredPath;
 
   if (!path.isAbsolute(databasePath)) {

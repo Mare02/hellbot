@@ -24,6 +24,7 @@ if (serveStatic && !fs.existsSync(indexPath)) {
 const database = initializeDatabase();
 let sensitiveKeys = {};
 const cleanupLogging = installConsoleLogging({
+  database,
   profile: 'dashboard',
   component: 'dashboard',
   secretProvider: () => sensitiveKeys,

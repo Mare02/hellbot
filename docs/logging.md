@@ -1,45 +1,54 @@
 # Local application logs
 
-Hellbot stores structured JSONL logs separately from the configuration database. Nothing is written and `console` is not patched by importing `src/services/logging`; startup explicitly installs the capture.
+Hellbot stores application logs in the `application_logs` table in the same SQLite database as configuration, history and AI calls. It uses `HELLBOT_DATABASE_PATH` (default: `~/.local/share/hellbot/hellbot-db`). Nothing is written and `console` is not patched by importing `src/services/logging`; startup explicitly installs the capture. Console output keeps its existing behavior.
 
-## Storage and limits
+## Storage and retention
 
-- Default directory: `~/.local/share/hellbot/logs`.
-- `HELLBOT_LOG_DIR` overrides it with an absolute directory outside the repository, including after resolving symlinks.
-- Each profile (`dev`, `prod`, or `dashboard`) has one current file, such as `dev.jsonl`, and up to four rotated files, `dev.1.jsonl` through `dev.4.jsonl`.
-- Each file is limited to **5 MiB**. The total limit is **25 MiB per profile**, or **75 MiB** for all three profiles.
-- Each record is limited to **32 KiB**; long strings, deeply nested context, and oversized context are truncated.
-- Dashboard queries show at most **7 days** of records. Files with no writes in 7 days are deleted during the next write, with cleanup checked at most hourly. Mixed-age files disappear through size rotation; individual expired records are excluded from reads. No background polling or cleanup timer is started. Old files for a permanently stopped profile remain on disk within the same fixed size budget.
-- New directories use mode `0700`, files `0600`. Log files must be regular files; file symlinks are rejected.
-- Use one writer process for each bot profile. The dashboard writes to its own profile. A second bot process using the same profile must not be run alongside the original.
+- Migration `005ApplicationLogs.sql` creates the table and indexes for profile, timestamp, level, component and command.
+- Each record is limited to **32 KiB**; long strings, deeply nested context, and oversized context are truncated before persistence.
+- Dashboard queries show at most **7 days** of records. Writes delete expired rows at most hourly. No cleanup timer is started. SQLite reuses freed pages; cleanup does not automatically shrink the database file.
+- All processes use the existing SQLite WAL and busy timeout configuration. Bot logging owns a lazily opened connection; dashboard logging reuses its existing connection. Shutdown closes owned connections.
+- Filtering, ordering, counting and pagination execute in SQL. Only the requested page is decoded and sanitized in JavaScript. Case-insensitive literal substring search uses a sanitized lowercase search field; it does not interpret SQL wildcard characters.
 
-Writes are synchronous and short so records are serialized in each process. Reads inspect only the five known files and at most 5 MiB per file. A partially written final line or malformed JSON record does not prevent reading other entries.
+New logs are no longer written to JSONL files. Existing files are preserved. To import the last seven days of existing records:
+
+```sh
+npm run logs:import
+npm run logs:import -- --apply
+# Optional source directory:
+npm run logs:import -- --directory /absolute/path/to/legacy/logs --apply
+```
+
+The importer uses `HELLBOT_LOG_DIR` only to locate legacy files, falling back to `~/.local/share/hellbot/logs`. It reads the existing five filenames per profile, validates and sanitizes records again, and skips already imported records when rerun. Source files are never deleted. Run after stopping old JSONL writers for a consistent final import. New logging does not use `HELLBOT_LOG_DIR`.
 
 ## API and integration
 
 ```javascript
+const { initializeDatabase } = require('./services/database');
 const { installConsoleLogging, createLogger, withLogContext, readLogs } = require('./services/logging');
+const database = initializeDatabase();
 
 const cleanup = installConsoleLogging({
+  database,
   profile: 'dev',
   component: 'bot',
   secretProvider: () => [] // Supply current decrypted AI keys synchronously.
 });
 
-const logger = createLogger({ profile: 'dev', component: 'ai' });
+const logger = createLogger({ database, profile: 'dev', component: 'ai' });
 logger.error('AI request failed', { error, command: 'askai' });
 
 await withLogContext({ component: 'commands', command: 'askai' }, async () => {
   // Existing console.log/info/warn/error/debug calls inherit this context.
 });
 
-const page = readLogs('dev', { level: 'error', page: 1, pageSize: 50 });
-// Call cleanup() at shutdown to restore the original console methods.
+const page = readLogs('dev', { level: 'error', page: 1, pageSize: 50 }, database);
+// At shutdown: logger.close(); cleanup(); database.close();
 ```
 
-Entries contain `timestamp`, `level`, `profile`, `component`, `message`, optional `command`, and optional structured `context`. Error values preserve their safe name, message, stack, code/status, and nested cause. Console output uses the same sanitized structured record as file storage. Logging failures report a fixed message; they never retry with raw arguments.
+Entries contain `timestamp`, `level`, `profile`, `component`, `message`, optional `command`, and optional structured `context`. Error values preserve their safe name, message, stack, code/status, and nested cause. Console output uses the same sanitized structured record as SQLite storage. Logging failures report a fixed message; they never retry with raw arguments.
 
-`readLogs(profile, filters)` supports exact `level` (`debug`, `info`, `warn`, `error`), `component`, and `command` filters, ISO date-time `from`/`to`, `page` (1–100000), and `pageSize` (1–100, default 50). Results are newest first and return `{ items, total, page, pageSize }`. Unknown or invalid filters throw an error with status `400` and code `INVALID_LOG_FILTER`. Missing log files return an empty page. File access/configuration errors remain errors rather than being presented as an empty log feed.
+`readLogs(profile, filters, database)` supports exact `level` (`debug`, `info`, `warn`, `error`), `component`, and `command` filters, ISO date-time `from`/`to`, `page` (1–100000), and `pageSize` (1–100, default 50). Results are newest first and return `{ items, total, page, pageSize }`. Unknown or invalid filters throw an error with status `400` and code `INVALID_LOG_FILTER`. An empty table returns an empty page. Database errors remain errors rather than being presented as an empty log feed.
 
 ## Secret and content handling
 

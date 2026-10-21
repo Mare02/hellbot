@@ -15,6 +15,7 @@ const { getProfile } = require('../../services/config/runtime');
 const { profileEnvSchema } = require('../../services/config/schema');
 const toolRegistry = require('../../data/aiToolRegistry');
 const secretProviders = require('../../data/secretProviders');
+const { createCodeUpdatesService } = require('../../services/codeUpdates');
 
 async function fetchBotProfile() {
   const credentials = createLegacyConfig(process.env);
@@ -39,6 +40,7 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   const secrets = createSecretStore(database);
   const guilds = createGuildStore(database);
   const aiUsage = createAiUsageStore(database, { secretProvider: () => secrets.readAll() });
+  const codeUpdates = createCodeUpdatesService();
   let guildSync;
   function syncGuilds() {
     if (!guildSync) {
@@ -97,6 +99,18 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
       ],
     })
   );
+  router.get('/project/commits', async (request, response) => {
+    const currentYear = new Date().getUTCFullYear();
+    const year = z.coerce.number().int().min(1970).max(currentYear).default(currentYear).parse(request.query.year);
+    try {
+      response.json(await codeUpdates.summary(year));
+    } catch (error) {
+      console.error('Could not read project Git history', { error });
+      response.status(503).json({
+        error: 'Git history is unavailable. Check that Git is installed and the project includes its repository history.',
+      });
+    }
+  });
   router.get('/guilds', async (request, response) => {
     response.json(guilds.read(profile) || (await syncGuilds()));
   });
@@ -185,7 +199,7 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   });
   router.get('/profiles/:env/logs', (request, response) => {
     assertActiveProfile(request.params.env);
-    response.json(readLogs(profile, queryFilters(request.query)));
+    response.json(readLogs(profile, queryFilters(request.query), database));
   });
   router.use((request, response) =>
     response.status(404).json({ error: 'API route was not found.' })

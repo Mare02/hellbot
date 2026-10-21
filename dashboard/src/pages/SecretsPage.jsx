@@ -22,7 +22,7 @@ import { useResource } from '../useResource';
 
 const PROVIDERS = {
   groq: { label: 'Groq', group: 'AI providers' },
-  google: { label: 'Google Gemini', group: 'AI providers' },
+  google: { label: 'Google', group: 'AI providers' },
   edenai: { label: 'EdenAI · image generation', group: 'AI providers' },
   newsapi: { label: 'NewsAPI', group: 'Integrations' },
   exchangerate: { label: 'ExchangeRate-API', group: 'Integrations' },

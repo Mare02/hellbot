@@ -8,13 +8,13 @@ The SQLite driver (`better-sqlite3`) is pinned in `package.json`.
 The default database file is outside the repository:
 
 ```text
-~/.local/share/hellbot/config.sqlite
+~/.local/share/hellbot/hellbot-db
 ```
 
 To override it, set an absolute file path in `.env` or the process environment:
 
 ```dotenv
-HELLBOT_DATABASE_PATH=/absolute/persistent/directory/config.sqlite
+HELLBOT_DATABASE_PATH=/absolute/persistent/directory/hellbot-db
 ```
 
 The parent directory is created when necessary. Paths inside this checkout,
@@ -53,6 +53,8 @@ database or silently continue with defaults.
   migrations leave it empty; the explicit task 2 import populates missing rows.
 - `secrets`: shared encrypted AI and integration API keys, with multiple rows allowed per provider.
   Populate explicitly with `npm run secrets:import -- --apply` or dashboard key management.
+- `application_logs`: sanitized application logs for `dev`, `prod` and `dashboard`, with SQL
+  filtering and pagination and seven-day retention. See [logging](logging.md).
 - `config_history`: profile or shared audit events with non-secret snapshots and
   metadata. Imports and subsequent configuration/key operations are recorded transactionally.
 

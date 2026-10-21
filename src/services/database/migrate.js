@@ -6,6 +6,7 @@ const MIGRATIONS = [
   { version: 2, file: '002DiscordRouting.sql' },
   { version: 3, file: '003GuildSnapshots.sql' },
   { version: 4, file: '004AiUsage.sql' },
+  { version: 5, file: '005ApplicationLogs.sql' },
 ];
 
 function migrateDatabase(database) {

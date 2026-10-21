@@ -17,6 +17,7 @@ import {
   IconBrain,
   IconKey,
   IconHistory,
+  IconGitCommit,
   IconLayoutDashboard,
   IconRefresh,
   IconSettings,
@@ -68,6 +69,13 @@ export const pages = {
     title: 'Activity log',
     description: 'A history of changes made through this dashboard instance.',
     icon: IconHistory,
+    shared: true,
+  },
+  code: {
+    slug: 'code-updates',
+    title: 'Code updates',
+    description: 'Development activity and recent commits in this project.',
+    icon: IconGitCommit,
     shared: true,
   },
 };

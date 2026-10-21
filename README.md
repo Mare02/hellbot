@@ -39,7 +39,7 @@ keys are loaded from SQLite; Discord credentials remain in env.
 ### Dashboard database
 
 Initialize the dashboard SQLite schema with `npm run db:migrate`.
-The database defaults to `~/.local/share/hellbot/config.sqlite`; set
+The database defaults to `~/.local/share/hellbot/hellbot-db`; set
 `HELLBOT_DATABASE_PATH` for another persistent location outside the repository.
 See [database setup](docs/database.md) for migration and startup details.
 

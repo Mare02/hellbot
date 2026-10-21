@@ -12,6 +12,7 @@
     "db:migrate": "node scripts/migrateDatabase.js",
     "config:import": "node scripts/importConfig.js",
     "secrets:import": "node scripts/importSecrets.js",
+    "logs:import": "node scripts/importLogs.js",
     "dashboard:setup": "node scripts/setupDashboard.js",
     "dashboard:dev": "NODE_ENV=development node scripts/devDashboard.js",
     "dashboard:build": "vite build --config dashboard/vite.config.mjs",

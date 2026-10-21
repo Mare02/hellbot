@@ -25,7 +25,7 @@ profile selected for that installation.
 
 The import is explicit and skips profiles that already have configuration. It does
 not start a bot or overwrite stored profiles. The database defaults to
-`~/.local/share/hellbot/config.sqlite`; see [database setup](database.md).
+`~/.local/share/hellbot/hellbot-db`; see [database setup](database.md).
 
 Set a stable `HELLBOT_ENCRYPTION_KEY` in the environment for dashboard and bot
 processes. It must be a base64-encoded 32-byte key. Never rotate or replace it

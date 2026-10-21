@@ -5,8 +5,6 @@ import {
   Code,
   Drawer,
   Group,
-  Modal,
-  Pagination,
   Paper,
   Select,
   SimpleGrid,
@@ -15,142 +13,72 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import { IconEye, IconFilter, IconRefresh, IconSearch } from '@tabler/icons-react';
-import { dateLabel, queryString } from '../api';
+import { IconEye, IconSearch } from '@tabler/icons-react';
+import { dateLabel } from '../api';
 import { Empty, ResourceState } from '../components';
-import { useResource } from '../useResource';
+import { useFilteredResource } from '../useFilteredResource';
+import { ListFilters, ListPagination } from '../ListFilters';
+
+const INITIAL_FILTERS = { search: '', level: '', component: '', command: '', from: '', to: '' };
 
 export default function LogsPage({ profile, focusItem }) {
-  const [filters, setFilters] = useState({
-    search: '',
-    level: '',
-    component: '',
-    command: '',
-    from: '',
-    to: '',
-  });
-  const [query, setQuery] = useState(filters);
-  const [page, setPage] = useState(1);
+  const list = useFilteredResource(`/profiles/${profile}/logs`, INITIAL_FILTERS);
+  const { filters, setFilter, resource } = list;
   const [selected, setSelected] = useState(null);
-  const [filtersOpened, setFiltersOpened] = useState(false);
-  const activeFilterCount = Object.values(query).filter(Boolean).length;
-  const resource = useResource(
-    `/profiles/${profile}/logs?${queryString({ ...query, page, pageSize: 25 })}`
-  );
   useEffect(() => {
     if (focusItem) setSelected(focusItem);
   }, [focusItem]);
   return (
     <Stack gap="lg">
-      <Modal
-        opened={filtersOpened}
-        onClose={() => setFiltersOpened(false)}
+      <ListFilters
+        list={list}
         title="Filter logs"
-        size="lg"
+        description="Search by text, level, component, command, or date. Sensitive values are redacted before logs are stored."
+        totalLabel="log entries"
+        applyLabel="Apply filters / refresh"
       >
-        <Stack gap="md">
-          <Text size="sm" c="dimmed">
-            Search by text, level, component, command, or date. Sensitive values are redacted before
-            logs are stored.
-          </Text>
-          <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput
-              label="Text search"
-              placeholder="Search messages and details"
-              leftSection={<IconSearch size={16} />}
-              maxLength={256}
-              value={filters.search}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setFilters((current) => ({ ...current, search: value }));
-              }}
-            />
-            <Select
-              label="Level"
-              data={[
-                { value: '', label: 'All levels' },
-                ...['debug', 'info', 'warn', 'error'].map((value) => ({ value, label: value })),
-              ]}
-              value={filters.level}
-              onChange={(value) => setFilters((current) => ({ ...current, level: value || '' }))}
-            />
-            <TextInput
-              label="Component"
-              value={filters.component}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setFilters((current) => ({ ...current, component: value }));
-              }}
-            />
-            <TextInput
-              label="Command"
-              value={filters.command}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setFilters((current) => ({ ...current, command: value }));
-              }}
-            />
-            <TextInput
-              label="From"
-              type="date"
-              value={filters.from}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setFilters((current) => ({ ...current, from: value }));
-              }}
-            />
-            <TextInput
-              label="To"
-              type="date"
-              value={filters.to}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setFilters((current) => ({ ...current, to: value }));
-              }}
-            />
-          </SimpleGrid>
-          <Group justify="space-between">
-            <Button
-              variant="default"
-              onClick={() => {
-                const empty = { search: '', level: '', component: '', command: '', from: '', to: '' };
-                setFilters(empty);
-                setQuery(empty);
-                setPage(1);
-                resource.refresh();
-                setFiltersOpened(false);
-              }}
-            >
-              Reset filters
-            </Button>
-            <Button
-              leftSection={<IconRefresh size={16} />}
-              onClick={() => {
-                setQuery({ ...filters });
-                setPage(1);
-                resource.refresh();
-                setFiltersOpened(false);
-              }}
-            >
-              Apply filters / refresh
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-      <Group justify="space-between">
-        {resource.data && (
-          <Text c="dimmed" size="sm">
-            {resource.data.total} log entries
-          </Text>
-        )}
-        <Button
-          variant="default"
-          leftSection={<IconFilter size={16} />}
-          onClick={() => setFiltersOpened(true)}
-        >
-          Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-        </Button>
-      </Group>
+        <SimpleGrid cols={{ base: 1, sm: 2 }}>
+          <TextInput
+            label="Text search"
+            placeholder="Search messages and details"
+            leftSection={<IconSearch size={16} />}
+            maxLength={256}
+            value={filters.search}
+            onChange={(event) => setFilter('search', event.currentTarget.value)}
+          />
+          <Select
+            label="Level"
+            data={[
+              { value: '', label: 'All levels' },
+              ...['debug', 'info', 'warn', 'error'].map((value) => ({ value, label: value })),
+            ]}
+            value={filters.level}
+            onChange={(value) => setFilter('level', value || '')}
+          />
+          <TextInput
+            label="Component"
+            value={filters.component}
+            onChange={(event) => setFilter('component', event.currentTarget.value)}
+          />
+          <TextInput
+            label="Command"
+            value={filters.command}
+            onChange={(event) => setFilter('command', event.currentTarget.value)}
+          />
+          <TextInput
+            label="From"
+            type="date"
+            value={filters.from}
+            onChange={(event) => setFilter('from', event.currentTarget.value)}
+          />
+          <TextInput
+            label="To"
+            type="date"
+            value={filters.to}
+            onChange={(event) => setFilter('to', event.currentTarget.value)}
+          />
+        </SimpleGrid>
+      </ListFilters>
       <ResourceState {...resource} onRetry={resource.refresh} />
       {resource.data && (
         <>
@@ -221,11 +149,7 @@ export default function LogsPage({ profile, focusItem }) {
           ) : (
             <Empty>No log entries match these filters.</Empty>
           )}
-          <Pagination
-            total={Math.max(1, Math.ceil(resource.data.total / 25))}
-            value={page}
-            onChange={setPage}
-          />
+          <ListPagination list={list} />
         </>
       )}
       <Drawer

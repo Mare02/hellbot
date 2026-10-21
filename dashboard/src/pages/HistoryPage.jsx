@@ -4,9 +4,6 @@ import {
   Button,
   Code,
   Drawer,
-  Group,
-  Modal,
-  Pagination,
   Paper,
   SimpleGrid,
   Stack,
@@ -14,10 +11,14 @@ import {
   Text,
   TextInput,
 } from '@mantine/core';
-import { IconEye, IconFilter, IconRefresh } from '@tabler/icons-react';
-import { dateLabel, queryString } from '../api';
+import { IconEye } from '@tabler/icons-react';
+import { dateLabel } from '../api';
 import { Empty, ResourceState, Section } from '../components';
 import { useResource } from '../useResource';
+import { useFilteredResource } from '../useFilteredResource';
+import { ListFilters, ListPagination } from '../ListFilters';
+
+const INITIAL_FILTERS = { action: '', from: '', to: '' };
 
 function HistoryDetail({ id }) {
   const resource = useResource(`/history/${id}`);
@@ -61,101 +62,42 @@ function HistoryDetail({ id }) {
 }
 
 export default function HistoryPage({ profile, focusId }) {
-  const [filters, setFilters] = useState({ action: '', from: '', to: '' });
-  const [query, setQuery] = useState(filters);
-  const [page, setPage] = useState(1);
+  const list = useFilteredResource('/history', INITIAL_FILTERS);
+  const { filters, setFilter, resource } = list;
   const [selected, setSelected] = useState(null);
-  const [filtersOpened, setFiltersOpened] = useState(false);
-  const activeFilterCount = Object.values(query).filter(Boolean).length;
-  const resource = useResource(`/history?${queryString({ ...query, page, pageSize: 25 })}`);
   useEffect(() => {
     if (focusId !== undefined && focusId !== null) setSelected(focusId);
   }, [focusId]);
   return (
     <Stack gap="lg">
-      <Modal
-        opened={filtersOpened}
-        onClose={() => setFiltersOpened(false)}
+      <ListFilters
+        list={list}
         title="Filter activity"
-        size="lg"
+        description={`Configuration changes for the ${profile === 'prod' ? 'Production' : 'Development'} bot and shared dashboard data.`}
+        totalLabel="activity entries"
+        resetLabel="Reset"
       >
-        <Stack gap="md">
-          <Text size="sm" c="dimmed">
-            Configuration changes for the {profile === 'prod' ? 'Production' : 'Development'} bot
-            and shared dashboard data.
-          </Text>
-          <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-            <TextInput
-              label="Action"
-              placeholder="Filter by action"
-              value={filters.action}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setFilters((current) => ({ ...current, action: value }));
-              }}
-            />
-            <TextInput
-              label="From"
-              type="date"
-              value={filters.from}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setFilters((current) => ({ ...current, from: value }));
-              }}
-            />
-            <TextInput
-              label="To"
-              type="date"
-              value={filters.to}
-              onChange={(event) => {
-                const value = event.currentTarget.value;
-                setFilters((current) => ({ ...current, to: value }));
-              }}
-            />
-          </SimpleGrid>
-          <Group justify="space-between">
-            <Button
-              variant="default"
-              miw={100}
-              onClick={() => {
-                const empty = { action: '', from: '', to: '' };
-                setFilters(empty);
-                setQuery(empty);
-                setPage(1);
-                resource.refresh();
-                setFiltersOpened(false);
-              }}
-            >
-              Reset
-            </Button>
-            <Button
-              leftSection={<IconRefresh size={16} />}
-              onClick={() => {
-                setQuery({ ...filters });
-                setPage(1);
-                resource.refresh();
-                setFiltersOpened(false);
-              }}
-            >
-              Apply filters
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
-      <Group justify="space-between">
-        {resource.data && (
-          <Text size="sm" c="dimmed">
-            {resource.data.total} activity entries
-          </Text>
-        )}
-        <Button
-          variant="default"
-          leftSection={<IconFilter size={16} />}
-          onClick={() => setFiltersOpened(true)}
-        >
-          Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
-        </Button>
-      </Group>
+        <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
+          <TextInput
+            label="Action"
+            placeholder="Filter by action"
+            value={filters.action}
+            onChange={(event) => setFilter('action', event.currentTarget.value)}
+          />
+          <TextInput
+            label="From"
+            type="date"
+            value={filters.from}
+            onChange={(event) => setFilter('from', event.currentTarget.value)}
+          />
+          <TextInput
+            label="To"
+            type="date"
+            value={filters.to}
+            onChange={(event) => setFilter('to', event.currentTarget.value)}
+          />
+        </SimpleGrid>
+      </ListFilters>
       <ResourceState {...resource} onRetry={resource.refresh} />
       {resource.data && (
         <>
@@ -217,11 +159,7 @@ export default function HistoryPage({ profile, focusId }) {
           ) : (
             <Empty>No activity matches these filters.</Empty>
           )}
-          <Pagination
-            total={Math.max(1, Math.ceil(resource.data.total / 25))}
-            value={page}
-            onChange={setPage}
-          />
+          <ListPagination list={list} />
         </>
       )}
       <Drawer

@@ -159,7 +159,7 @@ export default function Overview({
   }
 
   const provider = config.data?.config.ai.provider;
-  const providerLabel = provider === 'google' ? 'Google Gemini' : provider === 'groq' ? 'Groq' : provider;
+  const providerLabel = provider === 'google' ? 'Google' : provider === 'groq' ? 'Groq' : provider;
   const model = config.data?.config.ai.models[provider]?.text;
 
   return (

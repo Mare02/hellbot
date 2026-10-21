@@ -71,7 +71,7 @@ export function AiSettingsForm({ form, update, fieldError, catalog, modelOptions
           label="AI provider"
           data={[
             { value: 'groq', label: 'Groq' },
-            { value: 'google', label: 'Google Gemini' },
+            { value: 'google', label: 'Google' },
             ...customProviders.map(({ id, name }) => ({ value: id, label: name })),
           ]}
           value={form.ai.provider}
@@ -122,7 +122,7 @@ export function AiSettingsForm({ form, update, fieldError, catalog, modelOptions
           </SimpleGrid>
         ) : (
           <TextInput
-            label="Gemini model"
+            label="Google model"
             value={form.ai.models.google.text}
             onChange={(event) => update('ai.models.google.text', event.currentTarget.value)}
             maxLength={200}

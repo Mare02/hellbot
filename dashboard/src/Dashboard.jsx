@@ -17,6 +17,7 @@ import { HistoryPage, LogsPage, SecretsPage } from './DataPages';
 import { useResource } from './useResource';
 import SidebarNavigation, { pages } from './SidebarNavigation';
 import Overview from './pages/Overview';
+import CodeUpdatesPage from './pages/CodeUpdatesPage';
 
 export default function Dashboard() {
   const profiles = useResource('/profiles');
@@ -169,6 +170,7 @@ export default function Dashboard() {
             {profile && page === 'activity' && (
               <HistoryPage profile={profile} focusId={location.state?.focusActivityId} />
             )}
+            {profile && page === 'code' && <CodeUpdatesPage />}
             {profile && page === 'logs' && (
               <LogsPage key={profile} profile={profile} focusItem={location.state?.focusLogItem} />
             )}

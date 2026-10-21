@@ -1,10 +1,5 @@
-const fs = require('node:fs');
-const os = require('node:os');
-const path = require('node:path');
+const { initializeDatabase } = require('../database');
 
-const REPOSITORY_PATH = path.resolve(__dirname, '../../..');
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
-const FILE_COUNT = 5;
 const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 const PROFILES = ['dev', 'prod', 'dashboard'];
 
@@ -14,168 +9,92 @@ function assertProfile(profile) {
   }
 }
 
-function assertExternalPath(directory) {
-  const relative = path.relative(fs.realpathSync(REPOSITORY_PATH), directory);
-  if (relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative)) {
-    throw new Error('HELLBOT_LOG_DIR must point outside the repository.');
-  }
-}
-
-function getLogDirectory(create = false) {
-  const directory =
-    process.env.HELLBOT_LOG_DIR === undefined
-      ? path.join(os.homedir(), '.local/share/hellbot/logs')
-      : process.env.HELLBOT_LOG_DIR;
-  if (!path.isAbsolute(directory)) {
-    throw new Error('HELLBOT_LOG_DIR must be an absolute directory path.');
-  }
-  const normalized = path.normalize(directory);
-  assertExternalPath(normalized);
-  if (!fs.existsSync(normalized)) {
-    if (!create) {
-      return null;
-    }
-    let ancestor = path.dirname(normalized);
-    while (!fs.existsSync(ancestor)) {
-      ancestor = path.dirname(ancestor);
-    }
-    assertExternalPath(path.join(fs.realpathSync(ancestor), path.relative(ancestor, normalized)));
-    fs.mkdirSync(normalized, { recursive: true, mode: 0o700 });
-  }
-  const realDirectory = fs.realpathSync(normalized);
-  assertExternalPath(realDirectory);
-  if (!fs.statSync(realDirectory).isDirectory()) {
-    throw new Error('HELLBOT_LOG_DIR must be a directory.');
-  }
-  return realDirectory;
-}
-
-function filePath(directory, profile, index) {
-  return path.join(directory, `${profile}${index ? `.${index}` : ''}.jsonl`);
-}
-
-function fileStat(filename) {
-  try {
-    const stat = fs.lstatSync(filename);
-    if (!stat.isFile() || stat.isSymbolicLink()) {
-      throw new Error('Log files must be regular files.');
-    }
-    return stat;
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return null;
-    }
-    throw error;
-  }
-}
-
-function createWriter(profile) {
+function createWriter(profile, database) {
   assertProfile(profile);
-  let directory;
+  const ownsDatabase = !database;
+  let connection = database;
+  let insert;
   let lastPruned = 0;
 
-  return (line) => {
-    directory = directory || getLogDirectory(true);
+  function write(entry, legacyHash = null) {
+    if (entry.profile !== profile) throw new Error('Log profile does not match its writer.');
+    connection ||= initializeDatabase();
+    insert ||= connection.prepare(`INSERT INTO application_logs
+      (timestamp, profile, level, component, command, message, context_json, search_text, legacy_hash)
+      VALUES (@timestamp, @profile, @level, @component, @command, @message, @context, @search, @legacyHash)
+      ON CONFLICT(legacy_hash) DO NOTHING`);
     const now = Date.now();
-    if (now - lastPruned > 60 * 60 * 1000) {
-      for (let index = 0; index < FILE_COUNT; index += 1) {
-        const filename = filePath(directory, profile, index);
-        const stat = fileStat(filename);
-        if (stat && now - stat.mtimeMs > RETENTION_MS) {
-          fs.unlinkSync(filename);
-        }
-      }
+    if (now - lastPruned >= 60 * 60 * 1000) {
+      connection.prepare('DELETE FROM application_logs WHERE timestamp < ?')
+        .run(new Date(now - RETENTION_MS).toISOString());
       lastPruned = now;
     }
+    return insert.run({
+      timestamp: entry.timestamp,
+      profile,
+      level: entry.level,
+      component: entry.component,
+      command: entry.command ?? null,
+      message: entry.message,
+      legacyHash,
+      context: entry.context === undefined ? null : JSON.stringify(entry.context),
+      search: JSON.stringify({
+        timestamp: entry.timestamp,
+        level: entry.level,
+        component: entry.component,
+        command: entry.command,
+        message: entry.message,
+        context: entry.context,
+      }).toLowerCase(),
+    }).changes;
+  }
 
-    const current = filePath(directory, profile, 0);
-    const size = fileStat(current)?.size || 0;
-    if (size + Buffer.byteLength(line) > MAX_FILE_BYTES) {
-      const oldest = filePath(directory, profile, FILE_COUNT - 1);
-      if (fileStat(oldest)) {
-        fs.unlinkSync(oldest);
-      }
-      for (let index = FILE_COUNT - 2; index >= 0; index -= 1) {
-        const source = filePath(directory, profile, index);
-        if (fileStat(source)) {
-          fs.renameSync(source, filePath(directory, profile, index + 1));
-        }
-      }
-    }
-
-    const descriptor = fs.openSync(
-      current,
-      fs.constants.O_WRONLY |
-        fs.constants.O_CREAT |
-        fs.constants.O_APPEND |
-        fs.constants.O_NOFOLLOW,
-      0o600
-    );
-    try {
-      fs.writeFileSync(descriptor, line, 'utf8');
-    } finally {
-      fs.closeSync(descriptor);
-    }
+  write.close = () => {
+    if (ownsDatabase && connection?.open) connection.close();
   };
+  return write;
 }
 
-function readEntries(profile) {
+function readEntries(database, profile, filters) {
   assertProfile(profile);
-  const directory = getLogDirectory();
-  if (!directory) {
-    return [];
-  }
-  const entries = [];
-  const minimumTimestamp = Date.now() - RETENTION_MS;
-  for (let index = 0; index < FILE_COUNT; index += 1) {
-    const filename = filePath(directory, profile, index);
-    let descriptor;
-    try {
-      const stat = fileStat(filename);
-      if (!stat || stat.mtimeMs < minimumTimestamp) {
-        continue;
-      }
-      descriptor = fs.openSync(filename, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
-      const length = Math.min(stat.size, MAX_FILE_BYTES);
-      const offset = Math.max(0, stat.size - length);
-      const buffer = Buffer.alloc(length);
-      const bytesRead = fs.readSync(descriptor, buffer, 0, length, offset);
-      const lines = buffer.subarray(0, bytesRead).toString('utf8').split('\n');
-      if (offset > 0) {
-        lines.shift();
-      }
-      // A writer may not have finished the last JSONL record yet.
-      lines.pop();
-      for (const line of lines) {
-        if (line.length > 32768) {
-          continue;
-        }
-        try {
-          const entry = JSON.parse(line);
-          if (
-            entry &&
-            entry.profile === profile &&
-            typeof entry.timestamp === 'string' &&
-            Date.parse(entry.timestamp) >= minimumTimestamp
-          ) {
-            entries.push(entry);
-          }
-        } catch {
-          // Ignore a damaged record without hiding other valid entries.
-        }
-      }
-    } catch (error) {
-      // Rotation can rename a file after it was listed.
-      if (error.code !== 'ENOENT') {
-        throw error;
-      }
-    } finally {
-      if (descriptor !== undefined) {
-        fs.closeSync(descriptor);
-      }
+  const conditions = ['profile = @profile', 'timestamp >= @cutoff'];
+  const params = { profile, cutoff: new Date(Date.now() - RETENTION_MS).toISOString() };
+  for (const key of ['level', 'component', 'command']) {
+    if (filters[key]) {
+      conditions.push(`${key} = @${key}`);
+      params[key] = filters[key];
     }
   }
-  return entries;
+  for (const [key, operator] of [['from', '>='], ['to', '<=']]) {
+    if (filters[key] !== undefined) {
+      conditions.push(`timestamp ${operator} @${key}`);
+      params[key] = new Date(filters[key]).toISOString();
+    }
+  }
+  if (filters.search) {
+    conditions.push('instr(search_text, @search) > 0');
+    params.search = filters.search;
+  }
+  const where = conditions.join(' AND ');
+  const connection = database || initializeDatabase();
+  try {
+    return connection.transaction(() => {
+      const total = connection.prepare(`SELECT COUNT(*) AS total FROM application_logs WHERE ${where}`)
+        .get(params).total;
+      const rows = connection.prepare(`SELECT timestamp, profile, level, component, command,
+        message, context_json FROM application_logs WHERE ${where}
+        ORDER BY timestamp DESC, id DESC LIMIT @limit OFFSET @offset`)
+        .all({ ...params, limit: filters.pageSize, offset: (filters.page - 1) * filters.pageSize });
+      const items = rows.map(({ context_json, command, ...entry }) => ({
+        ...entry,
+        ...(command === null ? {} : { command }),
+        ...(context_json === null ? {} : { context: JSON.parse(context_json) }),
+      }));
+      return { items, total, page: filters.page, pageSize: filters.pageSize };
+    })();
+  } finally {
+    if (!database) connection.close();
+  }
 }
 
 module.exports = { assertProfile, createWriter, readEntries };
