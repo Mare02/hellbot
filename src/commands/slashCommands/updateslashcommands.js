@@ -4,7 +4,8 @@ const config = require('../../utils/config');
 const slashCommands = require('.');
 const { OWNER, hasPermission } = require('../../utils/permissions');
 const messages = require('../../utils/messages');
-const { getInstance } = require('../../client');
+const { getInstance, getLoginPromise } = require('../../client');
+const { initializeRuntimeConfig } = require('../../services/config/runtime');
 const { isGuildEnabled } = require('../../utils/guildAccess');
 require('dotenv').config();
 
@@ -24,6 +25,7 @@ module.exports = {
     let updatesChannel;
 
     try {
+      if (isCalledAsJob) await getLoginPromise();
       const applicationId = client.application?.id || config.bot.appId;
 
       if (!applicationId) {
@@ -46,25 +48,30 @@ module.exports = {
 
       const messageText = 'Slash commands updated!';
       if (message) {
-        message.channel.send(messageText);
+        await message.channel.send(messageText);
       }
       else if (updatesChannel) {
-        updatesChannel.send(messageText);
+        await updatesChannel.send(messageText);
       }
     }
     catch (error) {
-      console.error(error);
+      console.error('Slash-command registration failed.');
+      if (!message && isCalledAsJob) process.exitCode = 1;
       const errorText = `Failed to update slash commands: ${error.message}`;
       if (message) {
-        message.channel.send(errorText);
+        await message.channel.send(errorText);
       }
       else if (updatesChannel) {
-        updatesChannel.send(errorText);
+        await updatesChannel.send(errorText);
       }
     } finally {
       if (!message && isCalledAsJob === true) {
-        process.exit();
+        try {
+          await client.destroy();
+        } finally {
+          initializeRuntimeConfig().close();
+        }
       }
     }
   }
-}
+};

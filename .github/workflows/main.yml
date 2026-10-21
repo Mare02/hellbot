@@ -38,6 +38,14 @@ jobs:
       - name: Check JavaScript syntax
         run: find src -type f -name '*.js' -print0 | xargs -0 -r -n1 node --check
 
+      - name: Verify SQLite migrations
+        env:
+          HELLBOT_DATABASE_PATH: ${{ runner.temp }}/hellbot-ci-db
+        run: pnpm run db:migrate
+
+      - name: Build dashboard
+        run: pnpm run dashboard:build
+
       - name: Configure VPS SSH
         env:
           VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
@@ -50,15 +58,30 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy to VPS
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
         run: |
-          ssh -o BatchMode=yes hellbot@93.127.160.57 'bash -l -i -c "exec bash -euo pipefail -s"' <<'REMOTE'
+          ssh -o BatchMode=yes hellbot@93.127.160.57 "bash -l -i -c 'exec bash -euo pipefail -s -- $DEPLOY_SHA'" <<'REMOTE'
             set -euo pipefail
+            export NODE_ENV=production
             cd /home/hellbot/projects/hellbot
-            git pull --ff-only origin main
-            pnpm install --frozen-lockfile
-            pm2 restart hellbot
-
+            test -z "$(git status --porcelain)"
+            git fetch origin main
+            git merge --ff-only "$1"
+            test "$(git rev-parse HEAD)" = "$1"
+            test "$(pnpm --version)" = '12.6.0'
+            pnpm install --frozen-lockfile --prod=false
+            pnpm run dashboard:build
+            pnpm run db:migrate
+            pm2 restart hellbot --update-env
+            if pm2 describe hellbot-dashboard >/dev/null 2>&1; then
+              pm2 restart hellbot-dashboard --update-env
+            else
+              pm2 start src/dashboard/server.js --name hellbot-dashboard --cwd "$PWD"
+            fi
+            pm2 save
+            node scripts/checkDeployment.js
+            node -e 'require("./src/commands/slashCommands/updateslashcommands").execute(null, true).catch(() => { console.error("Slash-command registration failed."); process.exitCode = 1; })'
             commit_message="$(git log -1 --format=%s)"
-            COMMIT_MESSAGE="$commit_message" node -e 'require("./src/jobs/botUpdatedJob").execute(process.env.COMMIT_MESSAGE)'
-            node -e 'require("./src/commands/slashCommands/updateslashcommands").execute(null, true)'
+            COMMIT_MESSAGE="$commit_message" node scripts/announceDeployment.js
           REMOTE
