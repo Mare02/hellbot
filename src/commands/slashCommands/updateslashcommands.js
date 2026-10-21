@@ -6,7 +6,6 @@ const { OWNER, hasPermission } = require('../../utils/permissions');
 const messages = require('../../utils/messages');
 const { getInstance, getLoginPromise } = require('../../client');
 const { initializeRuntimeConfig } = require('../../services/config/runtime');
-const { isGuildEnabled } = require('../../utils/guildAccess');
 require('dotenv').config();
 
 const rest = new REST({ version: '10' }).setToken(config.bot.token);
@@ -22,7 +21,6 @@ module.exports = {
     }
 
     const client = getInstance();
-    let updatesChannel;
 
     try {
       if (isCalledAsJob) await getLoginPromise();
@@ -30,16 +28,6 @@ module.exports = {
 
       if (!applicationId) {
         throw new Error('Unable to resolve the bot application ID.');
-      }
-
-      if (isCalledAsJob === true) {
-        const targetServerId = config.isDevMode
-          ? config.testingServerId
-          : config.homeServerId;
-        if (isGuildEnabled(targetServerId)) {
-          const homeServer = await client.guilds.fetch(targetServerId);
-          updatesChannel = await homeServer.channels.fetch(config.hellbotUpdatesChannelId);
-        }
       }
 
       await rest.put(Routes.applicationCommands(applicationId), {
@@ -50,9 +38,6 @@ module.exports = {
       if (message) {
         await message.channel.send(messageText);
       }
-      else if (updatesChannel) {
-        await updatesChannel.send(messageText);
-      }
     }
     catch (error) {
       console.error('Slash-command registration failed.');
@@ -60,9 +45,6 @@ module.exports = {
       const errorText = `Failed to update slash commands: ${error.message}`;
       if (message) {
         await message.channel.send(errorText);
-      }
-      else if (updatesChannel) {
-        await updatesChannel.send(errorText);
       }
     } finally {
       if (!message && isCalledAsJob === true) {
