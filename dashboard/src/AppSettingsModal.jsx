@@ -1,33 +1,10 @@
 import { Box, Group, Modal, Select, SimpleGrid, Stack, Text, UnstyledButton } from '@mantine/core';
 import { IconCheck } from '@tabler/icons-react';
-import { fontOptions, themeOptions, useAppTheme } from './AppTheme.jsx';
+import { fontOptions, getThemePreviewColors, themeOptions, useAppTheme } from './AppTheme.jsx';
 import './AppSettingsModal.css';
 
-const previewColors = {
-  hellbot: {
-    canvas: '#171311',
-    sidebar: '#2b211c',
-    surface: '#2b211c',
-    border: '#594d47',
-    text: '#f2efed',
-    muted: '#b2a6a0',
-    accent: '#d12f08',
-    active: '#382018',
-  },
-  light: {
-    canvas: '#ffffff',
-    sidebar: '#ffffff',
-    surface: '#f8f9fa',
-    border: '#d1d7e0',
-    text: '#252b34',
-    muted: '#7d8797',
-    accent: '#d12f08',
-    active: '#fff1e8',
-  },
-};
-
 function ThemePreview({ themeName }) {
-  const colors = previewColors[themeName];
+  const colors = getThemePreviewColors(themeName);
 
   return (
     <Box
