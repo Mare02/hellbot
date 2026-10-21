@@ -15,7 +15,16 @@ import {
   TextInput,
   Tooltip,
 } from '@mantine/core';
-import { IconEdit, IconKey, IconPlus, IconRefresh, IconTrash } from '@tabler/icons-react';
+import {
+  IconAlertCircle,
+  IconCheck,
+  IconEdit,
+  IconKey,
+  IconPlus,
+  IconRefresh,
+  IconTrash,
+  IconX,
+} from '@tabler/icons-react';
 import { api, dateLabel, mergeApplication } from '../api';
 import { ApplyStatus, ResourceState } from '../components';
 import { useResource } from '../useResource';
@@ -55,7 +64,8 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
   const [value, setValue] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
-  const [message, setMessage] = useState(null);
+  const [connectionResults, setConnectionResults] = useState({});
+  const [testingId, setTestingId] = useState(null);
   const [application, setApplication] = useState(null);
   const active = useRef(true);
   useEffect(() => {
@@ -105,22 +115,22 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
     setValue('');
     setLabel('');
   }
-  async function action(callback) {
+  async function action(callback, secretId) {
     if (busy) return;
     setBusy(true);
     setError(null);
-    setMessage(null);
     try {
       const result = await callback();
       if (!active.current) return;
       if (result.application)
         setApplication((previous) => mergeApplication(previous || [], result.application));
-      if ('success' in result)
-        setMessage({
-          success: result.success,
-          tested: result.tested,
-          text: result.message,
+      if (secretId) {
+        setConnectionResults((previous) => {
+          const next = { ...previous };
+          delete next[secretId];
+          return next;
         });
+      }
       resource.refresh();
       setEditor(null);
       setRemoving(null);
@@ -132,7 +142,8 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
       if (active.current) setBusy(false);
     }
   }
-  function testConnection(item) {
+  async function testConnection(item) {
+    if (busy) return;
     const allowGeneration = item.provider === 'edenai';
     if (
       allowGeneration &&
@@ -141,13 +152,30 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
       )
     )
       return;
-    return action(() =>
-      api(`/secrets/${item.id}/test?profile=${profile}`, {
+    setBusy(true);
+    setTestingId(item.id);
+    setConnectionResults((previous) => ({ ...previous, [item.id]: null }));
+    try {
+      const result = await api(`/secrets/${item.id}/test?profile=${profile}`, {
         method: 'POST',
         body: allowGeneration ? { allowGeneration: true } : {},
-      })
-    );
+      });
+      if (active.current)
+        setConnectionResults((previous) => ({ ...previous, [item.id]: result }));
+    } catch (failure) {
+      if (active.current)
+        setConnectionResults((previous) => ({
+          ...previous,
+          [item.id]: { success: false, tested: true, message: failure.message },
+        }));
+    } finally {
+      if (active.current) {
+        setTestingId(null);
+        setBusy(false);
+      }
+    }
   }
+
   function save() {
     if (!editor?.id && !providers.some((item) => item.value === provider)) return;
     if (editor.id) {
@@ -155,7 +183,7 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
         ...(label !== editor.label ? { label } : {}),
         ...(value !== editor.value ? { value } : {}),
       };
-      return action(() => api(`/secrets/${editor.id}`, { method: 'PATCH', body }));
+      return action(() => api(`/secrets/${editor.id}`, { method: 'PATCH', body }), editor.id);
     }
     return action(() => api('/secrets', { method: 'POST', body: { provider, label, value } }));
   }
@@ -170,20 +198,6 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
           {error}
         </Alert>
       )}
-      {message && (
-        <Alert
-          color={message.success ? 'teal' : message.tested === false ? 'yellow' : 'red'}
-          title={
-            message.success
-              ? 'Connection successful'
-              : message.tested === false
-                ? 'Connection not checked'
-                : 'Connection failed'
-          }
-        >
-          {message.text}
-        </Alert>
-      )}
       <ApplyStatus application={application} />
       <Group justify="space-between">
         <Text size="sm" c="dimmed">
@@ -195,6 +209,7 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
             leftSection={<IconRefresh size={16} />}
             disabled={busy}
             onClick={() => {
+              setConnectionResults({});
               resource.refresh();
               catalog.refresh();
             }}
@@ -278,11 +293,13 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
                                 <Button
                                   size="xs"
                                   variant="light"
-                                  loading={busy}
+                                  loading={testingId === item.id}
+                                  disabled={busy}
                                   onClick={() => testConnection(item)}
                                 >
                                   Test connection
                                 </Button>
+                                <ConnectionResult result={connectionResults[item.id]} />
                                 <Tooltip label="Edit key">
                                   <ActionIcon
                                     variant="subtle"
@@ -395,7 +412,9 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
             <Button
               color="red"
               loading={busy}
-              onClick={() => action(() => api(`/secrets/${removing.id}`, { method: 'DELETE' }))}
+              onClick={() =>
+                action(() => api(`/secrets/${removing.id}`, { method: 'DELETE' }), removing.id)
+              }
             >
               Delete key
             </Button>
@@ -403,5 +422,39 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
         </Stack>
       </Modal>
     </Stack>
+  );
+}
+
+function ConnectionResult({ result }) {
+  const successful = result?.success && result.tested === true;
+  const unchecked = result?.tested === false;
+  const Icon = successful ? IconCheck : unchecked ? IconAlertCircle : IconX;
+  const label = successful
+    ? 'Connection successful'
+    : unchecked
+      ? 'Connection not checked'
+      : 'Connection failed';
+
+  return (
+    <span role="status" aria-live="polite">
+      {result && (
+        <Tooltip
+          label={`${label}: ${result.message}`}
+          events={{ hover: true, focus: true, touch: true }}
+          multiline
+          w={280}
+        >
+          <Text
+            component="span"
+            c={successful ? 'teal' : unchecked ? 'yellow' : 'red'}
+            tabIndex={0}
+            aria-label={`${label}: ${result.message}`}
+            style={{ display: 'inline-flex', verticalAlign: 'middle' }}
+          >
+            <Icon size={18} aria-hidden="true" />
+          </Text>
+        </Tooltip>
+      )}
+    </span>
   );
 }

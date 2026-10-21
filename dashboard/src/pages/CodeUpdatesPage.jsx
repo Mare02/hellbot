@@ -109,7 +109,7 @@ export default function CodeUpdatesPage() {
                   ].map(([label, value]) => (
                     <Group key={label} justify="space-between" gap="sm" wrap="nowrap">
                       <Text size="xs" c="dimmed">{label}</Text>
-                      <Text fz={20} fw={650} style={{ fontVariantNumeric: 'tabular-nums' }}>
+                      <Text size="sm" fw={600} style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {typeof value === 'number' ? value.toLocaleString() : value}
                       </Text>
                     </Group>
