@@ -20,7 +20,6 @@ const sharedPalettes = {
   gold: ['#FFF9E8', '#F8EDC9', '#F0DDA0', '#E6C76D', '#D8AE42', '#C29429', '#A87A16', '#8F650B', '#745009', '#5B3F07'],
   amethyst: ['#F5EEFF', '#E7D6FF', '#CEB1FF', '#B48AFF', '#9A68F0', '#824BDB', '#6D37C2', '#5B2DA8', '#492586', '#391E68'],
   teal: ['#E8F3F1', '#CFE2DE', '#A9C8C2', '#7FA9A1', '#5A877F', '#3D6D65', '#2B5A52', '#20483F', '#193B34', '#122F2A'],
-  emerald: ['#E9FBF2', '#C9F3DC', '#9CE8BF', '#68D99B', '#3BC779', '#22AA60', '#168B4C', '#11723E', '#0F5C34', '#0D482B'],
 };
 
 const themeDefinitions = {
@@ -31,7 +30,7 @@ const themeDefinitions = {
     primaryColor: 'ember',
     colors: {
       dark: ['#F2EFED', '#D8D0CC', '#B2A6A0', '#897C75', '#594D47', '#382E29', '#211B18', '#171311', '#100D0B', '#0A0807'],
-      surface: ['#F5F0ED', '#E7DDD8', '#D2C4BC', '#B7A69D', '#958177', '#594A42', '#2B211C', '#241B17', '#1D1613', '#17110F'],
+      surface: ['#F5F0ED', '#E7DDD8', '#D2C4BC', '#B7A69D', '#958177', '#594A42', '#241B17', '#1D1613', '#17110F', '#120D0B'],
       ...sharedPalettes,
     },
   },
@@ -70,23 +69,23 @@ const themeDefinitions = {
   },
   amethyst: {
     value: 'amethyst',
-    label: 'Amethyst',
+    label: 'Amethyst Dark',
     scheme: 'dark',
     primaryColor: 'amethyst',
     colors: {
-      dark: ['#F5F0FA', '#E0D7EA', '#BDAFCB', '#9585A8', '#665776', '#453852', '#312840', '#241C32', '#191322', '#100D18'],
-      surface: ['#F5F0FA', '#E8DEF0', '#CFBFDD', '#AB98C2', '#79678F', '#49395D', '#342744', '#291F38', '#1D172B', '#151020'],
+      dark: ['#F2EDF7', '#D8CEE3', '#B7A8C8', '#907FA7', '#68597D', '#443653', '#2E223C', '#1D1527', '#140F1C', '#0D0912'],
+      surface: ['#F2EDF7', '#E6DCED', '#CBBDE0', '#A891C4', '#82689D', '#58466D', '#251B32', '#201729', '#17111F', '#100B16'],
       ...sharedPalettes,
     },
   },
-  emerald: {
-    value: 'emerald',
-    label: 'Emerald',
+  amethystLight: {
+    value: 'amethyst-light',
+    label: 'Amethyst Light',
     scheme: 'light',
-    primaryColor: 'emerald',
+    primaryColor: 'amethyst',
     colors: {
-      dark: ['#F0F7F3', '#D8E5DE', '#B5C9BE', '#8CA797', '#5F7B6A', '#3F5A49', '#294634', '#1E3829', '#152A1E', '#0E1E15'],
-      surface: ['#F2F8F3', '#EDF5EF', '#E7F1E9', '#E1EDE4', '#D9E8DD', '#D0E2D5', '#E6F1E8', '#DBEADF', '#CDE1D2', '#BED6C5'],
+      dark: ['#F6F3F9', '#E4DFE9', '#C8C0D1', '#9A90A6', '#736981', '#574D65', '#43394F', '#332940', '#261E32', '#1B1525'],
+      surface: ['#FAF8FC', '#F8F5FB', '#F6F2FA', '#F4EFF9', '#F1EBF7', '#EEE7F5', '#F2EDF8', '#EAE2F2', '#DED3E9', '#CFBFDF'],
       ...sharedPalettes,
     },
   },
@@ -110,7 +109,7 @@ export const themeOptions = [
   themeDefinitions.amethyst,
   themeDefinitions.light,
   themeDefinitions.creamLight,
-  themeDefinitions.emerald,
+  themeDefinitions.amethystLight,
 ];
 
 export function getThemePreviewColors(themeName) {
