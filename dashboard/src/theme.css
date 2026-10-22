@@ -22,3 +22,18 @@
 [data-mantine-color-scheme='dark'] .overview-table-secondary {
   color: var(--mantine-color-dimmed);
 }
+
+@media (max-width: 47.99em) {
+  .hellbot-mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding-block: var(--mantine-spacing-sm);
+    padding-inline: var(--mantine-spacing-md);
+    width: calc(100% + 2 * var(--mantine-spacing-md));
+    margin-inline: calc(-1 * var(--mantine-spacing-md));
+    margin-top: calc(-1 * var(--mantine-spacing-md));
+    background: var(--hellbot-surface-color);
+    border-bottom: 1px solid var(--mantine-color-default-border);
+  }
+}

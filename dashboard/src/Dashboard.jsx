@@ -99,7 +99,7 @@ export default function Dashboard() {
       <AppShell.Main>
         <Container size={1200} px={0}>
           <Stack gap="xl">
-            <Group hiddenFrom="sm">
+            <Group hiddenFrom="sm" className="hellbot-mobile-header">
               <Burger
                 opened={mobileOpened}
                 onClick={() => setMobileOpened((value) => !value)}

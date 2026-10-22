@@ -8,11 +8,12 @@ function ThemePreview({ themeName }) {
 
   return (
     <Box
+      className="app-theme-preview"
       aria-hidden="true"
       style={{
         display: 'grid',
         gridTemplateColumns: '29% 1fr',
-        height: 126,
+        height: 'var(--app-theme-preview-height, 126px)',
         overflow: 'hidden',
         border: `1px solid ${colors.border}`,
         borderRadius: 7,
@@ -82,7 +83,7 @@ export default function AppSettingsModal({ opened, onClose }) {
         </Text>
         <Stack gap="xs">
           <Text size="sm" fw={600}>Theme</Text>
-          <SimpleGrid cols={{ base: 1, sm: 2, lg: 3 }} spacing="sm">
+          <SimpleGrid cols={{ base: 2, lg: 3 }} spacing="sm">
             {themeOptions.map((option) => {
               const selected = themeName === option.value;
               return (

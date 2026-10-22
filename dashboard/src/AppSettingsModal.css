@@ -23,3 +23,9 @@
   outline: 2px solid var(--mantine-primary-color-5);
   outline-offset: 2px;
 }
+
+@media (max-width: 47.99em) {
+  .app-theme-preview {
+    --app-theme-preview-height: 80px;
+  }
+}
