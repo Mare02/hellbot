@@ -7,10 +7,10 @@ import { Empty, ResourceState, Section } from '../components';
 import { useResource } from '../useResource';
 
 const heatColors = [
-  'var(--mantine-primary-color-2)',
-  'var(--mantine-primary-color-4)',
-  'var(--mantine-primary-color-6)',
-  'var(--mantine-primary-color-8)',
+  '#9be9a8',
+  '#40c463',
+  '#30a14e',
+  '#216e39',
 ];
 
 export default function CodeUpdatesPage() {
