@@ -39,6 +39,10 @@ export default function Dashboard() {
   const markDirty = useCallback((value) => setDirty(value), []);
   const markBusy = useCallback((value) => setPending(value), []);
   useEffect(() => {
+    if (slug === 'features') {
+      routerNavigate('/bot-settings?tab=features', { replace: true });
+      return;
+    }
     if (!Object.values(pages).some((item) => item.slug === slug)) {
       routerNavigate('/overview', { replace: true });
     }
@@ -157,7 +161,7 @@ export default function Dashboard() {
                     onOpenApiKeys={() => routerNavigate(`/${pages.keys.slug}`)}
                   />
                 )}
-                {['ai', 'settings', 'features'].includes(page) && (
+                {['ai', 'settings'].includes(page) && (
                   <ConfigPage
                     key={`${profile}-${page}`}
                     profile={profile}

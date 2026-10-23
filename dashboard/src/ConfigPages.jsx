@@ -24,7 +24,10 @@ const AiUsageSection = lazy(() => import('./AiUsageSection'));
 
 export default function ConfigPage({ profile, page, onDirty, onBusy }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get('tab') === 'usage' ? 'usage' : 'settings';
+  const requestedTab = searchParams.get('tab');
+  const activeTab = page === 'ai'
+    ? requestedTab === 'usage' ? 'usage' : 'settings'
+    : requestedTab === 'features' ? 'features' : 'settings';
   const resource = useResource(`/profiles/${profile}/config`);
   const catalog = useResource('/catalog');
   const [original, setOriginal] = useState(null);
@@ -120,55 +123,56 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
         {page === 'ai' && (
           <AiSettingsForm form={form} update={update} fieldError={fieldError} catalog={catalog} />
         )}
-        {page === 'settings' && (
+        {page === 'settings' && activeTab === 'settings' && (
           <BotSettingsForm form={form} update={update} fieldError={fieldError} />
         )}
-        {page === 'features' && (
+        {page === 'settings' && activeTab === 'features' && (
           <FeaturesForm form={form} update={update} fieldError={fieldError} />
-        )}
-        {dirty && (
-          <div className="config-save-footer">
-            <Paper className="config-save-footer-inner" p="md" withBorder shadow="md">
-              <Group justify="space-between" wrap="wrap" gap="md">
-                <Stack gap={2}>
-                  <Text fw={600} size="sm">
-                    Unsaved changes
-                  </Text>
-                  <Text c="dimmed" size="xs">
-                    {profile === 'prod' ? 'Production' : 'Development'} ·{' '}
-                    {Object.keys(changedFields(original, form)).length} section(s) changed
-                  </Text>
-                </Stack>
-                <Group gap="xs">
-                  <Button
-                    variant="default"
-                    leftSection={<IconRotate size={16} />}
-                    disabled={busy}
-                    onClick={() => {
-                      setForm(structuredClone(original));
-                      setError(null);
-                      setIssues([]);
-                    }}
-                  >
-                    Discard
-                  </Button>
-                  <Button
-                    loading={busy}
-                    leftSection={<IconDeviceFloppy size={16} />}
-                    onClick={save}
-                  >
-                    Save changes
-                  </Button>
-                </Group>
-              </Group>
-            </Paper>
-          </div>
         )}
       </Stack>
     </Fieldset>
   );
 
-  if (page !== 'ai') return settings;
+  const saveFooter = dirty && (
+    <div className="config-save-footer">
+      <Paper className="config-save-footer-inner" p="md" withBorder shadow="md">
+        <Group justify="space-between" wrap="wrap" gap="md">
+          <Stack gap={2}>
+            <Text fw={600} size="sm">
+              Unsaved changes
+            </Text>
+            <Text c="dimmed" size="xs">
+              {profile === 'prod' ? 'Production' : 'Development'} ·{' '}
+              {Object.keys(changedFields(original, form)).length} section(s) changed
+            </Text>
+          </Stack>
+          <Group gap="xs">
+            <Button
+              variant="default"
+              leftSection={<IconRotate size={16} />}
+              disabled={busy}
+              onClick={() => {
+                setForm(structuredClone(original));
+                setError(null);
+                setIssues([]);
+              }}
+            >
+              Discard
+            </Button>
+            <Button
+              loading={busy}
+              leftSection={<IconDeviceFloppy size={16} />}
+              onClick={save}
+            >
+              Save changes
+            </Button>
+          </Group>
+        </Group>
+      </Paper>
+    </div>
+  );
+
+  if (page !== 'ai' && page !== 'settings') return settings;
 
   return (
     <Tabs
@@ -182,16 +186,25 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
         });
       }}
     >
-      <Tabs.List aria-label="AI settings navigation" mb="lg">
+      <Tabs.List aria-label={`${page === 'ai' ? 'AI' : 'Bot'} settings navigation`} mb="lg">
         <Tabs.Tab value="settings">Settings</Tabs.Tab>
-        <Tabs.Tab value="usage">Usage</Tabs.Tab>
+        {page === 'ai' ? (
+          <Tabs.Tab value="usage">Usage</Tabs.Tab>
+        ) : (
+          <Tabs.Tab value="features">Features</Tabs.Tab>
+        )}
       </Tabs.List>
-      <Tabs.Panel value="settings">{settings}</Tabs.Panel>
-      <Tabs.Panel value="usage" keepMounted={false}>
-        <LazyContent resetKey={profile}>
-          {activeTab === 'usage' && <AiUsageSection key={profile} profile={profile} />}
-        </LazyContent>
-      </Tabs.Panel>
+      <Tabs.Panel value="settings">{activeTab === 'settings' && settings}</Tabs.Panel>
+      {page === 'ai' ? (
+        <Tabs.Panel value="usage" keepMounted={false}>
+          <LazyContent resetKey={profile}>
+            {activeTab === 'usage' && <AiUsageSection key={profile} profile={profile} />}
+          </LazyContent>
+        </Tabs.Panel>
+      ) : (
+        <Tabs.Panel value="features">{activeTab === 'features' && settings}</Tabs.Panel>
+      )}
+      {saveFooter}
     </Tabs>
   );
 }

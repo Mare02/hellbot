@@ -13,7 +13,6 @@ import {
 import { useState } from 'react';
 import {
   IconAdjustments,
-  IconBolt,
   IconBrain,
   IconKey,
   IconHistory,
@@ -45,12 +44,6 @@ export const pages = {
     title: 'Bot settings',
     description: 'Command appearance and Hellbot workflows.',
     icon: IconAdjustments,
-  },
-  features: {
-    slug: 'features',
-    title: 'Features',
-    description: 'Control bot behavior and scheduled actions.',
-    icon: IconBolt,
   },
   logs: {
     slug: 'errors-logs',

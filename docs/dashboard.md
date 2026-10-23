@@ -109,6 +109,10 @@ receive scheduled guild broadcasts. The bot remains installed in those servers s
 the dashboard can continue listing and re-enabling them. Server discovery does not
 use bot IPC or open a Gateway connection.
 
+Bot settings use **Settings** and **Features** tabs. The Features tab contains
+feature switches and behavior schedules. The former `/features` page redirects to
+the Features tab for existing bookmarks.
+
 ## AI tools and features
 
 AI settings choose a supported provider and model and configure each registered AI
