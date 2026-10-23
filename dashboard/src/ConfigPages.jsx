@@ -1,6 +1,7 @@
 import { lazy, useEffect, useRef, useState } from 'react';
 import {
   Alert,
+  Badge,
   Button,
   Fieldset,
   Group,
@@ -16,9 +17,45 @@ import { IconCheck, IconDeviceFloppy, IconRotate } from '@tabler/icons-react';
 import { api, changedFields } from './api';
 import { ResourceState } from './components';
 import { useResource } from './useResource';
-import { AiSettingsForm, BotSettingsForm, FeaturesForm } from './ConfigForms';
+import { AiSettingsForm, BotSettingsForm } from './ConfigForms';
 import LazyContent from './LazyContent';
 import './ConfigPages.css';
+
+const botSettingsSections = [
+  { id: 'appearance', label: 'Appearance' },
+  { id: 'discord', label: 'Discord setup' },
+  { id: 'workflows', label: 'Workflows' },
+  { id: 'features', label: 'Features' },
+  { id: 'jobs', label: 'Scheduled jobs' },
+  { id: 'access', label: 'Server access' },
+];
+
+function sectionHasChanges(section, changes) {
+  if (section === 'appearance') return 'commandsPrefix' in changes || 'embedColor' in changes;
+  if (section === 'discord') {
+    return ['homeServerId', 'testingServerId', 'logChannelId', 'verifyChannelId', 'generalChannelId',
+      'hellbotUpdatesChannelId', 'masterCreationsChannelId', 'uniqueCreationsChannelId',
+      'masterPhotosChannelId', 'verificationLogsChannelId', 'minecraftCategoryId',
+      'staffMemberRoleId', 'verifiedRoleId'].some((key) => key in changes);
+  }
+  if (section === 'workflows') {
+    return 'roleRequests' in changes;
+  }
+  if (section === 'features') {
+    const featureChanges = changes.features || {};
+    return ['mentionReplies', 'randomReplies', 'roleRequests', 'verification', 'ticketReplies']
+      .some((key) => key in featureChanges)
+      || 'randomReplyProbability' in (changes.behavior || {});
+  }
+  if (section === 'jobs') {
+    const featureChanges = changes.features || {};
+    const behaviorChanges = changes.behavior || {};
+    return ['dailyQuotes', 'futureNews', 'presenceRotation'].some((key) => key in featureChanges)
+      || ['dailyQuoteSchedule', 'futureNewsSchedule', 'presenceRotationMinutes']
+        .some((key) => key in behaviorChanges);
+  }
+  return 'disabledGuildIds' in changes;
+}
 
 const AiUsageSection = lazy(() => import('./AiUsageSection'));
 
@@ -27,7 +64,9 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
   const requestedTab = searchParams.get('tab');
   const activeTab = page === 'ai'
     ? requestedTab === 'usage' ? 'usage' : 'settings'
-    : requestedTab === 'features' ? 'features' : 'settings';
+    : botSettingsSections.some(({ id }) => id === requestedTab)
+      ? requestedTab
+      : 'appearance';
   const resource = useResource(`/profiles/${profile}/config`);
   const catalog = useResource('/catalog');
   const [original, setOriginal] = useState(null);
@@ -48,7 +87,11 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
       setForm(structuredClone(resource.data.config));
     }
   }, [resource.data]);
-  const dirty = original && form ? Object.keys(changedFields(original, form)).length > 0 : false;
+  const changes = original && form ? changedFields(original, form) : {};
+  const dirty = Object.keys(changes).length > 0;
+  const changedSectionCount = page === 'settings'
+    ? botSettingsSections.filter(({ id }) => sectionHasChanges(id, changes)).length
+    : Object.keys(changes).length;
   useEffect(() => {
     onDirty(Boolean(dirty));
   }, [dirty, onDirty]);
@@ -123,11 +166,13 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
         {page === 'ai' && (
           <AiSettingsForm form={form} update={update} fieldError={fieldError} catalog={catalog} />
         )}
-        {page === 'settings' && activeTab === 'settings' && (
-          <BotSettingsForm form={form} update={update} fieldError={fieldError} />
-        )}
-        {page === 'settings' && activeTab === 'features' && (
-          <FeaturesForm form={form} update={update} fieldError={fieldError} />
+        {page === 'settings' && (
+          <BotSettingsForm
+            form={form}
+            update={update}
+            fieldError={fieldError}
+            section={activeTab}
+          />
         )}
       </Stack>
     </Fieldset>
@@ -143,7 +188,7 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
             </Text>
             <Text c="dimmed" size="xs">
               {profile === 'prod' ? 'Production' : 'Development'} ·{' '}
-              {Object.keys(changedFields(original, form)).length} section(s) changed
+              {changedSectionCount} section(s) changed
             </Text>
           </Stack>
           <Group gap="xs">
@@ -172,7 +217,44 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
     </div>
   );
 
-  if (page !== 'ai' && page !== 'settings') return settings;
+  if (page === 'settings') {
+    return (
+      <>
+        <Tabs
+          value={activeTab}
+          onChange={(value) => {
+            if (!value || value === activeTab) return;
+            setSearchParams((current) => {
+              const next = new URLSearchParams(current);
+              next.set('tab', value);
+              return next;
+            });
+          }}
+        >
+          <Tabs.List aria-label="Bot settings navigation" mb="lg">
+            {botSettingsSections.map((section) => (
+              <Tabs.Tab key={section.id} value={section.id}>
+                <Group gap="xs" wrap="nowrap">
+                  <span>{section.label}</span>
+                  {sectionHasChanges(section.id, changes) && (
+                    <Badge size="xs" variant="light" color="yellow">Unsaved</Badge>
+                  )}
+                </Group>
+              </Tabs.Tab>
+            ))}
+          </Tabs.List>
+          {botSettingsSections.map((section) => (
+            <Tabs.Panel key={section.id} value={section.id}>
+              {activeTab === section.id && settings}
+            </Tabs.Panel>
+          ))}
+        </Tabs>
+        {saveFooter}
+      </>
+    );
+  }
+
+  if (page !== 'ai') return settings;
 
   return (
     <Tabs

@@ -205,8 +205,10 @@ async function executeToolCalls(
     messages: [...request.messages, message, ...toolMessages, ...imageContextMessage],
     ...(toolIteration + 1 >= MAX_TOOL_ITERATIONS ? { tool_choice: 'none' } : {}),
   };
+  if (['groq', 'google'].includes(provider) && visionImages.length) {
+    followUpRequest.model = config.ai.models[provider].vision;
+  }
   if (provider === 'groq' && visionImages.length) {
-    followUpRequest.model = config.ai.models.groq.vision;
     delete followUpRequest.reasoning_effort;
   }
   const followUpData = await createCompletion(followUpRequest, provider);
@@ -265,8 +267,8 @@ module.exports = {
       const request = {
         messages: buildRequestMessages(prompt, effectiveSystemPrompt, imageUrl),
         model:
-          provider === 'groq' && imageUrl
-            ? config.ai.models.groq.vision
+          ['groq', 'google'].includes(provider) && imageUrl
+            ? config.ai.models[provider].vision
             : customProvider?.model || config.ai.models[provider].text,
         stream: false,
       };

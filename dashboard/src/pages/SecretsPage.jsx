@@ -211,10 +211,6 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
 
   return (
     <Stack gap="xl">
-      <Alert title="Shared credentials for this bot">
-        These keys are used by the selected bot's AI and integration services. Updating or deleting
-        a key refreshes this bot. Key values are encrypted at rest and can be viewed when editing.
-      </Alert>
       {!editor && error && (
         <Alert color="red" title="Action failed">
           {error}

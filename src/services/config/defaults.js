@@ -26,7 +26,10 @@ function createInitialConfig(profileEnv, env) {
           text: legacy.currentAiProvider === 'groq' ? legacy.currentAiModel : aiModels.gpt_oss_120b,
           vision: aiModels.qwen3_8_27b,
         },
-        google: { text: legacy.currentGeminiModel },
+        google: {
+          text: legacy.currentGeminiModel,
+          vision: legacy.currentGeminiModel,
+        },
       },
     },
     roleRequests: { ...legacy.roleRequests },

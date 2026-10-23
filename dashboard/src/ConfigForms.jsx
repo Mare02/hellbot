@@ -121,13 +121,27 @@ export function AiSettingsForm({ form, update, fieldError, catalog, modelOptions
             />
           </SimpleGrid>
         ) : (
-          <TextInput
-            label="Google model"
-            value={form.ai.models.google.text}
-            onChange={(event) => update('ai.models.google.text', event.currentTarget.value)}
-            maxLength={200}
-            error={fieldError('ai.models.google.text')}
-          />
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <TextInput
+              label="Text model"
+              value={form.ai.models.google.text}
+              onChange={(event) => update('ai.models.google.text', event.currentTarget.value)}
+              maxLength={200}
+              error={fieldError('ai.models.google.text')}
+            />
+            <TextInput
+              label="Vision model"
+              value={form.ai.models.google.vision}
+              onChange={(event) => update('ai.models.google.vision', event.currentTarget.value)}
+              maxLength={200}
+              error={fieldError('ai.models.google.vision')}
+            />
+          </SimpleGrid>
+        )}
+        {(form.ai.provider === 'groq' || form.ai.provider === 'google') && (
+          <Text size="xs" c="dimmed">
+            The vision model is used when Hellbot analyzes images.
+          </Text>
         )}
         {catalog.error && (
           <Text size="sm" c="red">
@@ -227,7 +241,9 @@ const discordIdSections = [
   },
 ];
 
-export function BotSettingsForm({ form, update, fieldError }) {
+const jobFeatures = ['dailyQuotes', 'futureNews', 'presenceRotation'];
+
+function ServerAccessSection({ form, update, fieldError }) {
   const guilds = useResource('/guilds');
   const [guildsSyncing, setGuildsSyncing] = useState(false);
   const [guildsSyncError, setGuildsSyncError] = useState(null);
@@ -247,29 +263,103 @@ export function BotSettingsForm({ form, update, fieldError }) {
   }
 
   return (
+    <Section
+      title="Server access"
+      description="Choose which Discord servers can use this bot. Changes are stored with the configuration and apply when you save."
+    >
+      <Group justify="space-between">
+        <Text size="xs" c="dimmed">
+          {guilds.data?.syncedAt
+            ? `Last refreshed: ${dateLabel(guilds.data.syncedAt)}`
+            : 'Load the servers this bot has joined from Discord.'}
+        </Text>
+        <Button
+          variant="default"
+          leftSection={<IconRefresh size={16} />}
+          loading={guildsSyncing}
+          disabled={guilds.loading}
+          onClick={syncGuilds}
+        >
+          Refresh
+        </Button>
+      </Group>
+      {guildsSyncError && (
+        <Alert color="yellow" title="Could not refresh servers">
+          {guildsSyncError} The last saved server list is kept.
+        </Alert>
+      )}
+      <ResourceState
+        {...guilds}
+        onRetry={guilds.refresh}
+        errorColor="yellow"
+        errorTitle="Could not load servers"
+        errorMessage="Could not load the server list from Discord. Check this profile's Discord token and connection, then try again."
+      />
+      {guilds.data &&
+        (guilds.data.guilds.length ? (
+          <Stack gap="md">
+            {guilds.data.guilds.map((guild) => (
+              <Group key={guild.id} justify="space-between" wrap="nowrap">
+                <Stack gap={2}>
+                  <Text fw={500}>{guild.name}</Text>
+                  <Text size="xs" c="dimmed">
+                    {guild.id}
+                  </Text>
+                </Stack>
+                <Switch
+                  aria-label={`Enable Hellbot in ${guild.name}`}
+                  checked={!disabledGuildIds.includes(guild.id)}
+                  onChange={(event) =>
+                    update(
+                      'disabledGuildIds',
+                      event.currentTarget.checked
+                        ? disabledGuildIds.filter((id) => id !== guild.id)
+                        : [...disabledGuildIds, guild.id]
+                    )
+                  }
+                />
+              </Group>
+            ))}
+            {fieldError('disabledGuildIds') && (
+              <Text size="sm" c="red">
+                {fieldError('disabledGuildIds')}
+              </Text>
+            )}
+          </Stack>
+        ) : (
+          <Empty>This bot has not joined any Discord servers.</Empty>
+        ))}
+    </Section>
+  );
+}
+
+export function BotSettingsForm({ form, update, fieldError, section }) {
+  return (
     <>
-      <Section
-        title="Bot appearance"
-        description="Settings specific to Hellbot commands and replies."
-      >
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <TextInput
-            label="Command prefix"
-            value={form.commandsPrefix}
-            maxLength={32}
-            onChange={(event) => update('commandsPrefix', event.currentTarget.value)}
-            error={fieldError('commandsPrefix')}
-          />
-          <ColorInput
-            label="Embed color"
-            format="hex"
-            value={form.embedColor}
-            onChange={(value) => update('embedColor', value)}
-            error={fieldError('embedColor')}
-          />
-        </SimpleGrid>
-      </Section>
-      {discordIdSections.map(({ title, fields }) => (
+      {section === 'appearance' && (
+        <Section
+          title="Bot appearance"
+          description="Settings specific to Hellbot commands and replies."
+        >
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <TextInput
+              label="Command prefix"
+              value={form.commandsPrefix}
+              maxLength={32}
+              onChange={(event) => update('commandsPrefix', event.currentTarget.value)}
+              error={fieldError('commandsPrefix')}
+            />
+            <ColorInput
+              label="Embed color"
+              format="hex"
+              value={form.embedColor}
+              onChange={(value) => update('embedColor', value)}
+              error={fieldError('embedColor')}
+            />
+          </SimpleGrid>
+        </Section>
+      )}
+      {section === 'discord' && discordIdSections.map(({ title, fields }) => (
         <Section
           key={title}
           title={title}
@@ -290,112 +380,116 @@ export function BotSettingsForm({ form, update, fieldError }) {
           </SimpleGrid>
         </Section>
       ))}
-      <Section
-        title="Role request workflow"
-        description="Choose where Hellbot receives and reviews role requests. IDs can be copied from Discord with Developer Mode enabled."
-      >
-        <TextInput
-          label="Request channel ID"
-          value={form.roleRequests.requestChannelId}
-          onChange={(event) => update('roleRequests.requestChannelId', event.currentTarget.value)}
-          error={fieldError('roleRequests.requestChannelId')}
-        />
-        <TextInput
-          label="Review channel ID"
-          value={form.roleRequests.reviewChannelId}
-          onChange={(event) => update('roleRequests.reviewChannelId', event.currentTarget.value)}
-          error={fieldError('roleRequests.reviewChannelId')}
-        />
-        <TextInput
-          label="Anchor role ID"
-          description="Required for production role requests. Not used in development."
-          value={form.roleRequests.anchorRoleId || ''}
-          onChange={(event) =>
-            update('roleRequests.anchorRoleId', event.currentTarget.value || null)
-          }
-          error={fieldError('roleRequests.anchorRoleId')}
-        />
-      </Section>
-      <Section
-        title="Server access"
-        description="Choose which Discord servers can use this bot. Changes are stored with the configuration and apply when you save."
-      >
-        <Group justify="space-between">
-          <Text size="xs" c="dimmed">
-            {guilds.data?.syncedAt
-              ? `Last refreshed: ${dateLabel(guilds.data.syncedAt)}`
-              : 'Load the servers this bot has joined from Discord.'}
-          </Text>
-          <Button
-            variant="default"
-            leftSection={<IconRefresh size={16} />}
-            loading={guildsSyncing}
-            disabled={guilds.loading}
-            onClick={syncGuilds}
-          >
-            Refresh
-          </Button>
-        </Group>
-        {guildsSyncError && (
-          <Alert color="yellow" title="Could not refresh servers">
-            {guildsSyncError} The last saved server list is kept.
-          </Alert>
-        )}
-        <ResourceState
-          {...guilds}
-          onRetry={guilds.refresh}
-          errorColor="yellow"
-          errorTitle="Could not load servers"
-          errorMessage="Could not load the server list from Discord. Check this profile's Discord token and connection, then try again."
-        />
-        {guilds.data &&
-          (guilds.data.guilds.length ? (
-            <Stack gap="md">
-              {guilds.data.guilds.map((guild) => (
-                <Group key={guild.id} justify="space-between" wrap="nowrap">
-                  <Stack gap={2}>
-                    <Text fw={500}>{guild.name}</Text>
-                    <Text size="xs" c="dimmed">
-                      {guild.id}
-                    </Text>
-                  </Stack>
-                  <Switch
-                    aria-label={`Enable Hellbot in ${guild.name}`}
-                    checked={!disabledGuildIds.includes(guild.id)}
-                    onChange={(event) =>
-                      update(
-                        'disabledGuildIds',
-                        event.currentTarget.checked
-                          ? disabledGuildIds.filter((id) => id !== guild.id)
-                          : [...disabledGuildIds, guild.id]
-                      )
-                    }
-                  />
-                </Group>
-              ))}
-              {fieldError('disabledGuildIds') && (
-                <Text size="sm" c="red">
-                  {fieldError('disabledGuildIds')}
-                </Text>
-              )}
-            </Stack>
-          ) : (
-            <Empty>This bot has not joined any Discord servers.</Empty>
-          ))}
-      </Section>
+      {section === 'workflows' && (
+        <Section
+          title="Role request workflow"
+          description="Choose where Hellbot receives and reviews role requests. IDs can be copied from Discord with Developer Mode enabled."
+        >
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <TextInput
+              label="Request channel ID"
+              value={form.roleRequests.requestChannelId}
+              onChange={(event) => update('roleRequests.requestChannelId', event.currentTarget.value)}
+              error={fieldError('roleRequests.requestChannelId')}
+            />
+            <TextInput
+              label="Review channel ID"
+              value={form.roleRequests.reviewChannelId}
+              onChange={(event) => update('roleRequests.reviewChannelId', event.currentTarget.value)}
+              error={fieldError('roleRequests.reviewChannelId')}
+            />
+            <TextInput
+              label="Anchor role ID"
+              description="Required for production role requests. Not used in development."
+              value={form.roleRequests.anchorRoleId || ''}
+              onChange={(event) =>
+                update('roleRequests.anchorRoleId', event.currentTarget.value || null)
+              }
+              error={fieldError('roleRequests.anchorRoleId')}
+            />
+          </SimpleGrid>
+        </Section>
+      )}
+      {section === 'features' && (
+        <FeaturesForm form={form} update={update} fieldError={fieldError} section="features" />
+      )}
+      {section === 'jobs' && (
+        <FeaturesForm form={form} update={update} fieldError={fieldError} section="jobs" />
+      )}
+      {section === 'access' && (
+        <ServerAccessSection form={form} update={update} fieldError={fieldError} />
+      )}
     </>
   );
 }
 
-export function FeaturesForm({ form, update, fieldError }) {
+export function FeaturesForm({ form, update, fieldError, section }) {
+  const featureEntries = Object.entries(form.features).filter(([name]) =>
+    section === 'jobs' ? jobFeatures.includes(name) : !jobFeatures.includes(name)
+  );
+
+  if (section === 'jobs') {
+    return (
+      <>
+        <Section
+          title="Scheduled jobs"
+          description="Choose which automatic tasks Hellbot runs."
+        >
+          <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
+            {featureEntries.map(([name, enabled]) => (
+              <Switch
+                key={name}
+                label={featureLabels[name]?.[0] || name}
+                description={featureLabels[name]?.[1]}
+                checked={enabled}
+                onChange={(event) => update(`features.${name}`, event.currentTarget.checked)}
+              />
+            ))}
+          </SimpleGrid>
+        </Section>
+        <Section
+          title="Job schedules"
+          description="Cron schedules use the bot server's timezone. Changes reschedule the next execution."
+        >
+          <SimpleGrid cols={{ base: 1, sm: 2 }}>
+            <TextInput
+              label="Daily quote schedule"
+              description="Cron format, for example: 0 8 * * *"
+              value={form.behavior.dailyQuoteSchedule}
+              onChange={(event) => update('behavior.dailyQuoteSchedule', event.currentTarget.value)}
+              error={fieldError('behavior.dailyQuoteSchedule')}
+            />
+            <TextInput
+              label="Future news schedule"
+              description="Cron format, for example: 0 18 * * *"
+              value={form.behavior.futureNewsSchedule}
+              onChange={(event) => update('behavior.futureNewsSchedule', event.currentTarget.value)}
+              error={fieldError('behavior.futureNewsSchedule')}
+            />
+            <NumberInput
+              label="Presence rotation interval"
+              suffix=" min"
+              value={form.behavior.presenceRotationMinutes}
+              min={1}
+              max={35791}
+              allowDecimal={false}
+              onChange={(value) => update('behavior.presenceRotationMinutes', value)}
+              error={fieldError('behavior.presenceRotationMinutes')}
+            />
+          </SimpleGrid>
+        </Section>
+      </>
+    );
+  }
+
   return (
     <>
       <Section
-        title="Features"
-        description="Changes apply to new events and scheduled executions. Existing work may finish using its previous settings."
+        title="Bot features"
+        description="Choose which capabilities Hellbot uses. Changes apply to new events and scheduled executions."
       >
         <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
-          {Object.entries(form.features).map(([name, enabled]) => (
+          {featureEntries.map(([name, enabled]) => (
             <Switch
               key={name}
               label={featureLabels[name]?.[0] || name}
@@ -407,8 +501,8 @@ export function FeaturesForm({ form, update, fieldError }) {
         </SimpleGrid>
       </Section>
       <Section
-        title="Timing and frequency"
-        description="Cron schedules use the bot server's timezone. Changes reschedule the next execution."
+        title="Reply behavior"
+        description="Adjust how often Hellbot joins conversations without a mention."
       >
         <NumberInput
           label="Random reply probability"
@@ -420,32 +514,6 @@ export function FeaturesForm({ form, update, fieldError }) {
           decimalScale={4}
           onChange={(value) => update('behavior.randomReplyProbability', value)}
           error={fieldError('behavior.randomReplyProbability')}
-        />
-        <SimpleGrid cols={{ base: 1, sm: 2 }}>
-          <TextInput
-            label="Daily quote schedule"
-            description="Cron format, for example: 0 8 * * *"
-            value={form.behavior.dailyQuoteSchedule}
-            onChange={(event) => update('behavior.dailyQuoteSchedule', event.currentTarget.value)}
-            error={fieldError('behavior.dailyQuoteSchedule')}
-          />
-          <TextInput
-            label="Future news schedule"
-            description="Cron format, for example: 0 18 * * *"
-            value={form.behavior.futureNewsSchedule}
-            onChange={(event) => update('behavior.futureNewsSchedule', event.currentTarget.value)}
-            error={fieldError('behavior.futureNewsSchedule')}
-          />
-        </SimpleGrid>
-        <NumberInput
-          label="Presence rotation interval"
-          suffix=" min"
-          value={form.behavior.presenceRotationMinutes}
-          min={1}
-          max={35791}
-          allowDecimal={false}
-          onChange={(value) => update('behavior.presenceRotationMinutes', value)}
-          error={fieldError('behavior.presenceRotationMinutes')}
         />
       </Section>
     </>

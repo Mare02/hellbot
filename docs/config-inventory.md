@@ -18,6 +18,7 @@ ai.provider
 ai.models.groq.text
 ai.models.groq.vision
 ai.models.google.text
+ai.models.google.vision
 ai.tools.<registeredToolName>
 features.<supportedFeatureName>
 behavior.randomReplyProbability
@@ -37,6 +38,7 @@ roleRequests.anchorRoleId
 | `ai.provider` | `AI_PROVIDER`, normalized as today; fallback `groq` | `services/AIservice.js`, `services/chatContext.js`, `utils/aiPrompts.js` | Refresh the selected profile's AI client and media handling. |
 | `ai.models.groq.text` | Legacy selected model when Groq is active; otherwise `aiModels.gpt_oss_120b` | `services/AIservice.js`, `commands/info.js`, `utils/aiPrompts.js` through `currentAiModel` | Apply to subsequent text requests. |
 | `ai.models.google.text` | Legacy `currentGeminiModel` | Same active-model consumers; `services/geminiCompletion.js` receives the request model | Apply to subsequent Google requests. |
+| `ai.models.google.vision` | Defaults to the legacy Gemini model; old stored profiles receive the same default when read | Image requests and tool-image follow-ups in `services/AIservice.js` | Apply to subsequent Google vision requests. |
 | `ai.models.groq.vision` | Existing hardcoded `aiModels.qwen3_8_27b` | Image requests and tool-image follow-ups in `services/AIservice.js` | Apply to subsequent vision requests. |
 | `roleRequests.*` | Existing per-environment destinations and anchor name; dev anchor is null | Request creation, review interactions, role placement, and request instructions in `services/roleRequests.js` | Live for subsequent operations; preserve the workflow's permission and hierarchy checks. |
 

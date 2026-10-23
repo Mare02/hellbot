@@ -2,6 +2,7 @@ const { z } = require('zod');
 const cron = require('node-cron');
 const discordRoutingDefaults = require('../../data/discordRoutingDefaults');
 const toolRegistry = require('../../data/aiToolRegistry');
+const aiModels = require('../../data/aiModels');
 
 const profileEnvSchema = z.enum(['dev', 'prod']);
 const discordIdSchema = z.string().regex(/^[1-9]\d{16,19}$/);
@@ -66,7 +67,10 @@ const profileConfigSchema = z.strictObject({
         text: z.string().trim().min(1).max(200),
         vision: z.string().trim().min(1).max(200),
       }),
-      google: z.strictObject({ text: z.string().trim().min(1).max(200) }),
+      google: z.strictObject({
+        text: z.string().trim().min(1).max(200),
+        vision: z.string().trim().min(1).max(200).default(aiModels.gemini_3_5_flash_lite),
+      }),
     }),
   }),
   features: featuresSchema.prefault({}),

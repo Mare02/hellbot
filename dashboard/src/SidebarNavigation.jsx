@@ -42,7 +42,7 @@ export const pages = {
   settings: {
     slug: 'bot-settings',
     title: 'Bot settings',
-    description: 'Command appearance and Hellbot workflows.',
+    description: 'Configure Hellbot behavior, Discord setup, scheduled jobs and server access.',
     icon: IconAdjustments,
   },
   logs: {
