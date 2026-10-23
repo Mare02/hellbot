@@ -18,6 +18,7 @@ import {
 import {
   IconAlertCircle,
   IconCheck,
+  IconCopy,
   IconEdit,
   IconKey,
   IconPlus,
@@ -66,6 +67,8 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
   const [error, setError] = useState(null);
   const [connectionResults, setConnectionResults] = useState({});
   const [testingId, setTestingId] = useState(null);
+  const [copyingEnv, setCopyingEnv] = useState(false);
+  const [copyEnvStatus, setCopyEnvStatus] = useState(null);
   const [application, setApplication] = useState(null);
   const active = useRef(true);
   useEffect(() => {
@@ -187,6 +190,25 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
     }
     return action(() => api('/secrets', { method: 'POST', body: { provider, label, value } }));
   }
+
+  async function copyEnv() {
+    if (copyingEnv) return;
+    setCopyingEnv(true);
+    setCopyEnvStatus(null);
+    try {
+      const { content } = await api('/secrets/export', { method: 'POST', body: {} });
+      await navigator.clipboard.writeText(content);
+      setCopyEnvStatus({ success: true, message: 'Environment copied to clipboard.' });
+    } catch (failure) {
+      setCopyEnvStatus({
+        success: false,
+        message: failure.message || 'Could not copy the environment to the clipboard.',
+      });
+    } finally {
+      setCopyingEnv(false);
+    }
+  }
+
   return (
     <Stack gap="xl">
       <Alert title="Shared credentials for this bot">
@@ -206,6 +228,15 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
         <Group gap="xs">
           <Button
             variant="default"
+            leftSection={<IconCopy size={16} />}
+            loading={copyingEnv}
+            disabled={busy}
+            onClick={copyEnv}
+          >
+            Copy .env
+          </Button>
+          <Button
+            variant="default"
             leftSection={<IconRefresh size={16} />}
             disabled={busy}
             onClick={() => {
@@ -218,6 +249,11 @@ export default function SecretsPage({ profile, onDirty, onBusy }) {
           </Button>
         </Group>
       </Group>
+      {copyEnvStatus && (
+        <Text size="sm" c={copyEnvStatus.success ? 'teal' : 'red'} role="status" aria-live="polite">
+          {copyEnvStatus.message}
+        </Text>
+      )}
       <ResourceState {...catalog} onRetry={catalog.refresh} />
       {catalog.data && !providers.length && (
         <Alert title="Provider catalog unavailable">

@@ -17,6 +17,7 @@ const toolRegistry = require('../../data/aiToolRegistry');
 const secretProviders = require('../../data/secretProviders');
 const { createCodeUpdatesService } = require('../../services/codeUpdates');
 const { createDeploymentsService } = require('../../services/deployments');
+const { buildEnvExport } = require('./envExport');
 
 async function fetchBotProfile() {
   const credentials = createLegacyConfig(process.env);
@@ -163,6 +164,9 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
     response.json({ application: await notifyBots([profile]) });
   });
   router.get('/secrets', (request, response) => response.json({ secrets: secrets.list() }));
+  router.post('/secrets/export', (request, response) =>
+    response.json({ content: buildEnvExport(process.env, secrets.readAll()) })
+  );
   router.post('/secrets/:id/edit', (request, response) =>
     response.json({ secret: secrets.readForEdit(request.params.id) })
   );

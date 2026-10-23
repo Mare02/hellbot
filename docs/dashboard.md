@@ -154,6 +154,13 @@ checks quota, API Ninjas checks one random quote. EdenAI requires a confirmation
 because its check generates a test image and may use provider credits. These
 requests run only when explicitly requested. Weather uses Open-Meteo without a key.
 
+**Copy .env** copies the configured Hellbot process environment variables and
+shared provider keys to the clipboard in `.env` format. Provider keys saved in the
+dashboard database take precedence over older process values. The export uses an
+explicit Hellbot variable allowlist; it does not include unrelated host variables,
+SQLite-backed bot settings, or custom-provider keys without an environment mapping.
+The copied text contains secrets.
+
 ## Activity and logs
 
 Activity shows configuration changes for this bot and key operations in this
