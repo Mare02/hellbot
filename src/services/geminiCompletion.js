@@ -46,7 +46,7 @@ async function createGeminiCompletion(request, prepareRequest = (value) => value
       return response.json();
     }
     await response.body?.cancel();
-    if ([429, 500, 502, 503, 504].includes(response.status) && attempt < MAX_RETRIES) {
+    if ([401, 403, 429, 500, 502, 503, 504].includes(response.status) && attempt < MAX_RETRIES) {
       await delay(1000 * 2 ** attempt + Math.random() * 250);
       continue;
     }
