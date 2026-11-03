@@ -50,7 +50,7 @@ const cronSchema = z
 
 const profileConfigSchema = z.strictObject({
   disabledGuildIds: z.array(discordIdSchema).max(2500).default([]),
-  guildToolUserIds: z.array(discordIdSchema).max(100).default(['652993719808557087']),
+  guildToolUserIds: z.array(discordIdSchema).max(100).default([]),
   ...Object.fromEntries(
     Object.entries(discordRoutingDefaults).map(([field, value]) => [
       field,
