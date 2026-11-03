@@ -103,7 +103,7 @@ function buildRequestMessages(userPrompt, systemPrompt, imageUrl) {
   return requestMessages;
 }
 
-async function executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMessageIds) {
+async function executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMessageIds, toolOutcomes) {
   let result;
   let visionImages = [];
   const name = toolCall.function?.name;
@@ -143,7 +143,9 @@ async function executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMe
     } else {
       result = typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult ?? null);
     }
+    toolOutcomes.push({ name, success: toolResult?.success !== false && !toolResult?.error });
   } catch (error) {
+    toolOutcomes.push({ name, success: false });
     result = JSON.stringify({ error: error.message || messages.errorState.apiError });
   }
   return {
@@ -159,6 +161,7 @@ async function executeToolCalls(
   traceChannel,
   toolTraceMessageIds,
   provider,
+  toolOutcomes,
   toolIteration = 0
 ) {
   const message = data?.choices?.[0]?.message;
@@ -174,8 +177,9 @@ async function executeToolCalls(
 
   const toolMessages = [];
   const visionImages = [];
+  toolOutcomes.length = 0;
   for (const toolCall of message.tool_calls) {
-    const result = await executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMessageIds);
+    const result = await executeToolCall(toolCall, toolHandlers, traceChannel, toolTraceMessageIds, toolOutcomes);
     toolMessages.push(result.toolMessage);
     visionImages.push(...result.visionImages);
   }
@@ -219,8 +223,18 @@ async function executeToolCalls(
     traceChannel,
     toolTraceMessageIds,
     provider,
+    toolOutcomes,
     toolIteration + 1
   );
+}
+
+function toolFallbackResponse(toolOutcomes) {
+  if (!toolOutcomes.length) return null;
+  const results = toolOutcomes.map(({ name, success }) => {
+    const toolName = typeof name === 'string' && /^[a-z0-9_]+$/.test(name) ? name : 'unknown tool';
+    return `${toolName}: ${success ? 'succeeded' : 'failed'}`;
+  });
+  return `I couldn't finish my response. Last tool results:\n${results.join('\n')}`;
 }
 
 function validatePrompt(userPrompt) {
@@ -287,21 +301,30 @@ module.exports = {
         request.parallel_tool_calls = false;
       }
 
-      const data = await createCompletion(request, provider);
-      const answer = toolSet
-        ? await executeToolCalls(
-            request,
-            data,
-            toolSet.toolHandlers,
-            toolOptions.channel,
-            toolTraceMessageIds,
-            provider
-          )
-        : data?.choices?.[0]?.message?.content;
-      if (typeof answer !== 'string' || !answer.trim()) {
-        throw new Error(messages.emptyState.noResponseAI);
+      const toolOutcomes = [];
+      try {
+        const data = await createCompletion(request, provider);
+        const answer = toolSet
+          ? await executeToolCalls(
+              request,
+              data,
+              toolSet.toolHandlers,
+              toolOptions.channel,
+              toolTraceMessageIds,
+              provider,
+              toolOutcomes
+            )
+          : data?.choices?.[0]?.message?.content;
+        if (typeof answer !== 'string' || !answer.trim()) {
+          throw new Error(messages.emptyState.noResponseAI);
+        }
+        return answer;
+      } catch (error) {
+        const fallback = toolFallbackResponse(toolOutcomes);
+        if (!fallback) throw error;
+        console.error('AI response failed after tool calls:', error);
+        return fallback;
       }
-      return answer;
     }),
 
   useImageGen: async (userPrompt, { apiKey } = {}) => {

@@ -6,6 +6,7 @@ import {
   Fieldset,
   Group,
   Paper,
+  Scroller,
   Stack,
   Tabs,
   Text,
@@ -232,16 +233,18 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
           }}
         >
           <Tabs.List aria-label="Bot settings navigation" mb="lg">
-            {botSettingsSections.map((section) => (
-              <Tabs.Tab key={section.id} value={section.id}>
-                <Group gap="xs" wrap="nowrap">
-                  <span>{section.label}</span>
-                  {sectionHasChanges(section.id, changes) && (
-                    <Badge size="xs" variant="light" color="yellow">Unsaved</Badge>
-                  )}
-                </Group>
-              </Tabs.Tab>
-            ))}
+            <Scroller w="100%">
+              {botSettingsSections.map((section) => (
+                <Tabs.Tab key={section.id} value={section.id}>
+                  <Group gap="xs" wrap="nowrap">
+                    <span>{section.label}</span>
+                    {sectionHasChanges(section.id, changes) && (
+                      <Badge size="xs" variant="light" color="yellow">Unsaved</Badge>
+                    )}
+                  </Group>
+                </Tabs.Tab>
+              ))}
+            </Scroller>
           </Tabs.List>
           {botSettingsSections.map((section) => (
             <Tabs.Panel key={section.id} value={section.id}>
@@ -269,12 +272,14 @@ export default function ConfigPage({ profile, page, onDirty, onBusy }) {
       }}
     >
       <Tabs.List aria-label={`${page === 'ai' ? 'AI' : 'Bot'} settings navigation`} mb="lg">
-        <Tabs.Tab value="settings">Settings</Tabs.Tab>
-        {page === 'ai' ? (
-          <Tabs.Tab value="usage">Usage</Tabs.Tab>
-        ) : (
-          <Tabs.Tab value="features">Features</Tabs.Tab>
-        )}
+        <Scroller w="100%">
+          <Tabs.Tab value="settings">Settings</Tabs.Tab>
+          {page === 'ai' ? (
+            <Tabs.Tab value="usage">Usage</Tabs.Tab>
+          ) : (
+            <Tabs.Tab value="features">Features</Tabs.Tab>
+          )}
+        </Scroller>
       </Tabs.List>
       <Tabs.Panel value="settings">{activeTab === 'settings' && settings}</Tabs.Panel>
       {page === 'ai' ? (
