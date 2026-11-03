@@ -5,12 +5,15 @@ function getTargetGuildId() {
 }
 
 function isAuthorizedRequester(user) {
-  return user?.id === config.owner.id;
+  return Boolean(
+    user?.id &&
+      (user.id === config.owner.id || config.guildToolUserIds.includes(user.id))
+  );
 }
 
 function assertAuthorizedServer(guild, user) {
   if (!isAuthorizedRequester(user))
-    throw new Error('This server tool is available only to the bot owner.');
+    throw new Error('This server tool is available only to authorized users.');
   if (guild?.id !== getTargetGuildId())
     throw new Error('This server tool is limited to the configured Hellbot server.');
   return guild;

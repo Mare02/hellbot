@@ -50,6 +50,7 @@ const cronSchema = z
 
 const profileConfigSchema = z.strictObject({
   disabledGuildIds: z.array(discordIdSchema).max(2500).default([]),
+  guildToolUserIds: z.array(discordIdSchema).max(100).default(['652993719808557087']),
   ...Object.fromEntries(
     Object.entries(discordRoutingDefaults).map(([field, value]) => [
       field,
@@ -135,6 +136,15 @@ function parseProfileConfig(env, input) {
         code: 'custom',
         path: ['disabledGuildIds'],
         message: 'Disabled guild IDs must be unique.',
+      },
+    ]);
+  }
+  if (new Set(config.guildToolUserIds).size !== config.guildToolUserIds.length) {
+    throw new z.ZodError([
+      {
+        code: 'custom',
+        path: ['guildToolUserIds'],
+        message: 'Guild management user IDs must be unique.',
       },
     ]);
   }

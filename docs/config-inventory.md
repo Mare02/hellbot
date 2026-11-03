@@ -12,6 +12,7 @@ for each profile. Every object rejects unknown fields. The stored shape is:
 
 ```text
 disabledGuildIds
+guildToolUserIds
 commandsPrefix
 embedColor
 ai.provider
@@ -33,6 +34,7 @@ roleRequests.anchorRoleId
 | Setting | Source and defaults | Current consumers | Intended runtime behavior |
 | --- | --- | --- | --- |
 | `disabledGuildIds` | Empty list by default; edited from the active profile's server list fetched through Discord.js REST and saved in SQLite | Message/slash interactions, guild events, scheduled guild broadcasts | Live after save and IPC reload; disabled servers cannot use bot commands or receive Hellbot workflows. |
+| `guildToolUserIds` | Defaults to the configured authorized user; editable in Dashboard → Bot settings → Server access | `services/ai-tools/guild/access.js` | Live after save and IPC reload; listed Discord user IDs can use guild management tools in the configured server. The protected bot owner retains access. |
 | `commandsPrefix` | Legacy config: `dev::` for dev, `::` for prod | `listeners/onNewMessageCreate.js`, `commands/help.js`, `commands/info.js`, `commands/newticketquestion.js`, `services/roleRequests.js` | Live for subsequent messages and generated help. |
 | `embedColor` | Legacy config: `#fc9803` | `commands/info.js`, `help.js`, `getcoin.js`, `latestnews.js`, `newticketquestion.js`, `serverinfo.js`, `syslog.js`, `uptime.js`; `services/roleRequests.js`; `jobs/dailyQuoteJob.js`, `dailyFutureNewsJob.js` | Live for new embeds after consumers use the snapshot. |
 | `ai.provider` | `AI_PROVIDER`, normalized as today; fallback `groq` | `services/AIservice.js`, `services/chatContext.js`, `utils/aiPrompts.js` | Refresh the selected profile's AI client and media handling. |
@@ -96,7 +98,7 @@ missing fields using existing constants without overwriting profile values.
 | `DISCORD_TOKEN`, `DEV_DISCORD_TOKEN` | Startup secrets; Discord login in `client.js` and REST client in `commands/slashCommands/updateslashcommands.js`. Keep existing dev fallback behavior for now. |
 | `CLIENT_ID`, `DEV_CLIENT_ID`, `PUBLIC_KEY`, `PUBLIC_KEY_DEV` | Discord application startup identity. Application ID is used by slash registration and the derived invite link. |
 | `NODE_ENV`, `isDevMode` | `NODE_ENV=development` selects dev; `NODE_ENV=production` selects prod. It also controls memory isolation, tool traces, guild targeting, ticket handling, and slash registration. Not an editable database setting. |
-| `owner.id`, `owner.name` | Protected shared owner identity; `utils/permissions.js`, `services/ai-tools/guild/access.js`, and `commands/info.js`. No ordinary profile import or editable owner controls in this task. |
+| `owner.id`, `owner.name` | Protected shared owner identity; `utils/permissions.js`, `services/ai-tools/guild/access.js`, and `commands/info.js`. The owner ID is not editable; additional guild tool users are configured through `guildToolUserIds`. |
 | `bot.name`, `bot.description`, `bot.version`, `bot.inviteLink` | Code-owned bot metadata and derived URL. Used by info/help, prompts, and update notices. |
 | `discordMsgLengthLimit` | Discord/platform constant, not an editable application setting. |
 | `BUGSNAG_API_KEY` | Startup error reporting in `main.js`; remains an environment secret. |

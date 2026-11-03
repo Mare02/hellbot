@@ -55,7 +55,7 @@ function sectionHasChanges(section, changes) {
       || ['dailyQuoteSchedule', 'futureNewsSchedule', 'presenceRotationMinutes']
         .some((key) => key in behaviorChanges);
   }
-  return 'disabledGuildIds' in changes;
+  return 'disabledGuildIds' in changes || 'guildToolUserIds' in changes;
 }
 
 const AiUsageSection = lazy(() => import('./AiUsageSection'));

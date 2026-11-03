@@ -9,6 +9,7 @@ import {
   SimpleGrid,
   Stack,
   Switch,
+  Textarea,
   Text,
   TextInput,
 } from '@mantine/core';
@@ -283,6 +284,19 @@ function ServerAccessSection({ form, update, fieldError }) {
           Refresh
         </Button>
       </Group>
+      <Textarea
+        label="Guild management access"
+        description="Discord user IDs allowed to use Hellbot's guild management tools in this profile. The bot owner always keeps access. Enter one ID per line."
+        value={(form.guildToolUserIds || []).join('\n')}
+        onChange={(event) => {
+          const userIds = [...new Set(event.currentTarget.value.split(/[\s,]+/).filter(Boolean))];
+          update('guildToolUserIds', userIds);
+        }}
+        autosize
+        minRows={2}
+        maxRows={8}
+        error={fieldError('guildToolUserIds')}
+      />
       {guildsSyncError && (
         <Alert color="yellow" title="Could not refresh servers">
           {guildsSyncError} The last saved server list is kept.

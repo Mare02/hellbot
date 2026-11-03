@@ -20,6 +20,7 @@ module.exports = new Proxy(legacy, {
         'behavior',
         'ai',
         'disabledGuildIds',
+        'guildToolUserIds',
       ].includes(property)
     ) {
       return initializeRuntimeConfig().snapshot[property];
