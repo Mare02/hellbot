@@ -3,7 +3,7 @@ const { usePrompt } = require('../services/AIservice');
 const { validateUserPromptInput } = require('../utils/helpers');
 const { reply } = require('../utils/helpers');
 const messages = require('../utils/messages');
-const { brainRotPrompt, chatReplyPrompt } = require('../utils/aiPrompts');
+const { characterPrompt, chatReplyPrompt } = require('../utils/aiPrompts');
 const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment, serializeMessageContent } = require('../services/chatContext');
 
 module.exports = {
@@ -17,7 +17,7 @@ module.exports = {
       required: true,
     },
   ],
-  async execute(interaction, args, options) {
+  async execute(interaction, args) {
     try {
       if (!args) {
         await interaction.deferReply();
@@ -36,7 +36,7 @@ module.exports = {
 
       let prompt = validateUserPromptInput(userInput, interaction.channel);
 
-      let systemPrompt;
+      let systemPrompt = characterPrompt();
       let imageUrl;
       if (interaction.reference) {
         const referencedMessage = await interaction.channel.messages.fetch(interaction.reference.messageId);
@@ -54,10 +54,6 @@ module.exports = {
           systemPrompt = `${systemPrompt}\n\nReferenced image attachment uses a format you cannot inspect directly. Reply from the text context and mention that if needed.`;
         }
       }
-      else if (options && options.useBrainRotPrompt) {
-        systemPrompt = brainRotPrompt();
-      }
-
       const answer = await usePrompt(prompt, systemPrompt, imageUrl, undefined, {
         channel: interaction.channel,
         user: interaction.author || interaction.user,

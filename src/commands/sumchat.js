@@ -1,4 +1,5 @@
 const { usePrompt } = require('../services/AIservice');
+const { characterPrompt } = require('../utils/aiPrompts');
 const { emptyState } = require('../utils/messages');
 const { reply } = require('../utils/helpers');
 const { getRecentChannelContext } = require('../services/chatContext');
@@ -31,7 +32,10 @@ module.exports = {
       }
 
       const conversation = JSON.stringify(messages);
-      const summary = await usePrompt(`Please summarize the following conversation:\n${conversation}`);
+      const summary = await usePrompt(
+        `Please summarize the following conversation:\n${conversation}`,
+        characterPrompt()
+      );
 
       await reply(interaction, args, summary);
     }

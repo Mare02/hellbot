@@ -78,6 +78,7 @@ const profileConfigSchema = z.strictObject({
   behavior: z
     .strictObject({
       randomReplyProbability: z.number().min(0).max(1).default(0.05),
+      characterPrompt: z.string().max(8000).default(''),
       dailyQuoteSchedule: cronSchema.default('0 8 * * *'),
       futureNewsSchedule: cronSchema.default('0 18 * * *'),
       presenceRotationMinutes: z.number().int().min(1).max(35791).default(360),

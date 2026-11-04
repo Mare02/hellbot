@@ -373,6 +373,27 @@ export function BotSettingsForm({ form, update, fieldError, section }) {
           </SimpleGrid>
         </Section>
       )}
+      {section === 'character' && (
+        <Section
+          title="Hellbot's character"
+          description="Set the personality and style Hellbot uses for AI-generated text, including replies, summaries, and scheduled future news."
+        >
+          <Textarea
+            label="Character prompt"
+            description="Describe how Hellbot should sound and behave. Task, safety, and tool instructions remain managed by the bot."
+            placeholder="Enter the character prompt for this bot."
+            value={form.behavior.characterPrompt}
+            maxLength={8000}
+            minRows={8}
+            autosize
+            onChange={(event) => update('behavior.characterPrompt', event.currentTarget.value)}
+            error={fieldError('behavior.characterPrompt')}
+          />
+          <Text size="xs" c="dimmed" ta="right">
+            {form.behavior.characterPrompt.length.toLocaleString()} / 8,000 characters
+          </Text>
+        </Section>
+      )}
       {section === 'discord' && discordIdSections.map(({ title, fields }) => (
         <Section
           key={title}

@@ -24,6 +24,7 @@ import './ConfigPages.css';
 
 const botSettingsSections = [
   { id: 'appearance', label: 'Appearance' },
+  { id: 'character', label: 'Character' },
   { id: 'discord', label: 'Discord setup' },
   { id: 'workflows', label: 'Workflows' },
   { id: 'features', label: 'Features' },
@@ -33,6 +34,10 @@ const botSettingsSections = [
 
 function sectionHasChanges(section, changes) {
   if (section === 'appearance') return 'commandsPrefix' in changes || 'embedColor' in changes;
+  if (section === 'character') {
+    const behaviorChanges = changes.behavior || {};
+    return 'characterPrompt' in behaviorChanges;
+  }
   if (section === 'discord') {
     return ['homeServerId', 'testingServerId', 'logChannelId', 'verifyChannelId', 'generalChannelId',
       'hellbotUpdatesChannelId', 'masterCreationsChannelId', 'uniqueCreationsChannelId',

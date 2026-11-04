@@ -2,8 +2,8 @@ const { EmbedBuilder } = require('discord.js');
 const { isGuildEnabled } = require('../utils/guildAccess');
 const { getInstance } = require('../client');
 const AIservice = require('../services/AIservice');
+const { characterPrompt, futureNewsPrompt } = require('../utils/aiPrompts');
 const { futureNewsResponseFormat } = require('../utils/aiSchemas');
-const { futureNewsPrompt } = require('../utils/aiPrompts');
 const config = require('../utils/config');
 
 function getRandomFutureDate() {
@@ -33,7 +33,7 @@ module.exports = {
     });
     const response = await AIservice.usePrompt(
       futureNewsPrompt(formattedDate),
-      null,
+      characterPrompt(),
       null,
       futureNewsResponseFormat
     );
