@@ -29,7 +29,7 @@ const toolDefinitions = [
     type: 'function',
     function: {
       name: 'get_server_automod_rules',
-      description: 'List AutoMod rules configured for the server. Requires Manage Server permission for the bot.',
+      description: 'List AutoMod rule IDs, names, enabled state, event type, and trigger type. Call get_server_automod_rule for keyword/regex filters, actions, or exemptions. Requires Manage Server permission for the bot.',
       parameters: { type: 'object', properties: {}, additionalProperties: false },
     },
   },
@@ -139,6 +139,16 @@ function serializeRule(rule) {
     })),
     exemptRoleIds: rule.exemptRoles?.map((role) => role.id) || [],
     exemptChannelIds: rule.exemptChannels?.map((channel) => channel.id) || [],
+  };
+}
+
+function serializeRuleSummary(rule) {
+  return {
+    id: rule.id,
+    name: rule.name,
+    enabled: rule.enabled,
+    eventType: AutoModerationRuleEventType[rule.eventType] || rule.eventType,
+    triggerType: AutoModerationRuleTriggerType[rule.triggerType] || rule.triggerType,
   };
 }
 
@@ -256,7 +266,7 @@ function createServerAutoModerationToolSet({ channel, user } = {}) {
       ensureAccess();
       await requireManageGuild();
       const rules = await guild.autoModerationRules.fetch();
-      return { success: true, count: rules.size, rules: [...rules.values()].map(serializeRule) };
+      return { success: true, count: rules.size, rules: [...rules.values()].map(serializeRuleSummary) };
     },
 
     get_server_automod_rule: async ({ rule_id: ruleId } = {}) => {

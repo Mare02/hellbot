@@ -5,7 +5,7 @@ const searchMembersDefinition = {
   type: 'function',
   function: {
     name: 'search_server_members',
-    description: 'Search members in the configured Hellbot server by username or server nickname. Use the returned user ID with get_server_member or edit_server_member.',
+    description: 'Search members in the configured Hellbot server by username or server nickname. Returns basic identity and role IDs/names; use get_server_member for joined date, timeout, or other details.',
     parameters: {
       type: 'object',
       properties: {
@@ -22,7 +22,7 @@ const listMembersDefinition = {
   type: 'function',
   function: {
     name: 'list_server_members',
-    description: 'List current members in the configured Hellbot server, optionally matching an exact role or having no assigned roles other than @everyone. Includes bots. Scans up to 5000 members per call using fresh Discord pages, not the member cache. If scanComplete is false, continue with nextAfterUserId as after_user_id and the same filters; never treat a partial page as the full membership or total match count.',
+    description: 'List current members in the configured Hellbot server, optionally matching an exact role or having no assigned roles other than @everyone. Includes bots. Returns basic identity and role IDs/names; use get_server_member for joined date, timeout, or other details. Scans up to 5000 members per call using fresh Discord pages, not the member cache. If scanComplete is false, continue with nextAfterUserId as after_user_id and the same filters; never treat a partial page as the full membership or total match count.',
     parameters: {
       type: 'object',
       properties: {
@@ -90,6 +90,19 @@ function serializeMember(member) {
   };
 }
 
+function serializeMemberSummary(member) {
+  return {
+    userId: member.id,
+    username: member.user.username,
+    globalName: member.user.globalName,
+    bot: member.user.bot,
+    nickname: member.nickname,
+    roles: member.roles.cache
+      .filter((role) => role.id !== member.guild.id)
+      .map((role) => ({ id: role.id, name: role.name })),
+  };
+}
+
 function createServerMemberToolSet({ channel, user } = {}) {
   if (!canUseServerTools(channel, user)) return { toolDefinitions: [], toolHandlers: {} };
 
@@ -126,7 +139,7 @@ function createServerMemberToolSet({ channel, user } = {}) {
           processedCount += 1;
           const matchesRole = roleId === undefined || member.roles.cache.has(roleId);
           const matchesWithoutRoles = !withoutRoles || !member.roles.cache.some((role) => role.id !== guild.id);
-          if (matchesRole && matchesWithoutRoles) members.push(serializeMember(member));
+          if (matchesRole && matchesWithoutRoles) members.push(serializeMemberSummary(member));
           if (members.length >= limit) break;
         }
         if (processedCount === page.size && page.size < pageSize) {
@@ -155,7 +168,7 @@ function createServerMemberToolSet({ channel, user } = {}) {
       return {
         success: true,
         count: matches.size,
-        members: [...matches.values()].map(serializeMember),
+        members: [...matches.values()].map(serializeMemberSummary),
       };
     },
 

@@ -220,7 +220,7 @@ module.exports = Object.freeze([
   {
     name: 'get_server_automod_rules',
     description:
-      'List AutoMod rules configured for the server. Requires Manage Server permission for the bot.',
+      'List AutoMod rule IDs, names, enabled state, event type, and trigger type. Call get_server_automod_rule for keyword/regex filters, actions, or exemptions. Requires Manage Server permission for the bot.',
     group: 'Guild management',
   },
   {
@@ -244,7 +244,7 @@ module.exports = Object.freeze([
   {
     name: 'get_server_channels',
     description:
-      'List channels in the configured Hellbot server. Use this first to find a channel ID before inspecting or editing a channel. For large results, use offset to continue.',
+      'List channel IDs, names, types, and parent category IDs in the configured Hellbot server. Use this first to find a channel ID before inspecting or editing a channel. Call get_server_channel for topic, permissions, or other details. For large results, use offset to continue.',
     group: 'Guild management',
   },
   {
@@ -279,7 +279,7 @@ module.exports = Object.freeze([
   {
     name: 'get_server_roles',
     description:
-      'List roles in the configured Hellbot server. Use this first to find a role ID before inspecting or editing a role.',
+      'List role IDs, names, and positions in the configured Hellbot server. Use this first to find a role ID; call get_server_role for color, flags, or permissions.',
     group: 'Guild management',
   },
   {
@@ -296,7 +296,7 @@ module.exports = Object.freeze([
   {
     name: 'list_server_members',
     description:
-      'List current members in the configured Hellbot server, optionally matching an exact role or having no assigned roles other than @everyone. Includes bots. Scans up to 5000 members per call using fresh Discord pages, not the member cache. If scanComplete is false, continue with nextAfterUserId as after_user_id and the same filters; never treat a partial page as the full membership or total match count.',
+      'List current members in the configured Hellbot server, optionally matching an exact role or having no assigned roles other than @everyone. Includes bots. Returns basic identity and role IDs/names; use get_server_member for joined date, timeout, or other details. Scans up to 5000 members per call using fresh Discord pages, not the member cache. If scanComplete is false, continue with nextAfterUserId as after_user_id and the same filters; never treat a partial page as the full membership or total match count.',
     group: 'Guild management',
   },
   {
@@ -314,7 +314,7 @@ module.exports = Object.freeze([
   {
     name: 'search_server_members',
     description:
-      'Search members in the configured Hellbot server by username or server nickname. Use the returned user ID with get_server_member or edit_server_member.',
+      'Search members in the configured Hellbot server by username or server nickname. Returns basic identity and role IDs/names; use get_server_member for joined date, timeout, or other details.',
     group: 'Guild management',
   },
   {

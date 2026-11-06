@@ -28,12 +28,12 @@ const listRolesDefinition = {
   type: 'function',
   function: {
     name: 'get_server_roles',
-    description: 'List roles in the configured Hellbot server. Use this first to find a role ID before inspecting or editing a role.',
+    description: 'List role IDs, names, and positions in the configured Hellbot server. Use this first to find a role ID; call get_server_role for color, flags, or permissions.',
     parameters: {
       type: 'object',
       properties: {
         offset: { type: 'integer', minimum: 0, description: 'Number of roles to skip. Defaults to 0.' },
-        limit: { type: 'integer', minimum: 1, maximum: 100, description: 'Maximum roles to return. Defaults to 50.' },
+        limit: { type: 'integer', minimum: 1, maximum: 100, description: 'Maximum roles to return. Defaults to 25.' },
       },
       additionalProperties: false,
     },
@@ -108,6 +108,14 @@ function serializeRole(role) {
   };
 }
 
+function serializeRoleSummary(role) {
+  return {
+    id: role.id,
+    name: role.name,
+    position: role.position,
+  };
+}
+
 function createServerRoleToolSet({ channel, user } = {}) {
   if (!canUseServerTools(channel, user)) return { toolDefinitions: [], toolHandlers: {} };
 
@@ -149,7 +157,7 @@ function createServerRoleToolSet({ channel, user } = {}) {
       return { success: true, role: serializeRole(verifiedRole) };
     },
 
-    get_server_roles: async ({ offset = 0, limit = 50 } = {}) => {
+    get_server_roles: async ({ offset = 0, limit = 25 } = {}) => {
       ensureAccess();
       if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
         throw new Error('Use an offset of 0 or greater and a limit from 1 to 100.');
@@ -160,7 +168,7 @@ function createServerRoleToolSet({ channel, user } = {}) {
         success: true,
         total: sortedRoles.length,
         offset,
-        roles: sortedRoles.slice(offset, offset + limit).map(serializeRole),
+        roles: sortedRoles.slice(offset, offset + limit).map(serializeRoleSummary),
       };
     },
 

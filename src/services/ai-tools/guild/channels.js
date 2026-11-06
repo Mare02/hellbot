@@ -37,12 +37,12 @@ const listChannelsDefinition = {
   type: 'function',
   function: {
     name: 'get_server_channels',
-    description: 'List channels in the configured Hellbot server. Use this first to find a channel ID before inspecting or editing a channel. For large results, use offset to continue.',
+    description: 'List channel IDs, names, types, and parent category IDs in the configured Hellbot server. Use this first to find a channel ID before inspecting or editing a channel. Call get_server_channel for topic, permissions, or other details. For large results, use offset to continue.',
     parameters: {
       type: 'object',
       properties: {
         offset: { type: 'integer', minimum: 0, description: 'Number of channels to skip. Defaults to 0.' },
-        limit: { type: 'integer', minimum: 1, maximum: 100, description: 'Maximum channels to return. Defaults to 50.' },
+        limit: { type: 'integer', minimum: 1, maximum: 100, description: 'Maximum channels to return. Defaults to 25.' },
       },
       additionalProperties: false,
     },
@@ -189,6 +189,15 @@ function serializeChannel(channel) {
   };
 }
 
+function serializeChannelSummary(channel) {
+  return {
+    id: channel.id,
+    name: channel.name,
+    type: ChannelType[channel.type] || channel.type,
+    parentId: channel.parentId || null,
+  };
+}
+
 function createServerChannelToolSet({ channel, user } = {}) {
   if (!canUseServerTools(channel, user)) {
     return { toolDefinitions: [], toolHandlers: {} };
@@ -251,7 +260,7 @@ function createServerChannelToolSet({ channel, user } = {}) {
       return { success: true, channel: serializeChannel(verifiedChannel) };
     },
 
-    get_server_channels: async ({ offset = 0, limit = 50 } = {}) => {
+    get_server_channels: async ({ offset = 0, limit = 25 } = {}) => {
       ensureAccess();
       if (!Number.isInteger(offset) || offset < 0 || !Number.isInteger(limit) || limit < 1 || limit > 100) {
         throw new Error('Use an offset of 0 or greater and a limit from 1 to 100.');
@@ -264,7 +273,7 @@ function createServerChannelToolSet({ channel, user } = {}) {
         success: true,
         total: sortedChannels.length,
         offset,
-        channels: sortedChannels.slice(offset, offset + limit).map(serializeChannel),
+        channels: sortedChannels.slice(offset, offset + limit).map(serializeChannelSummary),
       };
     },
 
