@@ -228,13 +228,12 @@ async function executeToolCalls(
   );
 }
 
-function toolFallbackResponse(toolOutcomes) {
+function toolFallbackResponse(toolOutcomes, error) {
   if (!toolOutcomes.length) return null;
-  const results = toolOutcomes.map(({ name, success }) => {
-    const toolName = typeof name === 'string' && /^[a-z0-9_]+$/.test(name) ? name : 'unknown tool';
-    return `${toolName}: ${success ? 'succeeded' : 'failed'}`;
-  });
-  return `I couldn't finish my response. Last tool results:\n${results.join('\n')}`;
+  const errorMessage = typeof error?.message === 'string' && error.message.trim()
+    ? error.message.trim()
+    : messages.errorState.apiError;
+  return `I couldn't finish my response: ${errorMessage}`;
 }
 
 function validatePrompt(userPrompt) {
@@ -320,7 +319,7 @@ module.exports = {
         }
         return answer;
       } catch (error) {
-        const fallback = toolFallbackResponse(toolOutcomes);
+        const fallback = toolFallbackResponse(toolOutcomes, error);
         if (!fallback) throw error;
         console.error('AI response failed after tool calls:', error);
         return fallback;
