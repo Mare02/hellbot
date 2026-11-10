@@ -1,5 +1,7 @@
 const { PermissionFlagsBits } = require('discord.js');
 
+const MAX_MESSAGES_PER_COMMAND = 100;
+
 module.exports = {
   name: 'deletemsg',
   description: 'Deletes a specified number of messages.',
@@ -11,7 +13,18 @@ module.exports = {
         return;
       }
 
-      const limit = Math.max(args[0] || 2, 2);
+      const countInput = args[0]?.trim();
+      const limit = countInput ? Number(countInput) : 2;
+      if (
+        (countInput && !/^\d+$/.test(countInput))
+        || !Number.isSafeInteger(limit)
+        || limit < 2
+        || limit > MAX_MESSAGES_PER_COMMAND
+      ) {
+        await message.channel.send(`Please enter a whole number between 2 and ${MAX_MESSAGES_PER_COMMAND}.`);
+        return;
+      }
+
       let totalDeleted = 0;
 
       while (totalDeleted < limit) {

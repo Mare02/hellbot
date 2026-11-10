@@ -1,6 +1,7 @@
 const { PermissionFlagsBits } = require('discord.js');
 const messages = require("../utils/messages");
 const { reply } = require("../utils/helpers");
+const { fetchGuildBan } = require('../utils/guildBans');
 const syslog = require('../commands/syslog');
 const dm = require('../commands/dm');
 
@@ -35,10 +36,8 @@ module.exports = {
 
       const userId = args ? (args[0] || "").replace(/[<@!>]/g, "") : interaction.options.getUser("user").id;
 
-      const bans = await interaction.guild.bans.fetch();
-      const isBanned = bans.has(userId);
-
-      if (isBanned) {
+      const existingBan = await fetchGuildBan(interaction.guild, userId);
+      if (existingBan) {
         await reply(interaction, args, `User with ID **${userId}** is already banned.`);
         return;
       }

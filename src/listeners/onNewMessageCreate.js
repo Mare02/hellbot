@@ -7,7 +7,6 @@ const { hasPermission } = require('../utils/permissions');
 const commands = require('../commands');
 const updateslashcommands = require('../commands/slashCommands/updateslashcommands');
 const freewill = require('../commands/freewill');
-const askai = require('../commands/askai');
 const { usePrompt } = require('../services/AIservice');
 const { chatReplyPrompt } = require('../utils/aiPrompts');
 const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment, serializeMessageContent } = require('../services/chatContext');
@@ -87,6 +86,7 @@ module.exports = () => {
     const fullArgs = message.content.split(' ');
     const args = message.content.slice(config.commandsPrefix.length).split(/ +/);
     const commandName = args.shift();
+    const isPrefixCommand = message.content.startsWith(config.commandsPrefix);
 
     let command = commands[commandName];
 
@@ -97,7 +97,7 @@ module.exports = () => {
     const mentionsBot = message.mentions.has(client.user.id);
     const repliesToBot = await isReplyToBot(message);
 
-    if (config.features.mentionReplies && (mentionsBot || repliesToBot) && commandName !== askai.name) {
+    if (config.features.mentionReplies && !isPrefixCommand && (mentionsBot || repliesToBot)) {
       try {
         await withLogContext({ component: 'ai', command: 'mentionReply' }, () => replyWithRecentContext(message));
       } catch (error) {
@@ -111,6 +111,7 @@ module.exports = () => {
     if (
       config.features.randomReplies
       && Math.random() < config.behavior.randomReplyProbability
+      && !isPrefixCommand
       && message.channel.name?.startsWith('general')
       && !message.mentions.has(client.user.id)
       && message.guild?.id === config.homeServerId
@@ -125,7 +126,7 @@ module.exports = () => {
       }
     }
 
-    if (!message.content.startsWith(config.commandsPrefix)) {
+    if (!isPrefixCommand) {
       return;
     };
 
