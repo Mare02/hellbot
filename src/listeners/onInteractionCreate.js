@@ -5,6 +5,7 @@ const messages = require('../utils/messages');
 const roleRequests = require('../services/roleRequests');
 const { withLogContext } = require('../services/logging');
 const { isGuildEnabled } = require('../utils/guildAccess');
+const { recordGuildInteraction } = require('../services/guildActivity');
 
 const client = getInstance();
 
@@ -20,7 +21,8 @@ module.exports = () => {
       return;
     }
     if (interaction.isButton() || interaction.isModalSubmit()) {
-      await roleRequests.handleInteraction(interaction);
+      const handled = await roleRequests.handleInteraction(interaction);
+      if (handled) recordGuildInteraction(interaction.guildId, 'componentInteraction');
       return;
     }
     if (!interaction.isCommand()) return;
@@ -36,7 +38,10 @@ module.exports = () => {
       }
 
       try {
-        await withLogContext({ component: 'commands', command: commandName }, () => command.execute(interaction));
+        await withLogContext({ component: 'commands', command: commandName }, async () => {
+          await command.execute(interaction);
+          recordGuildInteraction(interaction.guildId, 'slashCommand');
+        });
       } catch (error) {
         withLogContext({ component: 'commands', command: commandName }, () => console.error('Slash command failed', { error }));
         const reply = { content: messages.errorState.commandError, ephemeral: true };

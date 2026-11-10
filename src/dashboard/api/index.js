@@ -7,7 +7,7 @@ const { createGuildStore } = require('../../services/config/guilds');
 const { createAiUsageStore } = require('../../services/aiUsage/store');
 const { fetchBotGuilds } = require('../../services/discord/guilds');
 const { createLegacyConfig } = require('../../services/config/legacyConfig');
-const { notifyBots } = require('../../services/ipc');
+const { notifyBots, requestBot } = require('../../services/ipc');
 const { readLogs, withLogContext } = require('../../services/logging');
 const { createOriginCheck } = require('../middleware/origin');
 const { checkKey } = require('./checkKey');
@@ -18,6 +18,7 @@ const secretProviders = require('../../data/secretProviders');
 const { createCodeUpdatesService } = require('../../services/codeUpdates');
 const { createDeploymentsService } = require('../../services/deployments');
 const { buildEnvExport } = require('./envExport');
+const { createGuildActivityStore } = require('../../services/guildActivityStore');
 
 async function fetchBotProfile() {
   const credentials = createLegacyConfig(process.env);
@@ -35,12 +36,31 @@ function queryFilters(query) {
   return Object.fromEntries(Object.entries(query).filter(([, value]) => value !== ''));
 }
 
+function getGuildFeatures(config, profile, guildId) {
+  const roleRequestGuildId = profile === 'dev' ? config.testingServerId : config.homeServerId;
+  const guildFeatures = {
+    mentionReplies: () => true,
+    randomReplies: () => guildId === config.homeServerId,
+    roleRequests: () => guildId === roleRequestGuildId,
+    verification: () => guildId === config.homeServerId,
+    ticketReplies: () => profile !== 'dev' && guildId === config.homeServerId,
+    dailyQuotes: () => guildId !== config.testingServerId,
+    futureNews: () => guildId !== config.testingServerId,
+    presenceRotation: () => true,
+  };
+
+  return Object.entries(config.features)
+    .filter(([feature, enabled]) => enabled && guildFeatures[feature]?.())
+    .map(([feature]) => feature);
+}
+
 function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   const router = express.Router();
   const profile = getProfile();
   const configs = createConfigStore(database);
   const secrets = createSecretStore(database);
   const guilds = createGuildStore(database);
+  const guildActivity = createGuildActivityStore(database);
   const aiUsage = createAiUsageStore(database, { secretProvider: () => secrets.readAll() });
   const codeUpdates = createCodeUpdatesService();
   const deploymentSha = process.env.DEPLOY_SHA || null;
@@ -146,8 +166,76 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   router.get('/guilds', async (request, response) => {
     response.json(guilds.read(profile) || (await syncGuilds()));
   });
+  router.get('/servers', async (request, response) => {
+    let snapshot = guilds.read(profile);
+    let syncWarning = false;
+    if (!snapshot) {
+      snapshot = await syncGuilds();
+    } else if (snapshot.guilds.some((guild) => (
+      guild.approximate_member_count === undefined || !Object.hasOwn(guild, 'icon')
+    ))) {
+      try {
+        snapshot = await syncGuilds();
+      } catch {
+        syncWarning = true;
+      }
+    }
+    const config = configs.read(profile);
+    const disabledGuilds = new Set(config.disabledGuildIds);
+    const activityByGuild = new Map(
+      guildActivity.list(profile).map((activity) => [activity.guildId, activity])
+    );
+    const items = snapshot.guilds.map((guild) => {
+      const enabled = !disabledGuilds.has(guild.id);
+      const activity = activityByGuild.get(guild.id);
+      return {
+        id: guild.id,
+        name: guild.name,
+        iconUrl: guild.icon
+          ? `https://cdn.discordapp.com/icons/${guild.id}/${guild.icon}.${guild.icon.startsWith('a_') ? 'gif' : 'png'}?size=64`
+          : null,
+        memberCount: guild.approximate_member_count ?? null,
+        enabled,
+        enabledFeatures: enabled ? getGuildFeatures(config, profile, guild.id) : [],
+        ...(activity ? {
+          lastInteractionAt: activity.lastInteractionAt,
+          lastInteractionType: activity.lastInteractionType,
+        } : {}),
+      };
+    });
+    response.json({
+      syncedAt: snapshot.syncedAt,
+      totalServers: items.length,
+      enabledServers: items.filter((guild) => guild.enabled).length,
+      disabledServers: items.filter((guild) => !guild.enabled).length,
+      syncWarning,
+      items,
+    });
+  });
   router.post('/guilds/sync', async (request, response) => {
     response.json(await syncGuilds());
+  });
+  router.get('/health', async (request, response) => {
+    const [bot, errors] = await Promise.all([
+      requestBot(profile),
+      readLogs(profile, {
+        level: 'error',
+        from: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+        pageSize: 1,
+        page: 1,
+      }, database),
+    ]);
+    response.json({
+      checkedAt: new Date().toISOString(),
+      online: bot.online === true,
+      ready: bot.ready === true,
+      status: bot.online !== true ? 'offline' : bot.ready === true ? 'ready' : 'connecting',
+      startedAt: bot.startedAt || null,
+      uptimeSeconds: Number.isSafeInteger(bot.uptimeSeconds) ? bot.uptimeSeconds : null,
+      jobs: Array.isArray(bot.jobs) ? bot.jobs : [],
+      errorCount24h: errors.total,
+      latestError: errors.items[0] || null,
+    });
   });
   router.get('/profiles/:env/config', (request, response) => {
     assertActiveProfile(request.params.env);

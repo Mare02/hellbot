@@ -10,6 +10,7 @@ const MIGRATIONS = [
   { version: 6, file: '006RoleRequestAnchorId.sql' },
   { version: 7, file: '007DeploymentRelease.sql' },
   { version: 8, file: '008RemoveLogoutMessage.sql' },
+  { version: 9, file: '009GuildActivity.sql' },
 ];
 
 function migrateDatabase(database) {

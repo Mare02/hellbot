@@ -7,6 +7,8 @@ const guildPageSchema = z.array(
   z.object({
     id: z.string().regex(/^\d{1,20}$/),
     name: z.string().min(1).max(100),
+    icon: z.string().regex(/^(?:a_)?[0-9a-fA-F]+$/).max(64).nullable().optional(),
+    approximate_member_count: z.number().int().nonnegative().optional(),
   })
 );
 
@@ -18,7 +20,7 @@ async function fetchBotGuilds() {
   let after = '0';
 
   while (true) {
-    const query = new URLSearchParams({ limit: String(PAGE_SIZE), after });
+    const query = new URLSearchParams({ limit: String(PAGE_SIZE), after, with_counts: 'true' });
     const result = guildPageSchema.safeParse(await rest.get(Routes.userGuilds(), { query }));
     if (!result.success) throw new Error('Discord returned an invalid server list.');
     const page = result.data;

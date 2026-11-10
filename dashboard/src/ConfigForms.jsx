@@ -1,5 +1,6 @@
 import {
   Alert,
+  Autocomplete,
   Button,
   ColorInput,
   NumberInput,
@@ -31,7 +32,12 @@ const featureLabels = {
   presenceRotation: ['Presence rotation', 'Periodically change the bot presence.'],
 };
 
-export function AiSettingsForm({ form, update, fieldError, catalog, modelOptions }) {
+const groqTextModelOptions = [
+  'openai/gpt-oss-120b',
+  'qwen/qwen3.8-27b',
+];
+
+export function AiSettingsForm({ form, update, fieldError, catalog }) {
   const [providerModal, setProviderModal] = useState(false);
   const [providerName, setProviderName] = useState('');
   const [baseUrl, setBaseUrl] = useState('');
@@ -106,10 +112,11 @@ export function AiSettingsForm({ form, update, fieldError, catalog, modelOptions
           </Stack>
         ) : form.ai.provider === 'groq' ? (
           <SimpleGrid cols={{ base: 1, sm: 2 }}>
-            <TextInput
+            <Autocomplete
               label="Text model"
+              data={groqTextModelOptions}
               value={form.ai.models.groq.text}
-              onChange={(event) => update('ai.models.groq.text', event.currentTarget.value)}
+              onChange={(value) => update('ai.models.groq.text', value)}
               maxLength={200}
               error={fieldError('ai.models.groq.text')}
             />

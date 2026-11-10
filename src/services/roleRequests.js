@@ -487,24 +487,26 @@ const denyRequest = async interaction => {
 };
 
 const handleInteraction = async interaction => {
+  if (!interaction.customId?.startsWith(`${REQUEST_PREFIX}:`)) return false;
+
   try {
     if (!config.features.roleRequests && interaction.customId?.startsWith(`${REQUEST_PREFIX}:`)) {
       await interaction.reply({ content: 'Role requests are currently disabled.', ephemeral: true });
-      return;
+      return true;
     }
     if (interaction.isButton() && interaction.customId.startsWith(`${REQUEST_PREFIX}:`)) {
       if (interaction.guildId !== getTargetServerId()) {
         await interaction.reply({ content: 'Role requests can only be reviewed in the configured server.', ephemeral: true });
-        return;
+        return true;
       }
       if (!config.roleRequests.reviewChannelId ||
         interaction.channelId !== config.roleRequests.reviewChannelId) {
         await interaction.reply({ content: 'This button only works in the configured review channel.', ephemeral: true });
-        return;
+        return true;
       }
       if (interaction.message.author.id !== interaction.client.user.id) {
         await interaction.reply({ content: 'This is not a Hellbot role request.', ephemeral: true });
-        return;
+        return true;
       }
       if (interaction.customId === `${REQUEST_PREFIX}:approve`) {
         await approveRequest(interaction);
@@ -513,18 +515,18 @@ const handleInteraction = async interaction => {
       } else {
         await interaction.reply({ content: 'Unknown role review action.', ephemeral: true });
       }
-      return;
+      return true;
     }
 
     if (interaction.isModalSubmit() && interaction.customId.startsWith(`${REQUEST_PREFIX}:deny-reason:`)) {
       if (interaction.guildId !== getTargetServerId()) {
         await interaction.reply({ content: 'Role requests can only be reviewed in the configured server.', ephemeral: true });
-        return;
+        return true;
       }
       if (!config.roleRequests.reviewChannelId ||
         interaction.channelId !== config.roleRequests.reviewChannelId) {
         await interaction.reply({ content: 'This denial form is no longer valid.', ephemeral: true });
-        return;
+        return true;
       }
       await denyRequest(interaction);
     }
@@ -534,6 +536,7 @@ const handleInteraction = async interaction => {
     if (interaction.deferred) await interaction.editReply(response).catch(() => {});
     else if (!interaction.replied) await interaction.reply({ content: response, ephemeral: true }).catch(() => {});
   }
+  return true;
 };
 
 const ensureInstructions = async guild => {

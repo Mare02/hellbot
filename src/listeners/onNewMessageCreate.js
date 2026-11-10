@@ -12,6 +12,7 @@ const { chatReplyPrompt } = require('../utils/aiPrompts');
 const { getMessageImageUrl, hasOversizedImageAttachment, hasUnsupportedVisionAttachment, serializeMessageContent } = require('../services/chatContext');
 const { sendDiscordContent } = require('../utils/discordMessages');
 const { isGuildEnabled } = require('../utils/guildAccess');
+const { recordGuildInteraction } = require('../services/guildActivity');
 
 const client = getInstance();
 
@@ -100,6 +101,7 @@ module.exports = () => {
     if (config.features.mentionReplies && !isPrefixCommand && (mentionsBot || repliesToBot)) {
       try {
         await withLogContext({ component: 'ai', command: 'mentionReply' }, () => replyWithRecentContext(message));
+        recordGuildInteraction(message.guildId, 'mentionReply');
       } catch (error) {
         withLogContext({ component: 'ai', command: 'mentionReply' }, () => {
           console.error('AI response error:', error);
@@ -117,7 +119,10 @@ module.exports = () => {
       && message.guild?.id === config.homeServerId
     ) {
       try {
-        await withLogContext({ component: 'ai', command: 'freewill' }, () => freewill.execute(message, []));
+        await withLogContext({ component: 'ai', command: 'freewill' }, async () => {
+          const responded = await freewill.execute(message, []);
+          if (responded) recordGuildInteraction(message.guildId, 'randomReply');
+        });
       }
       catch (error) {
         withLogContext({ component: 'ai', command: 'freewill' }, () => {
@@ -142,7 +147,10 @@ module.exports = () => {
       }
 
       try {
-        await withLogContext({ component: 'commands', command: commandName }, () => command.execute(message, args));
+        await withLogContext({ component: 'commands', command: commandName }, async () => {
+          await command.execute(message, args);
+          recordGuildInteraction(message.guildId, 'prefixCommand');
+        });
       } catch (error) {
         withLogContext({ component: 'commands', command: commandName }, () => console.error('Prefix command failed', { error }));
       }

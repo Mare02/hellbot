@@ -23,6 +23,7 @@ const LogsPage = lazy(() => import('./pages/LogsPage'));
 const SecretsPage = lazy(() => import('./pages/SecretsPage'));
 const CodeUpdatesPage = lazy(() => import('./pages/CodeUpdatesPage'));
 const DeploysPage = lazy(() => import('./pages/DeploysPage'));
+const ServersPage = lazy(() => import('./pages/ServersPage'));
 
 export default function Dashboard() {
   const profiles = useResource('/profiles');
@@ -161,6 +162,7 @@ export default function Dashboard() {
                     onOpenApiKeys={() => routerNavigate(`/${pages.keys.slug}`)}
                   />
                 )}
+                {page === 'servers' && <ServersPage key={`servers-${profile}`} />}
                 {['ai', 'settings'].includes(page) && (
                   <ConfigPage
                     key={`${profile}-${page}`}

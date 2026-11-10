@@ -4,6 +4,7 @@ const { createConfigStore } = require('./store');
 const { createSecretStore } = require('./secrets');
 const { profileEnvSchema } = require('./schema');
 const { createAiUsageStore } = require('../aiUsage/store');
+const { createGuildActivityStore } = require('../guildActivityStore');
 
 let runtime;
 
@@ -64,6 +65,7 @@ function initializeRuntimeConfig() {
       aiUsage: createAiUsageStore(database, {
         secretProvider: () => [state.secrets, secrets.readAll()],
       }),
+      guildActivity: createGuildActivityStore(database),
       get snapshot() {
         return state.config;
       },

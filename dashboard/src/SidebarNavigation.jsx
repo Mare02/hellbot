@@ -18,6 +18,7 @@ import {
   IconHistory,
   IconGitCommit,
   IconRocket,
+  IconServer,
   IconLayoutDashboard,
   IconRefresh,
   IconSettings,
@@ -32,6 +33,12 @@ export const pages = {
     title: 'Overview',
     description: 'Status and saved settings for the selected bot.',
     icon: IconLayoutDashboard,
+  },
+  servers: {
+    slug: 'servers',
+    title: 'Servers',
+    description: 'Member counts, features in use and recent activity across your servers.',
+    icon: IconServer,
   },
   ai: {
     slug: 'ai-settings',

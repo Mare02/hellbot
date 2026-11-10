@@ -126,6 +126,25 @@ settings include random reply probability, scheduled job cron strings and presen
 rotation interval. Job changes reschedule affected tasks. In-flight work may finish
 with the values it already captured.
 
+## Server report and bot health
+
+The **Servers** page shows each server's Discord icon, enabled or disabled status,
+approximate member counts from Discord, features applicable to each server, and the
+most recent completed interaction recorded for each server. Refresh the server list
+to sync current membership and counts. Feature switches are set per profile, while
+some features only apply to specific servers. Disabled servers show no enabled features.
+
+Hellbot records the timestamp and type of completed prefix/slash commands, mention
+or random replies, and button/form interactions. It does not store message content
+or user IDs for this report. Activity begins when this version is deployed; older
+interactions are not backfilled.
+
+The **Overview** health panel shows whether the bot process is connected and ready,
+its uptime and start time, the error count and latest error from the past 24 hours,
+and the last run status of scheduled quote and future-news jobs. Scheduled-job
+results are kept in process memory and reset when the bot restarts. Use **Refresh**
+on Overview to request current health.
+
 ## API keys
 
 Groq, Google Gemini, EdenAI, NewsAPI, ExchangeRate-API and API Ninjas credentials

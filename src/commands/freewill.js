@@ -31,9 +31,11 @@ module.exports = {
       } else {
         await sendDiscordContent(interaction.channel, finalResponse);
       }
+      return true;
     }
     catch (error) {
       console.error(error);
+      return false;
     }
   },
 };

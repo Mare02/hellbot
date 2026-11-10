@@ -58,6 +58,8 @@ database or silently continue with defaults.
 - `deployment_release`: the last health-verified deployment per profile, including commit SHA,
   GitHub run ID, attempt and verification time (migration 007). GitHub workflow history and
   job logs remain on GitHub; see [Deploys](dashboard.md#deploys).
+- `guild_activity`: the most recent completed bot interaction per server and profile,
+  storing only the server ID, timestamp and interaction type (migration 009).
 - `config_history`: profile or shared audit events with non-secret snapshots and
   metadata. Imports and subsequent configuration/key operations are recorded transactionally.
 

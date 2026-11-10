@@ -48,7 +48,7 @@ async function start() {
   client.on('clientReady', () => console.info('Discord bot connected', { profile }));
   Object.values(listeners).forEach((listener) => listener(client));
   stopJobs = startJobs(client, runtime);
-  closeIpc = await startBotIpc(runtime, () => client.isReady());
+  closeIpc = await startBotIpc(runtime, () => client.isReady(), () => stopJobs?.getStatus() || []);
   process.once('SIGINT', () =>
     shutdown().catch(() => {
       process.exitCode = 1;
