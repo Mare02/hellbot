@@ -216,7 +216,7 @@ function HealthSection({ resource, onOpenLogs }) {
                         {job.enabled ? job.schedule : 'Disabled'}
                         {job.lastCompletedAt ? ` · Last run ${dateLabel(job.lastCompletedAt)}` : ' · No run recorded'}
                         {job.lastDurationMs !== null ? ` · ${formatDuration(job.lastDurationMs)}` : ''}
-                        {job.failedGuildCount ? ` · ${job.failedGuildCount} server delivery failures` : ''}
+                        {job.failedGuildCount ? ` · ${job.failedGuildCount} guild delivery failures` : ''}
                       </Text>
                     </Stack>
                     <Badge

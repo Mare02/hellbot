@@ -166,7 +166,7 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
   router.get('/guilds', async (request, response) => {
     response.json(guilds.read(profile) || (await syncGuilds()));
   });
-  router.get('/servers', async (request, response) => {
+  router.get('/guilds/activity', async (request, response) => {
     let snapshot = guilds.read(profile);
     let syncWarning = false;
     if (!snapshot) {
@@ -185,9 +185,10 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
     const activityByGuild = new Map(
       guildActivity.list(profile).map((activity) => [activity.guildId, activity])
     );
-    const items = snapshot.guilds.map((guild) => {
+    const guildSummaries = snapshot.guilds.map((guild) => {
       const enabled = !disabledGuilds.has(guild.id);
       const activity = activityByGuild.get(guild.id);
+      const applicableFeatures = getGuildFeatures(config, profile, guild.id);
       return {
         id: guild.id,
         name: guild.name,
@@ -196,7 +197,8 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
           : null,
         memberCount: guild.approximate_member_count ?? null,
         enabled,
-        enabledFeatures: enabled ? getGuildFeatures(config, profile, guild.id) : [],
+        enabledFeatures: enabled ? applicableFeatures : [],
+        applicableFeatures,
         ...(activity ? {
           lastInteractionAt: activity.lastInteractionAt,
           lastInteractionType: activity.lastInteractionType,
@@ -205,11 +207,8 @@ function createApi(database, port, { onSecretsChanged = () => {} } = {}) {
     });
     response.json({
       syncedAt: snapshot.syncedAt,
-      totalServers: items.length,
-      enabledServers: items.filter((guild) => guild.enabled).length,
-      disabledServers: items.filter((guild) => !guild.enabled).length,
       syncWarning,
-      items,
+      guilds: guildSummaries,
     });
   });
   router.post('/guilds/sync', async (request, response) => {

@@ -29,7 +29,7 @@ const botSettingsSections = [
   { id: 'workflows', label: 'Workflows' },
   { id: 'features', label: 'Features' },
   { id: 'jobs', label: 'Scheduled jobs' },
-  { id: 'access', label: 'Server access' },
+  { id: 'access', label: 'Guilds access' },
 ];
 
 function sectionHasChanges(section, changes) {

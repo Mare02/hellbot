@@ -18,7 +18,6 @@ import {
   IconHistory,
   IconGitCommit,
   IconRocket,
-  IconServer,
   IconLayoutDashboard,
   IconRefresh,
   IconSettings,
@@ -34,12 +33,6 @@ export const pages = {
     description: 'Status and saved settings for the selected bot.',
     icon: IconLayoutDashboard,
   },
-  servers: {
-    slug: 'servers',
-    title: 'Servers',
-    description: 'Member counts, features in use and recent activity across your servers.',
-    icon: IconServer,
-  },
   ai: {
     slug: 'ai-settings',
     title: 'AI settings',
@@ -49,7 +42,7 @@ export const pages = {
   settings: {
     slug: 'bot-settings',
     title: 'Bot settings',
-    description: 'Configure Hellbot behavior, Discord setup, scheduled jobs and server access.',
+    description: 'Configure Hellbot behavior, Discord setup, scheduled jobs and guilds access.',
     icon: IconAdjustments,
   },
   logs: {

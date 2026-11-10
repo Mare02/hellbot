@@ -1,5 +1,4 @@
 import {
-  Alert,
   Autocomplete,
   Button,
   ColorInput,
@@ -15,11 +14,9 @@ import {
   TextInput,
 } from '@mantine/core';
 import { useState } from 'react';
-import { IconRefresh } from '@tabler/icons-react';
-import { api, dateLabel } from './api';
-import { Empty, ResourceState, Section } from './components';
-import { useResource } from './useResource';
+import { Section } from './components';
 import AiToolsSection from './AiToolsSection';
+import GuildsSection from './pages/GuildsSection';
 
 const featureLabels = {
   mentionReplies: ['Mention replies', 'Reply when someone mentions the bot.'],
@@ -209,10 +206,10 @@ export function AiSettingsForm({ form, update, fieldError, catalog }) {
 
 const discordIdSections = [
   {
-    title: 'Servers',
+    title: 'Guilds',
     fields: [
-      ['homeServerId', 'Home server ID'],
-      ['testingServerId', 'Testing server ID'],
+      ['homeServerId', 'Home guild ID'],
+      ['testingServerId', 'Testing guild ID'],
     ],
   },
   {
@@ -251,46 +248,14 @@ const discordIdSections = [
 
 const jobFeatures = ['dailyQuotes', 'futureNews', 'presenceRotation'];
 
-function ServerAccessSection({ form, update, fieldError }) {
-  const guilds = useResource('/guilds');
-  const [guildsSyncing, setGuildsSyncing] = useState(false);
-  const [guildsSyncError, setGuildsSyncError] = useState(null);
+function GuildsAccessSection({ form, update, fieldError }) {
   const disabledGuildIds = form.disabledGuildIds || [];
-
-  async function syncGuilds() {
-    setGuildsSyncing(true);
-    setGuildsSyncError(null);
-    try {
-      await api('/guilds/sync', { method: 'POST', body: {} });
-      guilds.refresh();
-    } catch (error) {
-      setGuildsSyncError(error.message);
-    } finally {
-      setGuildsSyncing(false);
-    }
-  }
 
   return (
     <Section
-      title="Server access"
-      description="Choose which Discord servers can use this bot. Changes are stored with the configuration and apply when you save."
+      title="Guilds access"
+      description="Choose which Discord guilds can use this bot. Changes are stored with the configuration and apply when you save."
     >
-      <Group justify="space-between">
-        <Text size="xs" c="dimmed">
-          {guilds.data?.syncedAt
-            ? `Last refreshed: ${dateLabel(guilds.data.syncedAt)}`
-            : 'Load the servers this bot has joined from Discord.'}
-        </Text>
-        <Button
-          variant="default"
-          leftSection={<IconRefresh size={16} />}
-          loading={guildsSyncing}
-          disabled={guilds.loading}
-          onClick={syncGuilds}
-        >
-          Refresh
-        </Button>
-      </Group>
       <Textarea
         label="Guild management access"
         description="Discord user IDs allowed to use Hellbot's guild management tools in this profile. The bot owner always keeps access. Enter one ID per line."
@@ -304,52 +269,18 @@ function ServerAccessSection({ form, update, fieldError }) {
         maxRows={8}
         error={fieldError('guildToolUserIds')}
       />
-      {guildsSyncError && (
-        <Alert color="yellow" title="Could not refresh servers">
-          {guildsSyncError} The last saved server list is kept.
-        </Alert>
+      {fieldError('disabledGuildIds') && (
+        <Text size="sm" c="red">{fieldError('disabledGuildIds')}</Text>
       )}
-      <ResourceState
-        {...guilds}
-        onRetry={guilds.refresh}
-        errorColor="yellow"
-        errorTitle="Could not load servers"
-        errorMessage="Could not load the server list from Discord. Check this profile's Discord token and connection, then try again."
+      <GuildsSection
+        disabledGuildIds={disabledGuildIds}
+        onToggleGuild={(guildId, enabled) => update(
+          'disabledGuildIds',
+          enabled
+            ? disabledGuildIds.filter((id) => id !== guildId)
+            : [...disabledGuildIds, guildId],
+        )}
       />
-      {guilds.data &&
-        (guilds.data.guilds.length ? (
-          <Stack gap="md">
-            {guilds.data.guilds.map((guild) => (
-              <Group key={guild.id} justify="space-between" wrap="nowrap">
-                <Stack gap={2}>
-                  <Text fw={500}>{guild.name}</Text>
-                  <Text size="xs" c="dimmed">
-                    {guild.id}
-                  </Text>
-                </Stack>
-                <Switch
-                  aria-label={`Enable Hellbot in ${guild.name}`}
-                  checked={!disabledGuildIds.includes(guild.id)}
-                  onChange={(event) =>
-                    update(
-                      'disabledGuildIds',
-                      event.currentTarget.checked
-                        ? disabledGuildIds.filter((id) => id !== guild.id)
-                        : [...disabledGuildIds, guild.id]
-                    )
-                  }
-                />
-              </Group>
-            ))}
-            {fieldError('disabledGuildIds') && (
-              <Text size="sm" c="red">
-                {fieldError('disabledGuildIds')}
-              </Text>
-            )}
-          </Stack>
-        ) : (
-          <Empty>This bot has not joined any Discord servers.</Empty>
-        ))}
     </Section>
   );
 }
@@ -459,7 +390,7 @@ export function BotSettingsForm({ form, update, fieldError, section }) {
         <FeaturesForm form={form} update={update} fieldError={fieldError} section="jobs" />
       )}
       {section === 'access' && (
-        <ServerAccessSection form={form} update={update} fieldError={fieldError} />
+        <GuildsAccessSection form={form} update={update} fieldError={fieldError} />
       )}
     </>
   );
