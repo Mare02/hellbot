@@ -31,7 +31,7 @@ const themeDefinitions = {
     primaryColor: 'ember',
     colors: {
       dark: ['#F2EFED', '#D8D0CC', '#B2A6A0', '#897C75', '#594D47', '#382E29', '#211B18', '#171311', '#100D0B', '#0A0807'],
-      surface: ['#F5F0ED', '#E7DDD8', '#D2C4BC', '#B7A69D', '#958177', '#594A42', '#241B17', '#1D1613', '#17110F', '#120D0B'],
+      surface: ['#F5F0ED', '#E7DDD8', '#D2C4BC', '#B7A69D', '#958177', '#594A42', '#1F1714', '#1D1613', '#17110F', '#120D0B'],
       ...sharedPalettes,
     },
   },
@@ -63,8 +63,8 @@ const themeDefinitions = {
     scheme: 'dark',
     primaryColor: 'gold',
     colors: {
-      dark: ['#F2ECE0', '#D9CDB3', '#B5A580', '#887957', '#5E523C', '#413829', '#2E271C', '#1B1711', '#14100B', '#0D0A07'],
-      surface: ['#F2ECE0', '#E5D8BD', '#C9B58E', '#A98F60', '#806B45', '#413729', '#211B13', '#1B1711', '#15110C', '#0F0C08'],
+      dark: ['#F2ECE0', '#D9CDB3', '#B5A580', '#887957', '#5E523C', '#413829', '#282219', '#15120D', '#100D09', '#0A0806'],
+      surface: ['#F2ECE0', '#E5D8BD', '#C9B58E', '#A98F60', '#806B45', '#413729', '#1B160F', '#17130E', '#120E09', '#0C0906'],
       ...sharedPalettes,
     },
   },
@@ -74,8 +74,8 @@ const themeDefinitions = {
     scheme: 'dark',
     primaryColor: 'amethyst',
     colors: {
-      dark: ['#F2EDF7', '#D8CEE3', '#B7A8C8', '#907FA7', '#68597D', '#443653', '#2E223C', '#1D1527', '#140F1C', '#0D0912'],
-      surface: ['#F2EDF7', '#E6DCED', '#CBBDE0', '#A891C4', '#82689D', '#58466D', '#251B32', '#201729', '#17111F', '#100B16'],
+      dark: ['#F2EDF7', '#D8CEE3', '#B7A8C8', '#907FA7', '#68597D', '#443653', '#291E36', '#17111F', '#100B16', '#09060D'],
+      surface: ['#F2EDF7', '#E6DCED', '#CBBDE0', '#A891C4', '#82689D', '#58466D', '#1F172B', '#1A1324', '#130E1B', '#0C0812'],
       ...sharedPalettes,
     },
   },

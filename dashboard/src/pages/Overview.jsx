@@ -1,5 +1,13 @@
 import { Alert, Avatar, Badge, Button, Group, Paper, Stack, Table, Text, Title } from '@mantine/core';
-import { IconActivity, IconBrain, IconEye, IconRefresh, IconArrowRight } from '@tabler/icons-react';
+import {
+  IconActivity,
+  IconAlertCircle,
+  IconArrowRight,
+  IconBrain,
+  IconEye,
+  IconHistory,
+  IconRefresh,
+} from '@tabler/icons-react';
 import { dateLabel } from '../api';
 import { Empty, ResourceState } from '../components';
 import { useResource } from '../useResource';
@@ -8,7 +16,10 @@ function ActivityTable({ resource, onOpen, onViewAll }) {
   return (
     <Stack gap="sm">
       <Group justify="space-between">
-        <Text fw={600}>Recent activity</Text>
+        <Group gap="xs">
+          <IconHistory size={18} />
+          <Text fw={600}>Recent activity</Text>
+        </Group>
         <Button
           variant="subtle"
           size="compact-sm"
@@ -73,7 +84,10 @@ function ErrorsTable({ resource, onOpen, onViewAll }) {
   return (
     <Stack gap="sm">
       <Group justify="space-between">
-        <Text fw={600}>Recent errors</Text>
+        <Group gap="xs">
+          <IconAlertCircle size={18} />
+          <Text fw={600}>Recent errors</Text>
+        </Group>
         <Button
           variant="subtle"
           size="compact-sm"
@@ -138,14 +152,6 @@ function ErrorsTable({ resource, onOpen, onViewAll }) {
   );
 }
 
-const JOB_LABELS = { dailyQuotes: 'Daily quotes', futureNews: 'Future news' };
-const JOB_OUTCOMES = {
-  success: { label: 'Succeeded', color: 'teal' },
-  partial: { label: 'Partial delivery', color: 'yellow' },
-  error: { label: 'Failed', color: 'red' },
-  running: { label: 'Running', color: 'blue' },
-};
-
 function formatUptime(seconds) {
   if (!Number.isSafeInteger(seconds) || seconds < 0) return '—';
   if (seconds < 60) return `${seconds}s`;
@@ -157,18 +163,8 @@ function formatUptime(seconds) {
   return `${minutes}m`;
 }
 
-function formatDuration(milliseconds) {
-  if (!Number.isSafeInteger(milliseconds) || milliseconds < 0) return '—';
-  if (milliseconds < 60_000) return `${Math.ceil(milliseconds / 1000)}s`;
-  const seconds = Math.floor(milliseconds / 1000);
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-}
-
 function HealthSection({ resource, onOpenLogs }) {
   const health = resource.data;
-  const status = health?.status;
-  const statusColor = status === 'ready' ? 'teal' : status === 'connecting' ? 'yellow' : 'red';
 
   return (
     <Stack gap="sm">
@@ -177,11 +173,6 @@ function HealthSection({ resource, onOpenLogs }) {
           <IconActivity size={18} />
           <Text fw={600}>Bot health</Text>
         </Group>
-        {health && (
-          <Badge color={statusColor} variant="light">
-            {status === 'ready' ? 'Connected to Discord' : status === 'connecting' ? 'Connecting' : 'Offline'}
-          </Badge>
-        )}
       </Group>
       <ResourceState {...resource} onRetry={resource.refresh} />
       {health && (
@@ -204,32 +195,6 @@ function HealthSection({ resource, onOpenLogs }) {
                 </Group>
               </Stack>
             </Group>
-            <Stack gap="sm">
-              <Text size="sm" fw={600}>Scheduled jobs</Text>
-              {health.jobs.length ? health.jobs.map((job) => {
-                const outcome = JOB_OUTCOMES[job.lastOutcome];
-                return (
-                  <Group key={job.feature} justify="space-between" align="flex-start" wrap="nowrap">
-                    <Stack gap={2}>
-                      <Text size="sm" fw={500}>{JOB_LABELS[job.feature] || job.feature}</Text>
-                      <Text size="xs" c="dimmed">
-                        {job.enabled ? job.schedule : 'Disabled'}
-                        {job.lastCompletedAt ? ` · Last run ${dateLabel(job.lastCompletedAt)}` : ' · No run recorded'}
-                        {job.lastDurationMs !== null ? ` · ${formatDuration(job.lastDurationMs)}` : ''}
-                        {job.failedGuildCount ? ` · ${job.failedGuildCount} guild delivery failures` : ''}
-                      </Text>
-                    </Stack>
-                    <Badge
-                      color={!job.enabled ? 'gray' : outcome?.color || 'gray'}
-                      variant="light"
-                      style={{ flexShrink: 0 }}
-                    >
-                      {!job.enabled ? 'Disabled' : job.running ? 'Running' : outcome?.label || 'Waiting for first run'}
-                    </Badge>
-                  </Group>
-                );
-              }) : <Text size="sm" c="dimmed">Scheduled job status is unavailable while the bot is offline.</Text>}
-            </Stack>
             {health.latestError && (
               <Alert color="red" title={`Latest error · ${dateLabel(health.latestError.timestamp)}`}>
                 <Text size="sm" lineClamp={2}>{health.latestError.message}</Text>
