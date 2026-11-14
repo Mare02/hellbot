@@ -1,0 +1,156 @@
+# Hellbot Discord Bot - AI Agent Rules
+
+## Project Overview
+This is a Discord bot named "Hellbot" built with Node.js and Discord.js v14. The bot includes AI integration (Groq SDK, EdenAI), moderation features, and various entertainment commands.
+
+
+## Professional Programming Standards
+
+- Write clear, minimal, and efficient code
+- Use descriptive names and small, focused functions
+- Avoid deep nesting and complex logic
+- Separate concerns and keep modules single-purpose
+- Handle errors and edge cases gracefully
+- Follow the DRY (Don't Repeat Yourself) principle
+- Follow the Single Responsibility Principle for all modules
+- Use dependency injection where appropriate
+- Maintain clear separation between different layers of the application
+- Write code that reads like well-written prose
+
+
+## Code Style & Conventions
+
+### General
+- Do not create any tests for new features, commands, or bug fixes.
+
+### JavaScript Style
+- Use ES6+ features but maintain CommonJS require/module.exports structure
+- Use camelCase for variables and functions
+- Use PascalCase for class names and constructors
+- Use UPPER_SNAKE_CASE for constants and environment variables
+- Always use semicolons
+- Use template literals for string interpolation
+- Prefer const over let, avoid var
+- Use async/await over Promises when possible
+
+### Discord.js Patterns
+- Always use interaction.reply() or interaction.editReply() for slash commands
+- Use interaction.deferReply() for operations that take longer than 3 seconds
+- Check permissions before executing moderation commands
+- Always handle errors gracefully with try/catch blocks
+- Use embeds for rich message formatting with embedColor from config.js
+
+### File Organization
+- Commands go in `src/commands/` directory
+- Each command should export: name, description, execute function
+- Utilities go in `src/utils/` directory
+- Services (like AI) go in `src/services/` directory
+- Event listeners go in `src/listeners/` directory
+- Configuration in `src/utils/config.js`
+- Constants and data in `src/data/` directory
+
+### Environment Variables
+- Always use process.env for sensitive data
+- DISCORD_TOKEN is the bot token; in development, DEV_DISCORD_TOKEN overrides it when set.
+- CLIENT_ID is the Discord application ID; in development, DEV_CLIENT_ID overrides it when set.
+- PUBLIC_KEY is optional for interaction verification; in development, PUBLIC_KEY_DEV overrides it when set.
+- AI_PROVIDER selects groq (default) or google for text generation.
+- Set GROQ_API_KEY for Groq, or GEMINI_API_KEY_1 (and additional numbered keys) / GEMINI_API_KEY fallback for Google.
+- EDENAI_API_KEY is used only for image generation.
+- BUGSNAG_API_KEY is used by startup error tracking.
+- Use NODE_ENV for environment detection (development/production)
+- Reference config.js for accessing environment-dependent settings
+
+
+## Architecture Patterns
+
+### Command Structure
+```javascript
+module.exports = {
+  name: 'commandname',
+  description: 'Command description',
+  execute: async (interaction) => {
+    try {
+      // Command logic here
+      await interaction.reply('Response');
+    } catch (error) {
+      console.error('Error in command:', error);
+      await interaction.reply('An error occurred while executing this command.');
+    }
+  }
+};
+```
+
+### Service Integration
+- Use AIservice.js for all AI-related functionality
+- Always validate inputs before sending to AI services
+- Handle API rate limits and errors gracefully
+- Truncate responses to respect Discord's 2000 character limit
+
+### Error Handling
+- Log errors to console with context
+- Use Bugsnag for error tracking in production
+- Provide user-friendly error messages
+- Never expose sensitive information in error messages
+
+
+## Discord Bot Best Practices
+
+### Permissions
+- Check the invoking guild member's effective Discord permissions before executing permission-gated commands. Discord.js combines permission grants from all of the member's roles; do not check only a configured staff role ID for these commands.
+- Use `config.staffRoleIds` only for features whose policy specifically depends on those configured roles.
+- Keep the user's permissions separate from the bot's own permissions and role hierarchy checks.
+
+### Rate Limiting
+- Implement cooldowns for heavy operations
+- Respect Discord API rate limits
+- Use deferReply() for long-running operations
+
+### Security
+- Never log or expose BOT_TOKEN or API keys
+- Validate all user inputs
+- Sanitize data before database operations or file system access
+- Use environment-specific configurations
+
+
+## AI Integration Guidelines
+
+### Groq AI (Text Generation)
+- Use AIservice.usePrompt() for text generation
+- Always provide proper error handling
+- Respect the discordMsgLengthLimit (2000 characters)
+- Use appropriate AI models from aiModels.js
+- Support both text and image inputs
+
+### Image Generation
+- Use AIservice.useImageGen() for image creation
+- Handle API failures gracefully
+- Validate image URLs before sending to Discord
+
+
+## Development Workflow
+
+### Environment Setup
+- Use `npm run dev` for development with nodemon
+- Use `npm run pmdev` for PM2 process management
+- Maintain separate development and production configurations
+- Test commands in development server before production
+
+### File Naming
+- Use camelCase for JavaScript files
+- Keep filenames descriptive and concise
+- Group related functionality in directories
+- Use index.js files for clean imports
+
+### Debugging
+- Use console.log with descriptive context
+- Implement proper error boundaries
+- Test slash commands in Discord before deployment
+- Verify permissions and roles in test server
+```
+
+## Dependencies Management
+- Keep discord.js updated to latest stable version
+- Pin API SDK versions for consistency
+- Use exact versions for critical dependencies
+- Regularly update security-related packages
