@@ -33,7 +33,7 @@ npm run bot:prod
 `NODE_ENV` selects the bot profile: `development` runs the Development bot and
 `production` runs the Production bot. `npm run dev` and `npm run bot:dev` select
 the development Discord credentials; `npm run bot:prod` selects production.
-The dev script explicitly selects dev and starts nodemon. Runtime settings and AI
+The dev script explicitly selects dev and starts the bot with `node --watch`. Runtime settings and AI
 keys are loaded from SQLite; Discord credentials remain in env.
 
 ### Dashboard database

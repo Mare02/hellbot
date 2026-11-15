@@ -173,7 +173,7 @@ module.exports = {
 ## Development Workflow
 
 ### Environment Setup
-- `npm run dev` runs the bot in development with nodemon; `npm run pmdev` uses PM2
+- `npm run dev` runs the bot in development with `node --watch`; `npm run pmdev` uses PM2
 - `npm run db:migrate` initializes or upgrades SQLite
 - `npm run config:import -- --profile dev --dry-run` then `--apply` imports initial configuration
 - `npm run dashboard:setup` prepares the dashboard; `npm run dashboard:dev` runs it locally; `npm run dashboard:build` / `dashboard:start` are for production

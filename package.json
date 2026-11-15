@@ -5,7 +5,7 @@
   "main": "src/main.js",
   "scripts": {
     "start": "node src/main.js",
-    "dev": "NODE_ENV=development nodemon src/main.js",
+    "dev": "NODE_ENV=development node --watch src/main.js",
     "bot:dev": "NODE_ENV=development node src/main.js",
     "bot:prod": "NODE_ENV=production node src/main.js",
     "pmdev": "NODE_ENV=development pm2 start src/main.js",
@@ -43,7 +43,6 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "6.1.2",
-    "nodemon": "^3.1.9",
     "vite": "8.3.4"
   }
 }
