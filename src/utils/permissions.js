@@ -18,4 +18,10 @@ const hasPermission = (requiredPermission, context) => {
   return Boolean(permissions && new PermissionsBitField(permissions).has(requiredPermission));
 };
 
-module.exports = { OWNER, hasPermission };
+const outranksTarget = (invoker, target) => {
+  if (!invoker || !target) return false;
+  if (invoker.guild.ownerId === invoker.id) return true;
+  return invoker.roles.highest.comparePositionTo(target.roles.highest) > 0;
+};
+
+module.exports = { OWNER, hasPermission, outranksTarget };

@@ -2,7 +2,8 @@ const { PermissionFlagsBits } = require('discord.js');
 const messages = require("../utils/messages");
 const { reply } = require("../utils/helpers");
 const syslog = require('../commands/syslog');
-const dm = require('../commands/dm');
+const { outranksTarget } = require('../utils/permissions');
+const { notifyMember } = require('../utils/moderationNotices');
 
 module.exports = {
   name: "kick",
@@ -64,6 +65,11 @@ module.exports = {
         return;
       }
       
+      if (!outranksTarget(interaction.member, userToKick)) {
+        await reply(interaction, args, "You can't kick a user with an equal or higher role than yours.");
+        return;
+      }
+
       if (!userToKick.kickable) {
         await reply(interaction, args, "This user cannot be kicked (higher role/privileges)");
         return;
@@ -76,12 +82,10 @@ module.exports = {
         replyMessage += ` Reason: ${reason}.`;
       }
 
+      await notifyMember(userToKick, 'kicked', reason);
       await userToKick.kick(reason);
 
       await reply(interaction, args, replyMessage);
-
-      await dm.execute(interaction, [userToKick.id, `You have been kicked from ${interaction.guild.name}.\nReason: ${reason}.`])
-        .catch(() => console.log("Failed to DM user"));
 
       await syslog.execute(interaction, [], `**${userToKick.displayName}** has been kicked.`, userToKick, [{
         name: 'Reason', 

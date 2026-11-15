@@ -3,7 +3,8 @@ const messages = require("../utils/messages");
 const { reply } = require("../utils/helpers");
 const { fetchGuildBan } = require('../utils/guildBans');
 const syslog = require('../commands/syslog');
-const dm = require('../commands/dm');
+const { outranksTarget } = require('../utils/permissions');
+const { notifyMember } = require('../utils/moderationNotices');
 
 module.exports = {
   name: "ban",
@@ -73,18 +74,22 @@ module.exports = {
         replyMessage += ` Reason: ${reason}.`;
       }
 
+      if (!outranksTarget(interaction.member, userToBan)) {
+        await reply(interaction, args, "You can't ban a user with an equal or higher role than yours.");
+        return;
+      }
+
       if (!userToBan.bannable) {
         await reply(interaction, args, "This user cannot be banned (higher role/privileges).");
         return;
       }
 
+      await notifyMember(userToBan, 'banned', reason);
       await userToBan.ban({ reason });
 
       await reply(interaction, args, replyMessage);
 
-      await dm.execute(interaction, [userToBan.id, `You have been banned from ${interaction.guild.name}.\nReason: ${reason}.`]);
-
-      await syslog.execute(interaction, [], `**${userToBan.displayName}** has been banned.`, userToBan, [{ name: 'Reason', value: reason }]);
+      await syslog.execute(interaction, [], `**${userToBan.displayName}** has been banned.`, userToBan, [{ name: 'Reason', value: reason || "No reason provided" }]);
     }
     catch (error) {
       console.error(error.message);
