@@ -1,8 +1,7 @@
 const { PermissionFlagsBits, PermissionsBitField } = require('discord.js');
 const { assertAuthorizedServer, canUseServerTools } = require('./access');
 
-const permissionNames = Object.keys(PermissionFlagsBits).filter((name) => Number.isNaN(Number(name)));
-const permissionNameSet = new Set(permissionNames);
+const { permissionNameSet } = require('./permissionNames');
 
 const createRoleDefinition = {
   type: 'function',
@@ -16,7 +15,7 @@ const createRoleDefinition = {
         color: { type: 'string', pattern: '^(#[0-9a-fA-F]{6}|[0-9a-fA-F]{6}|default)$', description: 'Optional six-digit hex color such as #fc9803, or "default".' },
         hoist: { type: 'boolean', description: 'Whether to display members with this role separately in the member list.' },
         mentionable: { type: 'boolean', description: 'Whether members can mention this role.' },
-        permissions: { type: 'array', items: { type: 'string', enum: permissionNames }, uniqueItems: true, maxItems: 53, description: 'Optional exact Discord permission names to grant. These are server-wide role permissions.' },
+        permissions: { type: 'array', items: { type: 'string' }, uniqueItems: true, maxItems: 53, description: 'Optional exact Discord permission names to grant. These are server-wide role permissions. Use exact names from the permission list in the instructions.' },
       },
       required: ['name'],
       additionalProperties: false,
@@ -69,8 +68,8 @@ const editRoleDefinition = {
         color: { type: 'string', pattern: '^(#[0-9a-fA-F]{6}|[0-9a-fA-F]{6}|default)$', description: 'New hex color such as #fc9803, or "default" to remove the role color.' },
         hoist: { type: 'boolean', description: 'Whether to display members with this role separately in the member list.' },
         mentionable: { type: 'boolean', description: 'Whether members can mention this role.' },
-        permissions_to_add: { type: 'array', items: { type: 'string', enum: permissionNames }, uniqueItems: true, maxItems: 50, description: 'Exact Discord permission names to grant to this role. This changes server-wide role permissions.' },
-        permissions_to_remove: { type: 'array', items: { type: 'string', enum: permissionNames }, uniqueItems: true, maxItems: 50, description: 'Exact Discord permission names to remove from this role. This changes server-wide role permissions.' },
+        permissions_to_add: { type: 'array', items: { type: 'string' }, uniqueItems: true, maxItems: 50, description: 'Exact Discord permission names to grant to this role. This changes server-wide role permissions. Use exact names from the permission list in the instructions.' },
+        permissions_to_remove: { type: 'array', items: { type: 'string' }, uniqueItems: true, maxItems: 50, description: 'Exact Discord permission names to remove from this role. This changes server-wide role permissions. Use exact names from the permission list in the instructions.' },
       },
       required: ['role_id'],
       additionalProperties: false,

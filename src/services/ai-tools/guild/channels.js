@@ -9,8 +9,7 @@ const channelTypes = {
   forum: ChannelType.GuildForum,
   stage: ChannelType.GuildStageVoice,
 };
-const permissionNames = Object.keys(PermissionFlagsBits).filter((name) => Number.isNaN(Number(name)));
-const permissionNameSet = new Set(permissionNames);
+const { permissionNameSet } = require('./permissionNames');
 
 const createChannelDefinition = {
   type: 'function',
@@ -114,9 +113,9 @@ const editChannelPermissionsDefinition = {
         channel_id: { type: 'string', description: 'The exact Discord channel ID.' },
         target_type: { type: 'string', enum: ['role', 'member'], description: 'Whether target_id identifies a server role or member.' },
         target_id: { type: 'string', description: 'The exact role or user ID to configure.' },
-        allow: { type: 'array', items: { type: 'string', enum: permissionNames }, uniqueItems: true, maxItems: 53, description: 'Permissions to explicitly allow for this target.' },
-        deny: { type: 'array', items: { type: 'string', enum: permissionNames }, uniqueItems: true, maxItems: 53, description: 'Permissions to explicitly deny for this target.' },
-        inherit: { type: 'array', items: { type: 'string', enum: permissionNames }, uniqueItems: true, maxItems: 53, description: 'Permissions to reset to inherit/default for this target.' },
+        allow: { type: 'array', items: { type: 'string' }, uniqueItems: true, maxItems: 53, description: 'Permissions to explicitly allow for this target. Use exact names from the permission list in the instructions.' },
+        deny: { type: 'array', items: { type: 'string' }, uniqueItems: true, maxItems: 53, description: 'Permissions to explicitly deny for this target. Use exact names from the permission list in the instructions.' },
+        inherit: { type: 'array', items: { type: 'string' }, uniqueItems: true, maxItems: 53, description: 'Permissions to reset to inherit/default for this target. Use exact names from the permission list in the instructions.' },
       },
       required: ['channel_id', 'target_type', 'target_id'],
       additionalProperties: false,

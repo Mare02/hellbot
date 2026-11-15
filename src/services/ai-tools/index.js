@@ -4,6 +4,7 @@ const chatContextTool = require('./getChatContext');
 const exchangeRatesTool = require('./exchangeRates/getExchangeRates');
 const { createMemoryToolSet, memoryToolsPrompt } = require('./memory');
 const { createGuildToolSet } = require('./guild');
+const { permissionToolNames, permissionNamesPrompt } = require('./guild/permissionNames');
 const { initializeRuntimeConfig } = require('../config/runtime');
 const registry = require('../../data/aiToolRegistry');
 const knownTools = new Set(registry.map((tool) => tool.name));
@@ -54,9 +55,13 @@ async function createToolSet(channel, options = {}) {
     ...memoryToolSet.toolHandlers,
   };
 
+  const enabledDefinitions = toolDefinitions.filter((tool) => isToolEnabled(tool.function.name));
+  const permissionNamesNeeded = enabledDefinitions.some((tool) =>
+    permissionToolNames.includes(tool.function.name)
+  );
+
   return {
-    toolDefinitions: toolDefinitions
-      .filter((tool) => isToolEnabled(tool.function.name))
+    toolDefinitions: enabledDefinitions
       .map((tool) => {
         if (tool.function.name !== 'search_memory' || isToolEnabled('get_chat_context'))
           return tool;
@@ -71,6 +76,7 @@ async function createToolSet(channel, options = {}) {
       }),
     toolHandlers,
     memoryPrompt: memoryEnabled ? memoryToolsPrompt : null,
+    permissionPrompt: permissionNamesNeeded ? permissionNamesPrompt : null,
   };
 }
 

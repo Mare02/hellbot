@@ -272,6 +272,7 @@ module.exports = {
             systemPrompt,
             toolSupportPrompt(),
             toolSet.memoryPrompt,
+            toolSet.permissionPrompt,
             'Only tools listed in the current request are available. If a description refers to an unavailable tool, do not call it; ask for essential missing context instead.',
           ]
             .filter(Boolean)
